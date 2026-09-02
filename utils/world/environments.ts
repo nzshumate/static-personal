@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { plateFragment, plateVertex, skyboxFragment, skyboxVertex } from './shaders'
+import { skyboxFragment, skyboxVertex } from './shaders'
 import { pulse } from './math'
 
 export type EnvironmentLayer = {
@@ -15,18 +15,16 @@ export type EnvironmentLayer = {
 }
 
 export const environmentLayers: EnvironmentLayer[] = [
-  { id: 'sky', start: 0.07, peak: 0.175, end: 0.3, yaw: 0.18, pitch: 0.08, exposure: 0.62, contrast: 1.12, tint: new THREE.Color(0xd7e4f2) },
-  { id: 'mountains', start: 0.2, peak: 0.305, end: 0.42, yaw: 0.42, pitch: 0.04, exposure: 0.58, contrast: 1.16, tint: new THREE.Color(0xd5dce6) },
-  { id: 'snow', start: 0.3, peak: 0.37, end: 0.46, yaw: 0.1, pitch: 0.02, exposure: 0.48, contrast: 1.1, tint: new THREE.Color(0xc9d6d4) },
-  { id: 'forest', start: 0.38, peak: 0.455, end: 0.58, yaw: 0.22, pitch: 0.06, exposure: 0.42, contrast: 1.18, tint: new THREE.Color(0xb7c8b8) },
-  { id: 'desert', start: 0.5, peak: 0.585, end: 0.7, yaw: -0.15, pitch: 0.05, exposure: 0.7, contrast: 1.14, tint: new THREE.Color(0xf0d3ae) },
-  { id: 'beach', start: 0.72, peak: 0.83, end: 0.93, yaw: 0.08, pitch: 0.02, exposure: 0.56, contrast: 1.08, tint: new THREE.Color(0xcfe0e6) }
+  { id: 'sky', start: 0.09, peak: 0.17, end: 0.25, yaw: 0.55, pitch: 0.1, exposure: 0.78, contrast: 1.08, tint: new THREE.Color(0xe4eef6) },
+  { id: 'mountains', start: 0.21, peak: 0.3, end: 0.38, yaw: 1.15, pitch: 0.06, exposure: 0.72, contrast: 1.12, tint: new THREE.Color(0xdce4ec) },
+  { id: 'forest', start: 0.34, peak: 0.43, end: 0.51, yaw: 0.72, pitch: 0.04, exposure: 0.56, contrast: 1.14, tint: new THREE.Color(0xc5d2c4) },
+  { id: 'desert', start: 0.47, peak: 0.56, end: 0.64, yaw: 0.35, pitch: 0.08, exposure: 0.92, contrast: 1.08, tint: new THREE.Color(0xf6dfb6) },
+  { id: 'beach', start: 0.73, peak: 0.8, end: 0.88, yaw: 2.4, pitch: 0.02, exposure: 0.7, contrast: 1.06, tint: new THREE.Color(0xd7e6ea) }
 ]
 
 const texturePath: Record<string, string> = {
   sky: '/world/sky.jpg',
   mountains: '/world/mountains.jpg',
-  snow: '/world/snow.jpg',
   forest: '/world/forest.jpg',
   desert: '/world/desert.jpg',
   beach: '/world/beach.jpg',
@@ -92,17 +90,40 @@ export const createEnvironments = (renderer: THREE.WebGLRenderer): EnvironmentSy
     uniforms: {
       uMap: { value: null },
       uOpacity: { value: 0 },
-      uExposure: { value: 0.42 },
-      uTint: { value: new THREE.Color(0xb7cfc4) }
+      uExposure: { value: 0.62 },
+      uTint: { value: new THREE.Color(0xc5d8cc) },
+      uTime: { value: 0 },
+      uDepth: { value: 0 },
+      uResolution: { value: new THREE.Vector2(1, 1) },
+      uPointer: { value: new THREE.Vector2() }
     },
-    vertexShader: plateVertex,
-    fragmentShader: plateFragment,
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      uniform float uOpacity;
+      uniform float uExposure;
+      uniform vec3 uTint;
+      varying vec2 vUv;
+      void main() {
+        vec2 uv = vUv;
+        uv.x = mix(0.08, 0.92, uv.x);
+        uv.y = mix(0.12, 0.88, uv.y);
+        vec3 color = texture2D(uMap, uv).rgb * uExposure * uTint;
+        gl_FragColor = vec4(color, uOpacity);
+      }
+    `,
     transparent: true,
     depthWrite: false,
     toneMapped: false
   })
-  const swamp = new THREE.Mesh(new THREE.PlaneGeometry(28, 18), swampMat)
-  swamp.position.set(0, 0, -16)
+  const swamp = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), swampMat)
+  swamp.frustumCulled = false
   swamp.visible = false
   group.add(swamp)
 
@@ -120,18 +141,15 @@ export const createEnvironments = (renderer: THREE.WebGLRenderer): EnvironmentSy
   const update = (progress: number, pointer: THREE.Vector2) => {
     spheres.forEach(({ layer, mesh, material }) => {
       const amount = pulse(progress, layer.start, layer.peak, layer.end)
-      material.uniforms.uOpacity.value = amount
+      material.uniforms.uOpacity.value = Math.pow(amount, 0.72)
       mesh.visible = amount > 0.01
       mesh.rotation.y = layer.yaw + pointer.x * 0.045
       mesh.rotation.x = layer.pitch - pointer.y * 0.02
     })
 
-    const swampAmount = pulse(progress, 0.6, 0.71, 0.82)
+    const swampAmount = pulse(progress, 0.6, 0.67, 0.76)
     swampMat.uniforms.uOpacity.value = swampAmount
     swamp.visible = swampAmount > 0.01
-    swamp.position.x = pointer.x * 0.35
-    swamp.position.y = pointer.y * 0.18 + (progress - 0.71) * -1.4
-    swamp.scale.setScalar(1.04 + swampAmount * 0.04)
   }
 
   return { group, update, preload }

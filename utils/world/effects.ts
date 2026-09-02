@@ -67,12 +67,12 @@ export const createEffects = (renderer: THREE.WebGLRenderer, mobile: boolean): E
   const group = new THREE.Group()
   const random = makeRng(77191)
   const fields: ParticleField[] = [
-    createField(renderer, random, mobile ? 180 : 420, 0xf4f7fb, 0.9, new THREE.Vector3(16, 12, 10), new THREE.Vector3(0, 1, -4), [0.22, 0.32, 0.44], new THREE.Vector3(0.12, -0.28, 0)),
-    createField(renderer, random, mobile ? 40 : 90, 0xd7f59a, 0.55, new THREE.Vector3(12, 7, 8), new THREE.Vector3(0, -0.4, -3), [0.4, 0.46, 0.56], new THREE.Vector3(0.02, 0.04, 0)),
-    createField(renderer, random, mobile ? 70 : 160, 0xf0c27a, 0.5, new THREE.Vector3(14, 8, 8), new THREE.Vector3(0, 0.2, -4), [0.52, 0.59, 0.7], new THREE.Vector3(0.18, 0.03, 0)),
-    createField(renderer, random, mobile ? 80 : 180, 0xcfe6d8, 0.7, new THREE.Vector3(14, 7, 8), new THREE.Vector3(0, 0.1, -4), [0.62, 0.71, 0.82], new THREE.Vector3(0.04, 0.06, 0)),
-    createField(renderer, random, mobile ? 60 : 140, 0xe8f6f8, 0.45, new THREE.Vector3(14, 6, 8), new THREE.Vector3(0, -0.6, -4), [0.74, 0.83, 0.92], new THREE.Vector3(0.08, 0.02, 0)),
-    createField(renderer, random, mobile ? 280 : 780, 0xb8eef2, 0.62, new THREE.Vector3(16, 12, 12), new THREE.Vector3(0, -0.4, -5), [0.84, 0.94, 1.05], new THREE.Vector3(0.03, -0.16, 0))
+    createField(renderer, random, mobile ? 180 : 420, 0xf4f7fb, 0.9, new THREE.Vector3(16, 12, 10), new THREE.Vector3(0, 1, -4), [0.21, 0.3, 0.4], new THREE.Vector3(0.12, -0.28, 0)),
+    createField(renderer, random, mobile ? 36 : 70, 0xd7f59a, 0.45, new THREE.Vector3(12, 7, 8), new THREE.Vector3(0, -0.4, -3), [0.36, 0.43, 0.5], new THREE.Vector3(0.02, 0.04, 0)),
+    createField(renderer, random, mobile ? 70 : 160, 0xf0c27a, 0.5, new THREE.Vector3(14, 8, 8), new THREE.Vector3(0, 0.2, -4), [0.48, 0.56, 0.64], new THREE.Vector3(0.18, 0.03, 0)),
+    createField(renderer, random, mobile ? 80 : 160, 0xcfe6d8, 0.55, new THREE.Vector3(14, 7, 8), new THREE.Vector3(0, 0.1, -4), [0.6, 0.67, 0.76], new THREE.Vector3(0.04, 0.06, 0)),
+    createField(renderer, random, mobile ? 60 : 140, 0xe8f6f8, 0.45, new THREE.Vector3(14, 6, 8), new THREE.Vector3(0, -0.6, -4), [0.73, 0.8, 0.88], new THREE.Vector3(0.08, 0.02, 0)),
+    createField(renderer, random, mobile ? 360 : 980, 0xb8eef2, 0.78, new THREE.Vector3(16, 12, 12), new THREE.Vector3(0, -0.4, -5), [0.84, 0.94, 1.05], new THREE.Vector3(0.03, -0.16, 0))
   ]
   fields.forEach((field) => group.add(field.points))
 
