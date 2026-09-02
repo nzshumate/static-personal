@@ -2,6 +2,7 @@
   "name": "nathan-shumate-personal",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
