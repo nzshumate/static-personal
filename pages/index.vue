@@ -25,6 +25,7 @@ useSeoMeta({
 <template>
   <main class="space-site">
     <ClientOnly><WebGLHero /></ClientOnly>
+    <ClientOnly><SpaceDetails /></ClientOnly>
     <div class="grain" aria-hidden="true" />
     <div class="edge-fade" aria-hidden="true" />
 
