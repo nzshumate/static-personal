@@ -465,14 +465,14 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   for (let i = 0; i < 7; i++) {
     addSprite(desert, glow, 0xf3c17e, 0.05, new THREE.Vector3((random() - 0.5) * 16, -0.2 + random() * 3, -4 - random() * 8), new THREE.Vector2(6.2, 2.1), true)
   }
-  const sand = addPoints(desert, renderer, mobile ? 80 : 180, 0xf0d08a, 0.5, () =>
+  const grit = addPoints(desert, renderer, mobile ? 80 : 180, 0xf0d08a, 0.5, () =>
     new THREE.Vector3((random() - 0.5) * 18, -2.2 + random() * 2.4, -2 - random() * 10)
   )
   tick.push((time, _progress, reduced) => {
     desertSun.material.uniforms.uTime.value = time
     duneMat.uniforms.uTime.value = time
     oasis.material.uniforms.uTime.value = time
-    sand.points.position.x = Math.sin(time * 0.15) * 0.4
+    grit.points.position.x = Math.sin(time * 0.15) * 0.4
     if (reduced) return
     tumble.position.set(-7.4 + ((time * 0.42) % 16), -2.45 + Math.abs(Math.sin(time * 1.5)) * 0.32, -2.6)
     tumble.rotation.z = time * 1.7
@@ -552,10 +552,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   addDome(beach, 0x16344c, 0xf0c090, 0xff8a40, new THREE.Vector3(-9, 3, -8))
   beach.add(new THREE.HemisphereLight(0xd8eef2, 0x243038, 0.62))
   const beachSun = addStar(beach, glow, new THREE.Vector3(-8.2, 1.6, -11), 0.48)
-  const sand = new THREE.PlaneGeometry(36, 14, mobile ? 40 : 70, mobile ? 20 : 36)
-  sand.rotateX(-Math.PI / 2)
-  displace(sand, (x, z) => -3.12 + Math.sin(x * 0.5) * 0.08 + Math.max(0, z + 2) * 0.04)
-  const sandMat = addTerrain(beach, sand, 0x8a6a3a, 0xc9ae7a, 0xe8d4a0, 4.2)
+  const shore = new THREE.PlaneGeometry(36, 14, mobile ? 40 : 70, mobile ? 20 : 36)
+  shore.rotateX(-Math.PI / 2)
+  displace(shore, (x, z) => -3.12 + Math.sin(x * 0.5) * 0.08 + Math.max(0, z + 2) * 0.04)
+  const sandMat = addTerrain(beach, shore, 0x8a6a3a, 0xc9ae7a, 0xe8d4a0, 4.2)
   const sea = addWater(0x0a4a5c, 0x3aa8ae, 0.09, 0.92, 38, 22, mobile ? 70 : 120)
   sea.mesh.position.set(0, -2.8, -10)
   beach.add(sea.mesh)
