@@ -7,6 +7,14 @@ const disciplines = [
   ['05', 'Product', 'Engineering decisions grounded in user value, business context, and shipping.']
 ]
 
+const roles = [
+  ['</>', 'Engineer', '15+ years building modern web, mobile, and data-driven applications.'],
+  ['◎', 'Leader', 'Leading engineering teams, driving technical strategy, and creating ownership.'],
+  ['◇', 'Builder', 'Shipping products end-to-end and building systems that scale without needless complexity.'],
+  ['✧', 'Explorer', 'Always learning—AI, automation, new platforms, and the future of software.'],
+  ['>_', 'Thinker', 'Writing about engineering, leadership, architecture, and the ideas shaping our industry.']
+]
+
 const writing = [
   { title: 'AI-native software development', kicker: 'Field notes', text: 'What changes when agents become part of the engineering system instead of another autocomplete tool.' },
   { title: 'Architecture that preserves options', kicker: 'Engineering', text: 'How to make strong technical decisions without over-designing the future.' },
@@ -28,36 +36,53 @@ useSeoMeta({
     <section id="top" class="hero">
       <ClientOnly><WebGLHero /></ClientOnly>
       <div class="hero-vignette" />
+
       <div class="network-labels" aria-hidden="true">
-        <span class="network-label label-ai">AI + Automation</span>
-        <span class="network-label label-architecture">Architecture</span>
-        <span class="network-label label-engineering">Engineering</span>
-        <span class="network-label label-product">Product</span>
-        <span class="network-label label-leadership">Leadership</span>
+        <span class="network-label label-ai">AI & Automation <b>+</b></span>
+        <span class="network-label label-architecture">Architecture <b>+</b></span>
+        <span class="network-label label-engineering">Engineering <b>+</b></span>
+        <span class="network-label label-product">Product <b>+</b></span>
+        <span class="network-label label-leadership">Leadership <b>+</b></span>
+      </div>
+
+      <div class="explore-orbit" aria-hidden="true">
+        <span>Move cursor<br>to explore</span>
       </div>
 
       <header class="site-header shell">
-        <a class="brand" href="#top" aria-label="Nathan Shumate, back to top">NS</a>
+        <a class="brand-lockup" href="#top" aria-label="Nathan Shumate, back to top">
+          <span class="brand-mark">NS</span>
+          <span class="brand-copy"><strong>Nathan Shumate</strong><small>Software Engineer & Technical Leader</small></span>
+        </a>
         <nav aria-label="Primary navigation">
+          <a class="active" href="#top">Home</a>
           <a href="#work">Work</a>
           <a href="#writing">Writing</a>
+          <a href="#experiments">Experiments</a>
           <a href="#about">About</a>
+          <a class="contact-link" href="#contact">Contact <span>•</span></a>
         </nav>
       </header>
 
       <div class="hero-content shell">
-        <p class="eyebrow">Software engineer · Technical leader</p>
-        <h1>I build software <span>and the teams that build it.</span></h1>
-        <p class="hero-copy">I work at the intersection of engineering, architecture, product, and AI—building systems that ship and helping teams do their best work.</p>
+        <p class="eyebrow">Engineering · Leadership · AI</p>
+        <h1>I build software<br>and the teams<br>that <em>build it.</em></h1>
+        <p class="hero-copy">I help teams ship high-quality products, explore emerging technology, and create leverage through automation and AI.</p>
         <div class="hero-actions">
-          <a class="button button-primary" href="#work">Explore my work</a>
+          <a class="button button-primary" href="#work">Explore my work <span>→</span></a>
           <a class="button button-ghost" href="#writing">Read my writing</a>
         </div>
       </div>
 
-      <div class="signal-row shell" aria-hidden="true">
-        <span>Engineering</span><span>Architecture</span><span>AI</span><span>Leadership</span><span>Product</span>
+      <div class="role-strip shell">
+        <article v-for="role in roles" :key="role[1]" class="role-card">
+          <span class="role-icon">{{ role[0] }}</span>
+          <h3>{{ role[1] }}</h3>
+          <p>{{ role[2] }}</p>
+        </article>
       </div>
+
+      <div class="scroll-rail" aria-hidden="true"><span>Scroll</span><i /><i /><i /><i /><i /></div>
     </section>
 
     <section id="work" class="section shell">
@@ -69,8 +94,8 @@ useSeoMeta({
       </div>
     </section>
 
-    <section class="statement-band">
-      <div class="shell statement-grid"><p class="eyebrow">Current focus</p><p class="statement-copy">I’m particularly interested in how AI changes the shape of engineering organizations: the tools we use, the systems we build, and the expectations we place on teams.</p></div>
+    <section id="experiments" class="statement-band">
+      <div class="shell statement-grid"><p class="eyebrow">Experiments</p><p class="statement-copy">I’m particularly interested in how AI changes the shape of engineering organizations: the tools we use, the systems we build, and the expectations we place on teams.</p></div>
     </section>
 
     <section id="writing" class="section shell">
@@ -91,6 +116,6 @@ useSeoMeta({
       </div>
     </section>
 
-    <footer class="site-footer shell"><span>© {{ year }} Nathan Shumate</span><a href="#top">Back to top ↑</a></footer>
+    <footer id="contact" class="site-footer shell"><span>© {{ year }} Nathan Shumate</span><a href="#top">Back to top ↑</a></footer>
   </main>
 </template>
