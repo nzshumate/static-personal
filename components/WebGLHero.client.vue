@@ -8,31 +8,17 @@ let renderer: THREE.WebGLRenderer | null = null
 let resizeHandler: (() => void) | null = null
 let pointerHandler: ((event: PointerEvent) => void) | null = null
 
-let pointGeometry: THREE.BufferGeometry | null = null
-let coreGeometry: THREE.BufferGeometry | null = null
-let lineGeometry: THREE.BufferGeometry | null = null
-let pointMaterial: THREE.PointsMaterial | null = null
-let coreMaterial: THREE.PointsMaterial | null = null
-let lineMaterial: THREE.LineBasicMaterial | null = null
-let glowLineMaterial: THREE.LineBasicMaterial | null = null
-
-const seededRandom = (() => {
-  let seed = 128734
-  return () => {
-    seed = (seed * 16807) % 2147483647
-    return (seed - 1) / 2147483646
-  }
-})()
+const disposables: Array<THREE.BufferGeometry | THREE.Material> = []
 
 onMounted(() => {
   if (!canvas.value) return
 
   const mobile = window.innerWidth < 800
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(mobile ? 56 : 49, 1, 0.1, 100)
-  camera.position.set(0, 0, mobile ? 7.1 : 8)
+  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 48, 1, 0.1, 50)
+  camera.position.set(0, 0, mobile ? 8 : 9)
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvas.value,
@@ -42,130 +28,104 @@ onMounted(() => {
   })
   renderer.setClearColor(0x000000, 0)
   renderer.outputColorSpace = THREE.SRGBColorSpace
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.4 : 2))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.35 : 1.8))
 
   const group = new THREE.Group()
-  group.position.set(mobile ? 1.1 : 2.15, mobile ? 0.25 : 0.08, 0)
-  group.rotation.z = -0.06
+  group.position.set(mobile ? 1.1 : 2.65, mobile ? 0.2 : 0.05, 0)
+  group.rotation.z = -0.05
   scene.add(group)
 
-  const pointCount = mobile ? 105 : 190
-  const basePoints: THREE.Vector3[] = []
-  const pointPositions = new Float32Array(pointCount * 3)
-
-  for (let i = 0; i < pointCount; i++) {
-    const angle = seededRandom() * Math.PI * 2
-    const radius = 0.6 + Math.pow(seededRandom(), 0.72) * (mobile ? 3.25 : 4.35)
-    const point = new THREE.Vector3(
-      Math.cos(angle) * radius * 1.28,
-      Math.sin(angle) * radius * 0.72,
-      (seededRandom() - 0.5) * 2
-    )
-    basePoints.push(point)
-    pointPositions.set([point.x, point.y, point.z], i * 3)
-  }
-
-  const coreBase = [
-    new THREE.Vector3(-1.55, 0.85, 0.25),
-    new THREE.Vector3(0.05, 1.35, -0.15),
-    new THREE.Vector3(1.6, 0.32, 0.1),
-    new THREE.Vector3(0.7, -1.2, 0.35),
-    new THREE.Vector3(-1.2, -1.05, -0.1)
+  const baseNodes = [
+    new THREE.Vector3(-2.45, 1.15, 0.15),
+    new THREE.Vector3(-0.95, 1.7, -0.2),
+    new THREE.Vector3(0.75, 1.2, 0.3),
+    new THREE.Vector3(2.3, 0.25, -0.1),
+    new THREE.Vector3(1.35, -1.35, 0.35),
+    new THREE.Vector3(-0.45, -1.7, -0.15),
+    new THREE.Vector3(-2.2, -0.85, 0.2),
+    new THREE.Vector3(-3.25, 0.15, -0.3),
+    new THREE.Vector3(3.15, 1.15, 0.15),
+    new THREE.Vector3(3.15, -1.1, -0.2),
+    new THREE.Vector3(0.15, 2.55, 0.1),
+    new THREE.Vector3(0.2, -2.55, -0.25)
   ]
 
-  pointGeometry = new THREE.BufferGeometry()
-  pointGeometry.setAttribute('position', new THREE.BufferAttribute(pointPositions, 3))
-  pointMaterial = new THREE.PointsMaterial({
-    color: 0xa7f3ff,
-    size: mobile ? 0.08 : 0.072,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 1,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
+  const hubIndices = new Set([0, 2, 3, 4, 6])
+  const currentNodes = baseNodes.map(node => node.clone())
+
+  const edgePairs: Array<[number, number]> = [
+    [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0],
+    [0, 2], [0, 6], [2, 4], [4, 6], [1, 10], [2, 10], [5, 11], [4, 11],
+    [3, 8], [3, 9], [4, 9], [6, 7], [0, 7], [1, 5], [2, 5], [0, 4]
+  ]
+
+  const nodeGeometry = new THREE.SphereGeometry(1, mobile ? 10 : 14, mobile ? 8 : 10)
+  const edgeGeometry = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true)
+  const pulseGeometry = new THREE.SphereGeometry(1, 10, 8)
+  disposables.push(nodeGeometry, edgeGeometry, pulseGeometry)
+
+  const hubMaterial = new THREE.MeshBasicMaterial({ color: 0xd9fbff, transparent: true, opacity: 0.98 })
+  const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x74e8ff, transparent: true, opacity: 0.86 })
+  const edgeMaterial = new THREE.MeshBasicMaterial({ color: 0x2f9cff, transparent: true, opacity: mobile ? 0.58 : 0.66 })
+  const glowMaterial = new THREE.MeshBasicMaterial({ color: 0x1557ff, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false })
+  const pulseMaterial = new THREE.MeshBasicMaterial({ color: 0xbdf7ff, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false })
+  disposables.push(hubMaterial, nodeMaterial, edgeMaterial, glowMaterial, pulseMaterial)
+
+  const nodeMeshes = baseNodes.map((node, index) => {
+    const mesh = new THREE.Mesh(nodeGeometry, hubIndices.has(index) ? hubMaterial : nodeMaterial)
+    mesh.position.copy(node)
+    const baseScale = hubIndices.has(index) ? (mobile ? 0.13 : 0.16) : (mobile ? 0.065 : 0.075)
+    mesh.scale.setScalar(baseScale)
+    mesh.userData.baseScale = baseScale
+    mesh.userData.index = index
+    group.add(mesh)
+    return mesh
   })
-  const points = new THREE.Points(pointGeometry, pointMaterial)
-  group.add(points)
 
-  coreGeometry = new THREE.BufferGeometry().setFromPoints(coreBase)
-  coreMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
-    size: mobile ? 0.25 : 0.22,
-    sizeAttenuation: true,
-    transparent: true,
-    opacity: 1,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  })
-  const cores = new THREE.Points(coreGeometry, coreMaterial)
-  group.add(cores)
+  const edgeMeshes: THREE.Mesh[] = []
+  const glowMeshes: THREE.Mesh[] = []
+  const yAxis = new THREE.Vector3(0, 1, 0)
 
-  type Connection = [number, number]
-  const connections: Connection[] = []
-  const allBase = [...basePoints, ...coreBase]
-  const coreOffset = pointCount
-
-  for (let i = 0; i < pointCount; i++) {
-    for (let j = i + 1; j < pointCount; j++) {
-      const distance = basePoints[i].distanceTo(basePoints[j])
-      if (distance < (mobile ? 1.02 : 1.14) && seededRandom() > 0.76) connections.push([i, j])
-    }
+  const updateEdgeMesh = (mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3, radius: number) => {
+    const direction = new THREE.Vector3().subVectors(b, a)
+    const length = direction.length()
+    const midpoint = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5)
+    mesh.position.copy(midpoint)
+    mesh.quaternion.setFromUnitVectors(yAxis, direction.normalize())
+    mesh.scale.set(radius, length, radius)
   }
 
-  coreBase.forEach((core, coreIndex) => {
-    basePoints
-      .map((point, index) => ({ index, distance: point.distanceTo(core) }))
-      .filter(item => item.distance < 2.5)
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, mobile ? 9 : 16)
-      .forEach(item => connections.push([coreOffset + coreIndex, item.index]))
+  edgePairs.forEach(([aIndex, bIndex]) => {
+    const edge = new THREE.Mesh(edgeGeometry, edgeMaterial)
+    updateEdgeMesh(edge, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.012 : 0.016)
+    group.add(edge)
+    edgeMeshes.push(edge)
+
+    const glow = new THREE.Mesh(edgeGeometry, glowMaterial)
+    updateEdgeMesh(glow, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.034 : 0.045)
+    group.add(glow)
+    glowMeshes.push(glow)
   })
 
-  for (let i = 0; i < coreBase.length; i++) {
-    connections.push([coreOffset + i, coreOffset + ((i + 1) % coreBase.length)])
-    connections.push([coreOffset + i, coreOffset + ((i + 2) % coreBase.length)])
-  }
-
-  const linePositions = new Float32Array(connections.length * 6)
-  lineGeometry = new THREE.BufferGeometry()
-  lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
-
-  glowLineMaterial = new THREE.LineBasicMaterial({
-    color: 0x0b5cff,
-    transparent: true,
-    opacity: mobile ? 0.42 : 0.36,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
+  const pulseMeshes = edgePairs.slice(0, mobile ? 7 : 12).map((_, index) => {
+    const mesh = new THREE.Mesh(pulseGeometry, pulseMaterial)
+    mesh.scale.setScalar(mobile ? 0.045 : 0.055)
+    mesh.userData.phase = index / (mobile ? 7 : 12)
+    group.add(mesh)
+    return mesh
   })
-  const glowLines = new THREE.LineSegments(lineGeometry, glowLineMaterial)
-  glowLines.scale.setScalar(1.01)
-  group.add(glowLines)
-
-  lineMaterial = new THREE.LineBasicMaterial({
-    color: 0x7eeaff,
-    transparent: true,
-    opacity: mobile ? 0.8 : 0.74,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  })
-  const lines = new THREE.LineSegments(lineGeometry, lineMaterial)
-  group.add(lines)
 
   const pointer = new THREE.Vector2(2, 2)
-  const targetRotation = new THREE.Vector2()
   const raycaster = new THREE.Raycaster()
-  const interactionPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
-  const pointerWorld = new THREE.Vector3(999, 999, 0)
-  const pointerLocal = new THREE.Vector3(999, 999, 0)
-  let pointerActive = false
-  let hoverStrength = 0
+  let hoveredNode: THREE.Mesh | null = null
+  let pointerX = 0
+  let pointerY = 0
 
   pointerHandler = (event: PointerEvent) => {
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1
-    targetRotation.y = pointer.x * (mobile ? 0.08 : 0.18)
-    targetRotation.x = pointer.y * (mobile ? 0.04 : 0.09)
-    pointerActive = true
+    pointerX = pointer.x
+    pointerY = pointer.y
   }
   window.addEventListener('pointermove', pointerHandler, { passive: true })
 
@@ -179,96 +139,57 @@ onMounted(() => {
   window.addEventListener('resize', resizeHandler)
   resizeHandler()
 
-  const pointAttr = pointGeometry.getAttribute('position') as THREE.BufferAttribute
-  const coreAttr = coreGeometry.getAttribute('position') as THREE.BufferAttribute
-  const lineAttr = lineGeometry.getAttribute('position') as THREE.BufferAttribute
-  const currentNodes = allBase.map(point => point.clone())
   const clock = new THREE.Clock()
 
   const render = () => {
     const t = clock.getElapsedTime()
 
-    if (pointerActive) {
+    if (!mobile) {
       raycaster.setFromCamera(pointer, camera)
-      if (raycaster.ray.intersectPlane(interactionPlane, pointerWorld)) {
-        pointerLocal.copy(pointerWorld)
-        group.worldToLocal(pointerLocal)
-      }
+      const intersections = raycaster.intersectObjects(nodeMeshes, false)
+      hoveredNode = (intersections[0]?.object as THREE.Mesh | undefined) ?? null
     }
 
-    let nearestCoreDistance = Infinity
+    currentNodes.forEach((node, index) => {
+      const base = baseNodes[index]
+      const phase = index * 0.73
+      const amplitude = reducedMotion ? 0 : hubIndices.has(index) ? 0.09 : 0.14
+      node.set(
+        base.x + Math.sin(t * 0.48 + phase) * amplitude,
+        base.y + Math.cos(t * 0.42 + phase * 1.1) * amplitude * 0.8,
+        base.z + Math.sin(t * 0.36 + phase * 1.4) * amplitude * 0.55
+      )
 
-    for (let i = 0; i < pointCount; i++) {
-      const base = basePoints[i]
-      const phase = i * 0.37
-      const waveX = prefersReducedMotion ? 0 : Math.sin(t * 0.42 + phase) * 0.045
-      const waveY = prefersReducedMotion ? 0 : Math.cos(t * 0.5 + phase * 0.7) * 0.065
-      const waveZ = prefersReducedMotion ? 0 : Math.sin(t * 0.32 + phase * 1.3) * 0.09
-
-      let pushX = 0
-      let pushY = 0
-      let pushZ = 0
-      if (pointerActive && !mobile) {
-        const dx = base.x - pointerLocal.x
-        const dy = base.y - pointerLocal.y
-        const distance = Math.sqrt(dx * dx + dy * dy)
-        if (distance < 1.6) {
-          const influence = (1 - distance / 1.6) ** 2
-          const inv = distance > 0.001 ? 1 / distance : 0
-          pushX = dx * inv * influence * 0.34
-          pushY = dy * inv * influence * 0.34
-          pushZ = influence * 0.45
-        }
-      }
-
-      const x = base.x + waveX + pushX
-      const y = base.y + waveY + pushY
-      const z = base.z + waveZ + pushZ
-      pointAttr.setXYZ(i, x, y, z)
-      currentNodes[i].set(x, y, z)
-    }
-    pointAttr.needsUpdate = true
-
-    for (let i = 0; i < coreBase.length; i++) {
-      const base = coreBase[i]
-      const pulse = prefersReducedMotion ? 0 : Math.sin(t * 0.8 + i * 1.2) * 0.06
-      const x = base.x + Math.cos(t * 0.24 + i) * 0.035
-      const y = base.y + pulse
-      const z = base.z + Math.sin(t * 0.28 + i * 0.8) * 0.05
-      coreAttr.setXYZ(i, x, y, z)
-      currentNodes[coreOffset + i].set(x, y, z)
-      if (pointerActive && !mobile) {
-        nearestCoreDistance = Math.min(nearestCoreDistance, Math.hypot(x - pointerLocal.x, y - pointerLocal.y))
-      }
-    }
-    coreAttr.needsUpdate = true
-
-    connections.forEach(([aIndex, bIndex], index) => {
-      const a = currentNodes[aIndex]
-      const b = currentNodes[bIndex]
-      const offset = index * 2
-      lineAttr.setXYZ(offset, a.x, a.y, a.z)
-      lineAttr.setXYZ(offset + 1, b.x, b.y, b.z)
+      const mesh = nodeMeshes[index]
+      mesh.position.copy(node)
+      const baseScale = mesh.userData.baseScale as number
+      const isHovered = hoveredNode === mesh
+      const pulse = hubIndices.has(index) && !reducedMotion ? 1 + Math.sin(t * 1.8 + phase) * 0.1 : 1
+      mesh.scale.setScalar(baseScale * pulse * (isHovered ? 1.85 : 1))
     })
-    lineAttr.needsUpdate = true
 
-    const hovered = nearestCoreDistance < 1.05
-    const targetHover = hovered ? 1 : 0
-    hoverStrength += (targetHover - hoverStrength) * 0.12
+    edgePairs.forEach(([aIndex, bIndex], index) => {
+      updateEdgeMesh(edgeMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.012 : 0.016)
+      updateEdgeMesh(glowMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.034 : 0.045)
+    })
 
-    if (!prefersReducedMotion) {
-      const idleY = Math.sin(t * 0.2) * 0.05
-      const idleX = Math.cos(t * 0.17) * 0.024
-      group.rotation.y += (targetRotation.y + idleY - group.rotation.y) * 0.026
-      group.rotation.x += (targetRotation.x + idleX - group.rotation.x) * 0.026
-      group.rotation.z = -0.06 + Math.sin(t * 0.18) * 0.02
-      group.position.y = (mobile ? 0.25 : 0.08) + Math.sin(t * 0.31) * 0.07
+    pulseMeshes.forEach((mesh, index) => {
+      const [aIndex, bIndex] = edgePairs[index]
+      const progress = reducedMotion ? mesh.userData.phase : (t * 0.16 + mesh.userData.phase) % 1
+      mesh.position.lerpVectors(currentNodes[aIndex], currentNodes[bIndex], progress)
+      const scale = (mobile ? 0.045 : 0.055) * (1 + Math.sin((progress + t) * Math.PI * 2) * 0.22)
+      mesh.scale.setScalar(scale)
+    })
+
+    const hoverBoost = hoveredNode ? 1 : 0
+    edgeMaterial.opacity = (mobile ? 0.58 : 0.66) + hoverBoost * 0.22
+    glowMaterial.opacity = 0.18 + hoverBoost * 0.16
+
+    if (!reducedMotion) {
+      group.rotation.y += ((mobile ? 0 : pointerX * 0.11) + Math.sin(t * 0.16) * 0.035 - group.rotation.y) * 0.035
+      group.rotation.x += ((mobile ? 0 : pointerY * 0.055) + Math.cos(t * 0.14) * 0.018 - group.rotation.x) * 0.035
+      group.position.y = (mobile ? 0.2 : 0.05) + Math.sin(t * 0.28) * 0.08
     }
-
-    if (coreMaterial) coreMaterial.size = (mobile ? 0.25 : 0.22) + hoverStrength * 0.12 + Math.sin(t * 1.6) * 0.018
-    if (pointMaterial) pointMaterial.size = (mobile ? 0.08 : 0.072) + hoverStrength * 0.014
-    if (lineMaterial) lineMaterial.opacity = (mobile ? 0.8 : 0.74) + hoverStrength * 0.18 + Math.sin(t * 0.8) * 0.05
-    if (glowLineMaterial) glowLineMaterial.opacity = (mobile ? 0.42 : 0.36) + hoverStrength * 0.22
 
     renderer?.render(scene, camera)
     frame = requestAnimationFrame(render)
@@ -281,13 +202,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(frame)
   if (pointerHandler) window.removeEventListener('pointermove', pointerHandler)
   if (resizeHandler) window.removeEventListener('resize', resizeHandler)
-  pointGeometry?.dispose()
-  coreGeometry?.dispose()
-  lineGeometry?.dispose()
-  pointMaterial?.dispose()
-  coreMaterial?.dispose()
-  lineMaterial?.dispose()
-  glowLineMaterial?.dispose()
+  disposables.forEach(item => item.dispose())
   renderer?.dispose()
 })
 </script>
