@@ -1,109 +1,127 @@
 <script setup lang="ts">
-const disciplines = [
-  ['01', 'Engineering', 'Modern frontend systems, product engineering, and maintainable software.'],
-  ['02', 'Architecture', 'Technical direction that keeps teams fast without painting them into corners.'],
-  ['03', 'AI & Automation', 'Practical agentic workflows and AI-assisted engineering that reduce friction.'],
-  ['04', 'Leadership', 'Clear standards, strong ownership, and environments where engineers can do their best work.'],
-  ['05', 'Product', 'Engineering decisions grounded in user value, business context, and shipping.']
+const capabilities = [
+  { n: '01', title: 'Engineering', copy: 'Modern product engineering across web, mobile, testing, design systems, and developer experience.' },
+  { n: '02', title: 'Architecture', copy: 'Technical direction that keeps systems understandable, adaptable, and fast enough to keep shipping.' },
+  { n: '03', title: 'AI & Automation', copy: 'Agentic workflows and practical automation that compound the leverage of an engineering team.' },
+  { n: '04', title: 'Leadership', copy: 'Clear standards, strong ownership, and teams that can make good decisions without waiting for permission.' }
 ]
 
-const networkTopics = [
-  { key: 'ai', title: 'AI & Automation', text: 'Agentic workflows, practical automation, and tools that compound engineering leverage.' },
-  { key: 'architecture', title: 'Architecture', text: 'Systems that preserve options, stay understandable, and scale with the team.' },
-  { key: 'engineering', title: 'Engineering', text: 'Modern product engineering across web, mobile, testing, and developer experience.' },
-  { key: 'product', title: 'Product', text: 'Technical decisions grounded in real users, business context, and shipping.' },
-  { key: 'leadership', title: 'Leadership', text: 'Clear direction, strong ownership, and teams that can make good decisions independently.' }
-]
-
-const roles = [
-  ['</>', 'Engineer', '15+ years building modern web, mobile, and data-driven applications.'],
-  ['◎', 'Leader', 'Leading engineering teams, driving technical strategy, and creating ownership.'],
-  ['◇', 'Builder', 'Shipping products end-to-end and building systems that scale without needless complexity.'],
-  ['✧', 'Explorer', 'Always learning—AI, automation, new platforms, and the future of software.'],
-  ['>_', 'Thinker', 'Writing about engineering, leadership, architecture, and the ideas shaping our industry.']
-]
-
-const writing = [
-  { title: 'AI-native software development', kicker: 'Field notes', text: 'What changes when agents become part of the engineering system instead of another autocomplete tool.' },
-  { title: 'Architecture that preserves options', kicker: 'Engineering', text: 'How to make strong technical decisions without over-designing the future.' },
-  { title: 'The lead is a force multiplier', kicker: 'Leadership', text: 'Why technical leadership is less about owning every answer and more about making the team better.' }
+const notes = [
+  ['AI-native engineering', 'What changes when agents become part of the engineering system instead of another autocomplete tool.'],
+  ['Architecture that preserves options', 'How to make strong technical decisions without over-designing the future.'],
+  ['The lead is a force multiplier', 'Why technical leadership is less about owning every answer and more about making the team better.']
 ]
 
 const year = new Date().getFullYear()
-const setNetworkFocus = (index: number) => {
-  if (import.meta.client) window.dispatchEvent(new CustomEvent('network-focus', { detail: index }))
-}
 
 useSeoMeta({
   title: 'Nathan Shumate — Software Engineer & Technical Leader',
+  description: 'Software engineering, technical leadership, architecture, AI, automation, and experiments by Nathan Shumate.',
   ogTitle: 'Nathan Shumate — Software Engineer & Technical Leader',
-  description: 'Building software, systems, and teams. Writing about engineering, architecture, AI, and technical leadership.',
-  ogDescription: 'Building software, systems, and teams.'
+  ogDescription: 'I build software and the teams that build it.'
 })
 </script>
 
 <template>
-  <main>
-    <section id="top" class="hero">
-      <ClientOnly><WebGLHero /></ClientOnly>
-      <div class="hero-vignette" />
+  <main class="space-site">
+    <ClientOnly><WebGLHero /></ClientOnly>
+    <div class="grain" aria-hidden="true" />
+    <div class="edge-fade" aria-hidden="true" />
 
-      <div class="network-labels">
-        <button
-          v-for="(topic, index) in networkTopics"
-          :key="topic.key"
-          class="network-label"
-          :class="`label-${topic.key}`"
-          type="button"
-          @mouseenter="setNetworkFocus(index)"
-          @mouseleave="setNetworkFocus(-1)"
-          @focus="setNetworkFocus(index)"
-          @blur="setNetworkFocus(-1)"
-        >
-          <span class="network-label-heading">{{ topic.title }} <b>+</b></span>
-          <span class="network-label-detail">{{ topic.text }}</span>
-        </button>
-      </div>
+    <header class="floating-nav">
+      <a class="identity" href="#top" aria-label="Nathan Shumate, back to top">
+        <span class="identity-mark">NS</span>
+        <span class="identity-copy"><strong>Nathan Shumate</strong><small>Engineer · Technical Leader</small></span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#work">Work</a>
+        <a href="#thinking">Thinking</a>
+        <a href="#about">About</a>
+        <a class="nav-contact" href="#contact">Contact ↗</a>
+      </nav>
+    </header>
 
-      <div class="explore-orbit" aria-hidden="true"><span>Move cursor<br>to explore</span></div>
-
-      <header class="site-header shell">
-        <a class="brand-lockup" href="#top" aria-label="Nathan Shumate, back to top">
-          <span class="brand-mark">NS</span>
-          <span class="brand-copy"><strong>Nathan Shumate</strong><small>Software Engineer & Technical Leader</small></span>
-        </a>
-        <nav aria-label="Primary navigation">
-          <a class="active" href="#top">Home</a><a href="#work">Work</a><a href="#writing">Writing</a><a href="#experiments">Experiments</a><a href="#about">About</a><a class="contact-link" href="#contact">Contact <span>•</span></a>
-        </nav>
-      </header>
-
-      <div class="hero-content shell">
-        <p class="eyebrow">Engineering · Leadership · AI</p>
+    <section id="top" class="scene scene-hero">
+      <div class="hero-index">01 / 05</div>
+      <div class="hero-lockup">
+        <p class="scene-kicker">Engineering · Leadership · AI</p>
         <h1>I build software<br>and the teams<br>that <em>build it.</em></h1>
-        <p class="hero-copy">I help teams ship high-quality products, explore emerging technology, and create leverage through automation and AI.</p>
-        <div class="hero-actions"><a class="button button-primary" href="#work">Explore my work <span>→</span></a><a class="button button-ghost" href="#writing">Read my writing</a></div>
+        <p class="hero-intro">I help teams turn hard technical decisions into software that ships, scales, and stays understandable.</p>
       </div>
-
-      <div class="role-strip shell">
-        <article v-for="role in roles" :key="role[1]" class="role-card"><span class="role-icon">{{ role[0] }}</span><h3>{{ role[1] }}</h3><p>{{ role[2] }}</p></article>
+      <div class="hero-aside">
+        <span class="signal-dot" />
+        <p>Software engineer and technical leader working across product engineering, architecture, AI, and automation.</p>
       </div>
-      <div class="scroll-rail" aria-hidden="true"><span>Scroll</span><i /><i /><i /><i /><i /></div>
+      <a class="scroll-cue" href="#work"><span>Scroll to enter</span><i>↓</i></a>
     </section>
 
-    <section id="work" class="section shell">
-      <div class="section-heading"><p class="eyebrow">What I do</p><h2>Technical depth.<br>Product awareness.<br>Clear direction.</h2></div>
-      <div class="discipline-grid"><article v-for="item in disciplines" :key="item[1]" class="discipline-card"><span class="index">{{ item[0] }}</span><h3>{{ item[1] }}</h3><p>{{ item[2] }}</p></article></div>
+    <section id="work" class="scene scene-statement">
+      <div class="chapter-index">02 / 05</div>
+      <div class="statement-wrap">
+        <p class="scene-kicker">The work</p>
+        <h2>The hard part is rarely<br><em>just the code.</em></h2>
+        <p class="statement-copy">The real work is choosing what matters, making the architecture legible, creating enough structure for a team to move quickly, and knowing when complexity has actually earned its place.</p>
+      </div>
+      <div class="chapter-note">Move through the field</div>
     </section>
 
-    <section id="experiments" class="statement-band"><div class="shell statement-grid"><p class="eyebrow">Experiments</p><p class="statement-copy">I’m particularly interested in how AI changes the shape of engineering organizations: the tools we use, the systems we build, and the expectations we place on teams.</p></div></section>
-
-    <section id="writing" class="section shell">
-      <div class="section-heading split-heading"><div><p class="eyebrow">Writing</p><h2>Ideas I’m working through.</h2></div><p>Notes on software engineering, architecture, AI, product development, and technical leadership.</p></div>
-      <div class="writing-grid"><article v-for="post in writing" :key="post.title" class="writing-card"><p class="card-kicker">{{ post.kicker }}</p><h3>{{ post.title }}</h3><p>{{ post.text }}</p><span class="read-more">Coming soon ↗</span></article></div>
+    <section class="scene scene-capabilities">
+      <div class="capability-heading">
+        <p class="scene-kicker">How I work</p>
+        <p>Technical depth without losing sight of the product.</p>
+      </div>
+      <div class="capability-list">
+        <article v-for="item in capabilities" :key="item.title" class="capability-row">
+          <span>{{ item.n }}</span>
+          <h3>{{ item.title }}</h3>
+          <p>{{ item.copy }}</p>
+          <b>↗</b>
+        </article>
+      </div>
     </section>
 
-    <section id="about" class="section shell about-grid"><div><p class="eyebrow">About</p><h2>I like hard problems, small teams, and software that earns its complexity.</h2></div><div class="about-copy"><p>I’m a software engineer and technical leader focused on modern product development. My work spans frontend architecture, engineering systems, mobile, AI-assisted development, and technical direction.</p><p>This site is where I share the work, experiments, and ideas that don’t fit into a job title.</p><div class="social-links"><a href="https://github.com/nzshumate" target="_blank" rel="noreferrer">GitHub ↗</a></div></div></section>
+    <section id="thinking" class="scene scene-thinking">
+      <div class="chapter-index">03 / 05</div>
+      <div class="thinking-panel">
+        <p class="scene-kicker">Current orbit</p>
+        <h2>AI changes the shape<br>of engineering teams.</h2>
+        <p>I’m interested in what happens after the novelty: how agents change workflows, ownership, testing, architecture, and the amount of leverage a small team can create.</p>
+        <div class="thinking-tags"><span>Agents</span><span>Automation</span><span>Architecture</span><span>Developer Experience</span></div>
+      </div>
+    </section>
 
-    <footer id="contact" class="site-footer shell"><span>© {{ year }} Nathan Shumate</span><a href="#top">Back to top ↑</a></footer>
+    <section class="scene scene-notes">
+      <div class="notes-heading">
+        <p class="scene-kicker">Notes from the work</p>
+        <h2>Ideas I’m<br>working through.</h2>
+      </div>
+      <div class="notes-list">
+        <article v-for="(note, index) in notes" :key="note[0]" class="note-row">
+          <span>0{{ index + 1 }}</span>
+          <div><h3>{{ note[0] }}</h3><p>{{ note[1] }}</p></div>
+          <em>Coming soon</em>
+        </article>
+      </div>
+    </section>
+
+    <section id="about" class="scene scene-about">
+      <div class="chapter-index">04 / 05</div>
+      <div class="about-title"><p class="scene-kicker">About</p><h2>Build things.<br>Make teams better.<br>Keep learning.</h2></div>
+      <div class="about-copy">
+        <p>I’m a software engineer and technical leader focused on modern product development. My work spans frontend architecture, mobile, engineering systems, AI-assisted development, and technical direction.</p>
+        <p>This site is where I share the work, experiments, and ideas that don’t fit neatly into a job title.</p>
+        <a href="https://github.com/nzshumate" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </div>
+    </section>
+
+    <section id="contact" class="scene scene-contact">
+      <div class="chapter-index">05 / 05</div>
+      <div class="contact-lockup">
+        <p class="scene-kicker">Contact</p>
+        <h2>Put a hard problem<br>in front of me.</h2>
+        <a href="https://github.com/nzshumate" target="_blank" rel="noreferrer">Start a conversation <span>↗</span></a>
+      </div>
+      <footer><span>© {{ year }} Nathan Shumate</span><a href="#top">Return to orbit ↑</a></footer>
+    </section>
   </main>
 </template>
