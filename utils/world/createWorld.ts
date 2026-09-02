@@ -3,14 +3,29 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
-import { createEffects } from './effects'
-import { createEnvironments } from './environments'
-import { smoothstep } from './math'
-import { createOcean } from './ocean'
+import { createBiomes, Z_STEP } from './biomes'
+import { lerp, smoothstep } from './math'
 import { createSpace } from './space'
 
 export type WorldHandle = {
   dispose: () => void
+}
+
+const backgrounds = [
+  new THREE.Color(0x02040a),
+  new THREE.Color(0x16324c),
+  new THREE.Color(0x6f8294),
+  new THREE.Color(0x0c1812),
+  new THREE.Color(0x2a1c12),
+  new THREE.Color(0x0c1816),
+  new THREE.Color(0x163844),
+  new THREE.Color(0x021018)
+]
+
+const mixColor = (value: number) => {
+  const scaled = value * (backgrounds.length - 1)
+  const index = Math.min(backgrounds.length - 2, Math.floor(scaled))
+  return backgrounds[index].clone().lerp(backgrounds[index + 1], scaled - index)
 }
 
 export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandle> => {
@@ -18,10 +33,10 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
   const scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x02040a)
-  scene.fog = null
+  scene.background = backgrounds[0].clone()
+  scene.fog = new THREE.FogExp2(0x02040a, 0.014)
 
-  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 46, 1, 0.1, 160)
+  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 46, 1, 0.1, 180)
   camera.position.set(0, 0.35, 11)
 
   const renderer = new THREE.WebGLRenderer({
@@ -32,34 +47,32 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
   })
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 0.96
+  renderer.toneMappingExposure = 0.98
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.1 : 1.45))
   renderer.setClearColor(0x02040a, 1)
 
   const composer = new EffectComposer(renderer)
   composer.addPass(new RenderPass(scene, camera))
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), mobile ? 0.1 : 0.16, 0.55, 0.28)
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), mobile ? 0.12 : 0.2, 0.58, 0.24)
   composer.addPass(bloom)
   composer.addPass(new OutputPass())
 
+  const journey = new THREE.Group()
   const space = createSpace(renderer, mobile)
-  const environments = createEnvironments(renderer)
-  const effects = createEffects(renderer, mobile)
-  const ocean = createOcean(mobile)
-  scene.add(space.group, environments.group, effects.group, ocean.group)
+  const biomes = createBiomes(renderer, mobile)
+  journey.add(space.group, ...biomes.groups)
+  scene.add(journey)
 
-  const hemi = new THREE.HemisphereLight(0xb9d0ea, 0x141814, 0.55)
-  scene.add(hemi)
-
-  await environments.preload()
+  const hemi = new THREE.HemisphereLight(0xb9d0ea, 0x141814, 0.45)
+  const key = new THREE.DirectionalLight(0xffe6c4, 1.8)
+  key.position.set(-7, 9, 6)
+  scene.add(hemi, key)
 
   let frame = 0
   let target = 0
   let progress = 0
   let pointerX = 0
   let pointerY = 0
-  const pointer = new THREE.Vector2()
-  const size = new THREE.Vector2()
   const clock = new THREE.Clock()
 
   const onScroll = () => {
@@ -77,7 +90,6 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
     camera.updateProjectionMatrix()
     renderer.setSize(width, height, false)
     composer.setSize(width, height)
-    size.set(width, height)
   }
 
   window.addEventListener('scroll', onScroll, { passive: true })
@@ -89,31 +101,37 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
   const render = () => {
     const time = clock.getElapsedTime()
     const delta = target - progress
-    progress += reduced || Math.abs(delta) > 0.22 ? delta : delta * 0.08
-    pointer.x += (pointerX - pointer.x) * 0.04
-    pointer.y += (pointerY - pointer.y) * 0.04
+    progress += reduced || Math.abs(delta) > 0.22 ? delta : delta * 0.07
+    const px = reduced ? 0 : pointerX
+    const py = reduced ? 0 : pointerY
 
-    const spaceAmount = 1 - smoothstep(0.07, 0.16, progress)
-    const oceanAmount = smoothstep(0.84, 0.92, progress)
-    space.setOpacity(spaceAmount)
-    space.group.visible = spaceAmount > 0.02
+    const travel = progress * Z_STEP * 7
+    journey.position.z = travel
+    space.setOpacity(1 - smoothstep(0.05, 0.16, progress))
     space.update(time, progress, reduced)
-    environments.update(progress, pointer)
-    effects.update(time, progress, reduced, renderer.getPixelRatio())
-    ocean.update(time, progress, pointer, size, reduced)
+    biomes.update(time, progress, reduced)
 
-    hemi.intensity = 0.42 - oceanAmount * 0.2
-    renderer.toneMappingExposure = 0.92 - oceanAmount * 0.12
-    bloom.strength = spaceAmount * (mobile ? 0.1 : 0.16) + oceanAmount * (mobile ? 0.08 : 0.14)
+    const stations = [space.group, ...biomes.groups]
+    stations.forEach((group) => {
+      const worldZ = journey.position.z + group.position.z
+      group.visible = worldZ > -48 && worldZ < 22
+    })
 
-    const camX = (reduced ? 0 : pointer.x * 0.22)
-    const camY = 0.32 - progress * 1.05 - oceanAmount * 0.55 + (reduced ? 0 : pointer.y * 0.08)
-    const camZ = 11 - progress * 1.4
-    camera.position.x += (camX - camera.position.x) * 0.04
-    camera.position.y += (camY - camera.position.y) * 0.04
-    camera.position.z += (camZ - camera.position.z) * 0.04
-    camera.rotation.z += ((reduced ? 0 : pointer.x * 0.012) - camera.rotation.z) * 0.03
-    camera.rotation.x += ((-0.02 - progress * 0.04 - oceanAmount * 0.08) - camera.rotation.x) * 0.03
+    const bg = mixColor(progress)
+    scene.background = bg
+    ;(scene.fog as THREE.FogExp2).color.copy(bg)
+    ;(scene.fog as THREE.FogExp2).density = 0.012 + smoothstep(0.82, 1, progress) * 0.02
+    hemi.intensity = 0.48 - smoothstep(0.82, 1, progress) * 0.2
+    key.intensity = 1.9 - smoothstep(0.5, 0.72, progress) * 0.4 - smoothstep(0.82, 1, progress) * 0.8
+    key.color.set(progress < 0.5 ? 0xffe6c4 : progress < 0.72 ? 0xc8e0d4 : 0x7ec8d4)
+    renderer.toneMappingExposure = 0.98 - smoothstep(0.84, 1, progress) * 0.14
+    bloom.strength = lerp(mobile ? 0.18 : 0.26, mobile ? 0.08 : 0.12, smoothstep(0.08, 0.22, progress))
+    bloom.strength = lerp(bloom.strength, mobile ? 0.12 : 0.18, smoothstep(0.84, 1, progress))
+
+    camera.position.x += (px * 0.24 - camera.position.x) * 0.04
+    camera.position.y += (0.28 - progress * 0.9 - smoothstep(0.84, 1, progress) * 0.5 + py * 0.08 - camera.position.y) * 0.04
+    camera.rotation.z += (px * 0.012 - camera.rotation.z) * 0.03
+    camera.rotation.x += ((-0.02 - progress * 0.035) - camera.rotation.x) * 0.03
 
     composer.render()
     frame = requestAnimationFrame(render)
