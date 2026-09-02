@@ -22,6 +22,7 @@ useSeoMeta({
 <template>
   <main class="space-site journey-site">
     <ClientOnly><WorldJourney /></ClientOnly>
+    <ClientOnly><PhotorealBackplates /></ClientOnly>
     <div class="grain" aria-hidden="true" />
     <div class="edge-fade journey-fade" aria-hidden="true" />
 
