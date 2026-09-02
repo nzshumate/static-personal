@@ -3,7 +3,7 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   ssr: true,
   modules: ['@nuxtjs/google-fonts'],
-  css: ['~/assets/css/main.css', '~/assets/css/space-details.css', '~/assets/css/journey.css', '~/assets/css/backplates.css'],
+  css: ['~/assets/css/main.css', '~/assets/css/journey.css'],
   googleFonts: {
     families: { Inter: [400, 500, 600, 700, 800], 'Space+Grotesk': [500, 600, 700] },
     display: 'swap', prefetch: true, preconnect: true
