@@ -1,0 +1,19 @@
+export default defineNuxtConfig({
+  compatibilityDate: '2025-07-15',
+  devtools: { enabled: false },
+  ssr: true,
+  modules: ['@nuxtjs/google-fonts'],
+  css: ['~/assets/css/main.css'],
+  googleFonts: {
+    families: { Inter: [400, 500, 600, 700, 800], 'Space+Grotesk': [500, 600, 700] },
+    display: 'swap', prefetch: true, preconnect: true
+  },
+  app: { head: { htmlAttrs: { lang: 'en' }, title: 'Nathan Shumate — Software Engineer & Technical Leader', meta: [
+    { name: 'description', content: 'Software engineering, technical leadership, AI, architecture, and experiments by Nathan Shumate.' },
+    { name: 'theme-color', content: '#050913' },
+    { property: 'og:title', content: 'Nathan Shumate — Software Engineer & Technical Leader' },
+    { property: 'og:description', content: 'Building software, systems, and teams.' },
+    { property: 'og:type', content: 'website' }
+  ] } },
+  nitro: { preset: 'static' }
+})
