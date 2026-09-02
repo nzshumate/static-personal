@@ -1,35 +1,151 @@
 <script setup lang="ts">
 import * as THREE from 'three'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 
 let frame = 0
 let renderer: THREE.WebGLRenderer | null = null
+let composer: EffectComposer | null = null
 let resizeHandler: (() => void) | null = null
 let pointerHandler: ((event: PointerEvent) => void) | null = null
 let focusHandler: ((event: Event) => void) | null = null
+
 const disposables: Array<THREE.BufferGeometry | THREE.Material> = []
 
 const vertexShader = `
-uniform float uSize;
+uniform float uTime;
 uniform float uPixelRatio;
-attribute float aScale;
+uniform float uFocus;
+uniform float uMotion;
+uniform vec2 uMouse;
+uniform float uPointScale;
+attribute float aSeed;
+attribute float aSize;
+attribute float aTone;
+varying float vTone;
+varying float vPulse;
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+vec3 flow(vec3 p,float seed){
+  float t=uTime*uMotion;
+  float s=seed*6.2831853;
+  float radial=length(p.xy);
+  float drift=t*(.18+.08*sin(s*1.7));
+  float twist=sin(drift+s+p.z*.75)*(.09+uFocus*.11);
+  p.xy=rot(twist)*p.xy;
+  p.x+=sin(drift*1.15+s+p.y*1.7+p.z*.6)*(.12+uFocus*.08);
+  p.y+=cos(drift*.93+s*1.31+p.x*1.45)*(.11+uFocus*.075);
+  p.z+=sin(drift*.74+s*.83+radial*2.4)*(.18+uFocus*.13);
+  vec2 delta=uMouse-p.xy;
+  float d=max(length(delta),.001);
+  float influence=smoothstep(1.9,.0,d);
+  vec2 tangent=vec2(-delta.y,delta.x)/d;
+  p.xy+=tangent*influence*(.16+.28*uFocus);
+  p.xy+=delta*influence*.035;
+  p.z+=influence*(.16+.25*uFocus);
+  return p;
+}
 void main(){
-  vec4 mvPosition=modelViewMatrix*vec4(position,1.0);
-  gl_PointSize=uSize*aScale*uPixelRatio*(8.0/max(2.0,-mvPosition.z));
-  gl_Position=projectionMatrix*mvPosition;
+  vec3 p=flow(position,aSeed);
+  vec4 mv=modelViewMatrix*vec4(p,1.0);
+  float pulse=.78+.22*sin(uTime*(.9+aSeed*.35)+aSeed*12.0);
+  gl_PointSize=uPointScale*aSize*uPixelRatio*pulse*(12.0/max(2.0,-mv.z));
+  gl_Position=projectionMatrix*mv;
+  vTone=aTone;
+  vPulse=pulse;
 }`
 
 const fragmentShader = `
+uniform vec3 uColorA;
+uniform vec3 uColorB;
+uniform float uOpacity;
+varying float vTone;
+varying float vPulse;
+void main(){
+  vec2 p=gl_PointCoord-.5;
+  float d=length(p);
+  float core=1.0-smoothstep(.0,.075,d);
+  float inner=1.0-smoothstep(.04,.18,d);
+  float glow=1.0-smoothstep(.12,.5,d);
+  float alpha=(core*.88+inner*.36+glow*.19)*uOpacity*vPulse;
+  if(alpha<.006)discard;
+  vec3 color=mix(uColorA,uColorB,clamp(vTone+.22*core,0.0,1.0));
+  color+=core*.45;
+  gl_FragColor=vec4(color,alpha);
+}`
+
+const hazeVertexShader = `
+uniform float uTime;
+uniform float uMotion;
+uniform float uFocus;
+attribute float aSeed;
+attribute float aSize;
+varying float vAlpha;
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+void main(){
+  vec3 p=position;
+  float t=uTime*uMotion;
+  p.xy=rot(sin(t*.12+aSeed*7.0)*.16)*p.xy;
+  p.x+=sin(t*.14+aSeed*11.0+p.y)*.13;
+  p.y+=cos(t*.12+aSeed*9.0+p.x)*.12;
+  vec4 mv=modelViewMatrix*vec4(p,1.0);
+  gl_PointSize=aSize*(1.0+uFocus*.22)*(220.0/max(3.0,-mv.z));
+  gl_Position=projectionMatrix*mv;
+  vAlpha=.55+.45*sin(t*.35+aSeed*8.0);
+}`
+
+const hazeFragmentShader = `
 uniform vec3 uColor;
 uniform float uOpacity;
+varying float vAlpha;
 void main(){
-  vec2 p=gl_PointCoord-vec2(.5);
+  vec2 p=gl_PointCoord-.5;
   float d=length(p);
-  float core=1.0-smoothstep(.02,.12,d);
-  float halo=1.0-smoothstep(.08,.5,d);
-  float a=(core*.82+halo*.48)*uOpacity;
-  if(a<.01)discard;
+  float cloud=pow(max(0.0,1.0-d*2.0),2.6);
+  float ring=1.0-smoothstep(.18,.5,d);
+  float a=cloud*ring*uOpacity*vAlpha;
+  if(a<.003)discard;
   gl_FragColor=vec4(uColor,a);
 }`
+
+const lineVertexShader = `
+uniform float uTime;
+uniform float uFocus;
+uniform float uMotion;
+uniform vec2 uMouse;
+attribute float aSeed;
+varying float vAlpha;
+mat2 rot(float a){float c=cos(a),s=sin(a);return mat2(c,-s,s,c);}
+vec3 flow(vec3 p,float seed){
+  float t=uTime*uMotion;
+  float s=seed*6.2831853;
+  float radial=length(p.xy);
+  float drift=t*(.18+.08*sin(s*1.7));
+  float twist=sin(drift+s+p.z*.75)*(.09+uFocus*.11);
+  p.xy=rot(twist)*p.xy;
+  p.x+=sin(drift*1.15+s+p.y*1.7+p.z*.6)*(.12+uFocus*.08);
+  p.y+=cos(drift*.93+s*1.31+p.x*1.45)*(.11+uFocus*.075);
+  p.z+=sin(drift*.74+s*.83+radial*2.4)*(.18+uFocus*.13);
+  vec2 delta=uMouse-p.xy;
+  float d=max(length(delta),.001);
+  float influence=smoothstep(1.9,.0,d);
+  vec2 tangent=vec2(-delta.y,delta.x)/d;
+  p.xy+=tangent*influence*(.16+.28*uFocus);
+  p.xy+=delta*influence*.035;
+  p.z+=influence*(.16+.25*uFocus);
+  return p;
+}
+void main(){
+  vec3 p=flow(position,aSeed);
+  gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);
+  vAlpha=.55+.45*sin(uTime*.55+aSeed*9.0);
+}`
+
+const lineFragmentShader = `
+uniform vec3 uColor;
+uniform float uOpacity;
+varying float vAlpha;
+void main(){gl_FragColor=vec4(uColor,uOpacity*(.55+.45*vAlpha));}`
 
 onMounted(async () => {
   await nextTick()
@@ -39,64 +155,108 @@ onMounted(async () => {
   const mobile = window.innerWidth < 800
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 46, 1, 0.1, 80)
-  camera.position.z = mobile ? 9.2 : 10
+  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 45, 1, 0.1, 80)
+  camera.position.z = mobile ? 9.4 : 10.4
 
   renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' })
   renderer.setClearColor(0x000000, 0)
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.15 : 1.6))
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.15 : 1.5))
   renderer.outputColorSpace = THREE.SRGBColorSpace
 
+  if (!mobile) {
+    composer = new EffectComposer(renderer)
+    composer.addPass(new RenderPass(scene, camera))
+    const bloom = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), .72, .52, .16)
+    bloom.threshold = .06
+    bloom.strength = .78
+    bloom.radius = .58
+    composer.addPass(bloom)
+  }
+
   const field = new THREE.Group()
-  field.position.set(mobile ? 1.45 : 2.9, mobile ? 0.55 : 0.02, 0)
+  field.position.set(mobile ? 1.35 : 2.82, mobile ? .48 : .04, 0)
+  field.rotation.z = -.035
   scene.add(field)
 
-  let seed = 19349663
+  let seed = 83492791
   const random = () => {
     seed = (seed * 16807) % 2147483647
     return (seed - 1) / 2147483646
   }
 
   const centers = [
-    new THREE.Vector3(-1.55, 1.75, 0.15),
-    new THREE.Vector3(1.38, 1.95, -0.2),
-    new THREE.Vector3(2.35, 0.25, 0.1),
-    new THREE.Vector3(0.75, -1.7, 0.1),
-    new THREE.Vector3(-1.65, -1.35, -0.08)
+    new THREE.Vector3(-1.55, 1.72, .12),
+    new THREE.Vector3(1.18, 1.95, -.16),
+    new THREE.Vector3(2.15, .25, .1),
+    new THREE.Vector3(.72, -1.62, .08),
+    new THREE.Vector3(-1.68, -1.28, -.06)
   ]
-  const colors = [
-    new THREE.Color(0x426cff),
-    new THREE.Color(0xe1e9ff),
-    new THREE.Color(0x5d94ff),
-    new THREE.Color(0xffa472),
-    new THREE.Color(0x5575ff)
+
+  const palettes = [
+    [new THREE.Color(0x244cff), new THREE.Color(0x9fd4ff)],
+    [new THREE.Color(0xb9c8ff), new THREE.Color(0xffffff)],
+    [new THREE.Color(0x2764ff), new THREE.Color(0x91dcff)],
+    [new THREE.Color(0xff6f45), new THREE.Color(0xffd8b8)],
+    [new THREE.Color(0x3455ff), new THREE.Color(0xa7b8ff)]
   ]
-  const counts = mobile ? [58, 50, 55, 60, 56] : [165, 145, 160, 175, 155]
+  const counts = mobile ? [95, 75, 90, 95, 90] : [340, 280, 320, 355, 330]
   let focused = -1
   const focusValues = [0, 0, 0, 0, 0]
 
   type Cluster = {
-    base: Float32Array
-    phases: Float32Array
-    geometry: THREE.BufferGeometry
-    material: THREE.ShaderMaterial
-    lineGeometry: THREE.BufferGeometry
-    lineMaterial: THREE.LineBasicMaterial
-    connections: Array<[number, number]>
-    beacons: THREE.Points
-    beaconGeometry: THREE.BufferGeometry
-    beaconMaterial: THREE.ShaderMaterial
-    beaconIndices: number[]
+    group: THREE.Group
+    pointsMaterial: THREE.ShaderMaterial
+    hazeMaterial: THREE.ShaderMaterial
+    lineMaterial: THREE.ShaderMaterial
   }
   const clusters: Cluster[] = []
 
-  const pointMaterial = (color: THREE.Color, size: number, opacity: number) => {
-    const material = new THREE.ShaderMaterial({
+  centers.forEach((center, ci) => {
+    const cluster = new THREE.Group()
+    cluster.position.copy(center)
+    field.add(cluster)
+
+    const count = counts[ci]
+    const positions = new Float32Array(count * 3)
+    const seeds = new Float32Array(count)
+    const sizes = new Float32Array(count)
+    const tones = new Float32Array(count)
+
+    for (let i = 0; i < count; i++) {
+      const a = random() * Math.PI * 2
+      const radial = Math.pow(random(), .92) * (ci === 3 ? 1.62 : 1.45)
+      const spiral = a + radial * (ci % 2 ? 1.8 : -1.65)
+      const shell = .48 + random() * .62
+      const x = Math.cos(spiral) * radial * shell
+      const y = Math.sin(spiral) * radial * (.46 + random() * .42)
+      const z = (random() - .5) * 2.7 + Math.sin(a * 2.0) * .22
+      positions.set([x, y, z], i * 3)
+      seeds[i] = random()
+      sizes[i] = .34 + Math.pow(random(), 2.2) * 1.85
+      tones[i] = random()
+    }
+
+    const pointGeometry = new THREE.BufferGeometry()
+    pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    pointGeometry.setAttribute('aSeed', new THREE.BufferAttribute(seeds, 1))
+    pointGeometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+    pointGeometry.setAttribute('aTone', new THREE.BufferAttribute(tones, 1))
+
+    const sharedUniforms = {
+      uTime: { value: 0 },
+      uPixelRatio: { value: renderer.getPixelRatio() },
+      uFocus: { value: 0 },
+      uMotion: { value: reducedMotion ? 0 : 1 },
+      uMouse: { value: new THREE.Vector2(99, 99) }
+    }
+
+    const pointsMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        uColor: { value: color },
-        uOpacity: { value: opacity },
-        uSize: { value: size },
-        uPixelRatio: { value: renderer?.getPixelRatio() ?? 1 }
+        ...sharedUniforms,
+        uPointScale: { value: mobile ? 8.5 : 8.1 },
+        uColorA: { value: palettes[ci][0] },
+        uColorB: { value: palettes[ci][1] },
+        uOpacity: { value: ci === 3 ? .72 : .62 }
       },
       vertexShader,
       fragmentShader,
@@ -104,101 +264,108 @@ onMounted(async () => {
       blending: THREE.AdditiveBlending,
       depthWrite: false
     })
-    disposables.push(material)
-    return material
-  }
+    cluster.add(new THREE.Points(pointGeometry, pointsMaterial))
 
-  centers.forEach((center, ci) => {
-    const count = counts[ci]
-    const base = new Float32Array(count * 3)
-    const positions = new Float32Array(count * 3)
-    const phases = new Float32Array(count)
-    const scales = new Float32Array(count)
-
-    for (let i = 0; i < count; i++) {
-      const angle = random() * Math.PI * 2
-      const radius = Math.pow(random(), 0.88) * (ci === 3 ? 1.65 : 1.38)
-      const curl = angle + radius * (ci % 2 ? 1.42 : -1.28)
-      const x = center.x + Math.cos(curl) * radius * (0.64 + random() * 0.42)
-      const y = center.y + Math.sin(curl) * radius * (0.48 + random() * 0.48)
-      const z = (random() - 0.5) * 2.9 + Math.sin(angle * 2.15) * 0.22
-      base.set([x, y, z], i * 3)
-      positions.set([x, y, z], i * 3)
-      phases[i] = random() * Math.PI * 2
-      scales[i] = 0.35 + random() * 1.35
+    const hazeCount = mobile ? 12 : 28
+    const hazePositions = new Float32Array(hazeCount * 3)
+    const hazeSeeds = new Float32Array(hazeCount)
+    const hazeSizes = new Float32Array(hazeCount)
+    for (let i = 0; i < hazeCount; i++) {
+      const a = random() * Math.PI * 2
+      const r = random() * 1.2
+      hazePositions.set([Math.cos(a) * r, Math.sin(a) * r * .72, (random() - .5) * 1.4], i * 3)
+      hazeSeeds[i] = random()
+      hazeSizes[i] = .7 + random() * 1.4
     }
-
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1))
-    const material = pointMaterial(colors[ci], mobile ? 12 : 11, ci === 3 ? 0.85 : 0.77)
-    field.add(new THREE.Points(geometry, material))
+    const hazeGeometry = new THREE.BufferGeometry()
+    hazeGeometry.setAttribute('position', new THREE.BufferAttribute(hazePositions, 3))
+    hazeGeometry.setAttribute('aSeed', new THREE.BufferAttribute(hazeSeeds, 1))
+    hazeGeometry.setAttribute('aSize', new THREE.BufferAttribute(hazeSizes, 1))
+    const hazeMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: sharedUniforms.uTime,
+        uMotion: sharedUniforms.uMotion,
+        uFocus: sharedUniforms.uFocus,
+        uColor: { value: palettes[ci][0].clone().lerp(palettes[ci][1], .42) },
+        uOpacity: { value: ci === 3 ? .09 : .065 }
+      },
+      vertexShader: hazeVertexShader,
+      fragmentShader: hazeFragmentShader,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+    cluster.add(new THREE.Points(hazeGeometry, hazeMaterial))
 
     const connections: Array<[number, number]> = []
     for (let i = 0; i < count; i++) {
-      const ix = base[i * 3], iy = base[i * 3 + 1], iz = base[i * 3 + 2]
-      let nearest = -1
-      let nearestD = mobile ? 0.62 : 0.5
-      for (let j = i + 1; j < count; j++) {
-        const dx = ix - base[j * 3], dy = iy - base[j * 3 + 1], dz = iz - base[j * 3 + 2]
+      if (random() > .58) continue
+      let best = -1
+      let bestD = .34 + random() * .18
+      const ix = positions[i * 3], iy = positions[i * 3 + 1], iz = positions[i * 3 + 2]
+      for (let j = i + 1; j < Math.min(count, i + 36); j++) {
+        const dx = ix - positions[j * 3], dy = iy - positions[j * 3 + 1], dz = iz - positions[j * 3 + 2]
         const d = Math.sqrt(dx * dx + dy * dy + dz * dz)
-        if (d < nearestD) { nearestD = d; nearest = j }
+        if (d < bestD) { bestD = d; best = j }
       }
-      if (nearest >= 0 && random() > 0.08) connections.push([i, nearest])
+      if (best >= 0) connections.push([i, best])
     }
 
-    const lineGeometry = new THREE.BufferGeometry()
-    lineGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(connections.length * 6), 3))
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: colors[ci], transparent: true, opacity: ci === 3 ? 0.16 : 0.12,
-      blending: THREE.AdditiveBlending, depthWrite: false
+    const linePositions = new Float32Array(connections.length * 6)
+    const lineSeeds = new Float32Array(connections.length * 2)
+    connections.forEach(([a, b], index) => {
+      linePositions.set([positions[a * 3], positions[a * 3 + 1], positions[a * 3 + 2]], index * 6)
+      linePositions.set([positions[b * 3], positions[b * 3 + 1], positions[b * 3 + 2]], index * 6 + 3)
+      lineSeeds[index * 2] = seeds[a]
+      lineSeeds[index * 2 + 1] = seeds[b]
     })
-    disposables.push(geometry, lineGeometry, lineMaterial)
-    field.add(new THREE.LineSegments(lineGeometry, lineMaterial))
+    const lineGeometry = new THREE.BufferGeometry()
+    lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
+    lineGeometry.setAttribute('aSeed', new THREE.BufferAttribute(lineSeeds, 1))
+    const lineMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: sharedUniforms.uTime,
+        uFocus: sharedUniforms.uFocus,
+        uMotion: sharedUniforms.uMotion,
+        uMouse: sharedUniforms.uMouse,
+        uColor: { value: palettes[ci][1] },
+        uOpacity: { value: ci === 3 ? .12 : .085 }
+      },
+      vertexShader: lineVertexShader,
+      fragmentShader: lineFragmentShader,
+      transparent: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    })
+    cluster.add(new THREE.LineSegments(lineGeometry, lineMaterial))
 
-    const beaconIndices = Array.from({ length: mobile ? 3 : 8 }, () => Math.floor(random() * count))
-    const beaconGeometry = new THREE.BufferGeometry()
-    beaconGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(beaconIndices.length * 3), 3))
-    beaconGeometry.setAttribute('aScale', new THREE.BufferAttribute(new Float32Array(beaconIndices.length).fill(1), 1))
-    const beaconMaterial = pointMaterial(colors[ci].clone().lerp(new THREE.Color(0xffffff), 0.45), mobile ? 22 : 25, 0.9)
-    const beacons = new THREE.Points(beaconGeometry, beaconMaterial)
-    field.add(beacons)
-
-    clusters.push({ base, phases, geometry, material, lineGeometry, lineMaterial, connections, beacons, beaconGeometry, beaconMaterial, beaconIndices })
+    disposables.push(pointGeometry, pointsMaterial, hazeGeometry, hazeMaterial, lineGeometry, lineMaterial)
+    clusters.push({ group: cluster, pointsMaterial, hazeMaterial, lineMaterial })
   })
 
-  const dustCount = mobile ? 240 : 760
-  const dustBase = new Float32Array(dustCount * 3)
+  const dustCount = mobile ? 260 : 900
+  const dustGeometry = new THREE.BufferGeometry()
   const dustPositions = new Float32Array(dustCount * 3)
-  const dustScales = new Float32Array(dustCount)
-  const dustPhases = new Float32Array(dustCount)
   for (let i = 0; i < dustCount; i++) {
     const angle = random() * Math.PI * 2
-    const radius = 1.2 + random() * 4.25
-    const x = Math.cos(angle) * radius * 0.9
-    const y = Math.sin(angle) * radius * 0.62
-    const z = (random() - 0.5) * 5.2
-    dustBase.set([x, y, z], i * 3)
-    dustPositions.set([x, y, z], i * 3)
-    dustScales[i] = 0.18 + random() * 0.85
-    dustPhases[i] = random() * Math.PI * 2
+    const radius = 1.0 + random() * 4.7
+    dustPositions.set([Math.cos(angle) * radius * .92, Math.sin(angle) * radius * .63, (random() - .5) * 5.8], i * 3)
   }
-  const dustGeometry = new THREE.BufferGeometry()
   dustGeometry.setAttribute('position', new THREE.BufferAttribute(dustPositions, 3))
-  dustGeometry.setAttribute('aScale', new THREE.BufferAttribute(dustScales, 1))
-  const dustMaterial = pointMaterial(new THREE.Color(0x8798c3), mobile ? 7 : 6, 0.29)
+  const dustMaterial = new THREE.PointsMaterial({ color: 0x7894c8, size: mobile ? .018 : .014, transparent: true, opacity: .28, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true })
   field.add(new THREE.Points(dustGeometry, dustMaterial))
-  disposables.push(dustGeometry)
+  disposables.push(dustGeometry, dustMaterial)
 
-  focusHandler = (event: Event) => { focused = Number((event as CustomEvent<number>).detail) }
+  focusHandler = (event: Event) => {
+    const value = Number((event as CustomEvent<number>).detail)
+    focused = Number.isFinite(value) ? value : -1
+  }
   window.addEventListener('network-focus', focusHandler)
 
   const pointer = new THREE.Vector2(2, 2)
-  const pointerWorld = new THREE.Vector3(999, 999, 0)
-  const pointerLocal = new THREE.Vector3(999, 999, 0)
+  const pointerWorld = new THREE.Vector3(99, 99, 0)
   const raycaster = new THREE.Raycaster()
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0)
-  let pointerActive = false
   let px = 0
   let py = 0
 
@@ -207,7 +374,6 @@ onMounted(async () => {
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1
     px = pointer.x
     py = pointer.y
-    pointerActive = true
   }
   window.addEventListener('pointermove', pointerHandler, { passive: true })
 
@@ -217,108 +383,62 @@ onMounted(async () => {
     camera.aspect = rect.width / Math.max(rect.height, 1)
     camera.updateProjectionMatrix()
     renderer.setSize(rect.width, rect.height, false)
+    composer?.setSize(rect.width, rect.height)
     const ratio = renderer.getPixelRatio()
-    clusters.forEach(c => {
-      c.material.uniforms.uPixelRatio.value = ratio
-      c.beaconMaterial.uniforms.uPixelRatio.value = ratio
-    })
-    dustMaterial.uniforms.uPixelRatio.value = ratio
+    clusters.forEach(c => { c.pointsMaterial.uniforms.uPixelRatio.value = ratio })
   }
   window.addEventListener('resize', resizeHandler)
   resizeHandler()
 
-  const dustAttr = dustGeometry.getAttribute('position') as THREE.BufferAttribute
   const clock = new THREE.Clock()
+  const pointerInField = new THREE.Vector3()
+  const localMouse = new THREE.Vector3()
 
   const render = () => {
     const t = clock.getElapsedTime()
-
-    if (pointerActive && !mobile) {
-      raycaster.setFromCamera(pointer, camera)
-      if (raycaster.ray.intersectPlane(plane, pointerWorld)) {
-        pointerLocal.copy(pointerWorld)
-        field.worldToLocal(pointerLocal)
-      }
-    }
+    raycaster.setFromCamera(pointer, camera)
+    if (raycaster.ray.intersectPlane(plane, pointerInField)) field.worldToLocal(pointerInField)
 
     clusters.forEach((cluster, ci) => {
-      focusValues[ci] += (((focused === ci) ? 1 : 0) - focusValues[ci]) * 0.08
+      const target = focused === ci ? 1 : 0
+      focusValues[ci] += (target - focusValues[ci]) * .075
       const focus = focusValues[ci]
-      const attr = cluster.geometry.getAttribute('position') as THREE.BufferAttribute
-      const lineAttr = cluster.lineGeometry.getAttribute('position') as THREE.BufferAttribute
+      localMouse.copy(pointerInField).sub(cluster.group.position)
 
-      for (let i = 0; i < counts[ci]; i++) {
-        const bx = cluster.base[i * 3], by = cluster.base[i * 3 + 1], bz = cluster.base[i * 3 + 2]
-        const phase = cluster.phases[i]
-        let x = bx, y = by, z = bz
+      cluster.pointsMaterial.uniforms.uTime.value = t
+      cluster.pointsMaterial.uniforms.uFocus.value = focus
+      cluster.pointsMaterial.uniforms.uMouse.value.set(localMouse.x, localMouse.y)
+      cluster.pointsMaterial.uniforms.uPointScale.value = (mobile ? 8.5 : 8.1) + focus * 2.8
+      cluster.pointsMaterial.uniforms.uOpacity.value = (ci === 3 ? .72 : .62) + focus * .2
 
-        if (!reducedMotion) {
-          const amp = 0.075 + focus * 0.095
-          x += Math.sin(t * (0.38 + ci * 0.018) + phase + by * 0.3) * amp
-          y += Math.cos(t * (0.31 + ci * 0.016) + phase * 1.12 + bx * 0.28) * amp * 0.92
-          z += Math.sin(t * 0.42 + phase * 0.72) * (0.11 + focus * 0.12)
-          if (focus > 0.01) {
-            const center = centers[ci]
-            const dx = x - center.x, dy = y - center.y
-            x += -dy * focus * 0.045 * Math.sin(t * 0.9 + phase)
-            y += dx * focus * 0.045 * Math.sin(t * 0.9 + phase)
-          }
-        }
+      cluster.hazeMaterial.uniforms.uTime.value = t
+      cluster.hazeMaterial.uniforms.uFocus.value = focus
+      cluster.hazeMaterial.uniforms.uOpacity.value = (ci === 3 ? .09 : .065) + focus * .055
 
-        if (pointerActive && !mobile) {
-          const dx = pointerLocal.x - x, dy = pointerLocal.y - y
-          const d = Math.sqrt(dx * dx + dy * dy)
-          if (d < 1.55) {
-            const influence = (1 - d / 1.55) ** 2
-            x += dx * influence * 0.06 - dy * influence * 0.17
-            y += dy * influence * 0.06 + dx * influence * 0.17
-            z += influence * 0.35
-          }
-        }
-        attr.setXYZ(i, x, y, z)
+      cluster.lineMaterial.uniforms.uTime.value = t
+      cluster.lineMaterial.uniforms.uFocus.value = focus
+      cluster.lineMaterial.uniforms.uMouse.value.set(localMouse.x, localMouse.y)
+      cluster.lineMaterial.uniforms.uOpacity.value = (ci === 3 ? .12 : .085) + focus * .13
+
+      if (!reducedMotion) {
+        cluster.group.rotation.z = Math.sin(t * (.055 + ci * .006) + ci) * .06
+        cluster.group.rotation.y = Math.sin(t * (.07 + ci * .004) + ci * .8) * .08
+        const breathing = 1 + Math.sin(t * .23 + ci * 1.7) * .025 + focus * .04
+        cluster.group.scale.setScalar(breathing)
       }
-      attr.needsUpdate = true
-
-      cluster.connections.forEach(([a, b], index) => {
-        const o = index * 2
-        lineAttr.setXYZ(o, attr.getX(a), attr.getY(a), attr.getZ(a))
-        lineAttr.setXYZ(o + 1, attr.getX(b), attr.getY(b), attr.getZ(b))
-      })
-      lineAttr.needsUpdate = true
-
-      const beaconAttr = cluster.beaconGeometry.getAttribute('position') as THREE.BufferAttribute
-      cluster.beaconIndices.forEach((particleIndex, i) => {
-        beaconAttr.setXYZ(i, attr.getX(particleIndex), attr.getY(particleIndex), attr.getZ(particleIndex))
-      })
-      beaconAttr.needsUpdate = true
-
-      cluster.material.uniforms.uOpacity.value = (ci === 3 ? 0.82 : 0.74) + focus * 0.22
-      cluster.material.uniforms.uSize.value = (mobile ? 12 : 11) + focus * 5
-      cluster.beaconMaterial.uniforms.uSize.value = (mobile ? 22 : 25) + focus * 10
-      cluster.lineMaterial.opacity = (ci === 3 ? 0.16 : 0.12) + focus * 0.22
     })
 
-    for (let i = 0; i < dustCount; i++) {
-      const p = dustPhases[i]
-      const bx = dustBase[i * 3], by = dustBase[i * 3 + 1], bz = dustBase[i * 3 + 2]
-      const m = reducedMotion ? 0 : 1
-      dustAttr.setXYZ(i,
-        bx + Math.sin(t * 0.17 + p + by * 0.08) * 0.075 * m,
-        by + Math.cos(t * 0.145 + p * 1.2 + bx * 0.08) * 0.065 * m,
-        bz + Math.sin(t * 0.13 + p) * 0.1 * m)
-    }
-    dustAttr.needsUpdate = true
-
     if (!reducedMotion) {
-      field.rotation.y += ((mobile ? 0 : px * 0.09) + Math.sin(t * 0.09) * 0.028 - field.rotation.y) * 0.024
-      field.rotation.x += ((mobile ? 0 : py * 0.044) + Math.cos(t * 0.08) * 0.015 - field.rotation.x) * 0.024
-      field.rotation.z = Math.sin(t * 0.07) * 0.013
-      field.position.y = (mobile ? 0.55 : 0.02) + Math.sin(t * 0.18) * 0.075
+      field.rotation.y += ((mobile ? 0 : px * .065) + Math.sin(t * .075) * .02 - field.rotation.y) * .018
+      field.rotation.x += ((mobile ? 0 : py * .028) + Math.cos(t * .065) * .012 - field.rotation.x) * .018
+      field.position.y = (mobile ? .48 : .04) + Math.sin(t * .14) * .05
     }
 
-    renderer?.render(scene, camera)
+    if (composer) composer.render()
+    else renderer?.render(scene, camera)
     frame = requestAnimationFrame(render)
   }
+
   render()
 })
 
@@ -328,6 +448,7 @@ onBeforeUnmount(() => {
   if (resizeHandler) window.removeEventListener('resize', resizeHandler)
   if (focusHandler) window.removeEventListener('network-focus', focusHandler)
   disposables.forEach(item => item.dispose())
+  composer?.dispose()
   renderer?.dispose()
 })
 </script>
