@@ -77,7 +77,6 @@ onMounted(() => {
     const baseScale = hubIndices.has(index) ? (mobile ? 0.13 : 0.16) : (mobile ? 0.065 : 0.075)
     mesh.scale.setScalar(baseScale)
     mesh.userData.baseScale = baseScale
-    mesh.userData.index = index
     group.add(mesh)
     return mesh
   })
@@ -85,11 +84,13 @@ onMounted(() => {
   const edgeMeshes: THREE.Mesh[] = []
   const glowMeshes: THREE.Mesh[] = []
   const yAxis = new THREE.Vector3(0, 1, 0)
+  const direction = new THREE.Vector3()
+  const midpoint = new THREE.Vector3()
 
   const updateEdgeMesh = (mesh: THREE.Mesh, a: THREE.Vector3, b: THREE.Vector3, radius: number) => {
-    const direction = new THREE.Vector3().subVectors(b, a)
+    direction.subVectors(b, a)
     const length = direction.length()
-    const midpoint = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5)
+    midpoint.addVectors(a, b).multiplyScalar(0.5)
     mesh.position.copy(midpoint)
     mesh.quaternion.setFromUnitVectors(yAxis, direction.normalize())
     mesh.scale.set(radius, length, radius)
@@ -97,19 +98,19 @@ onMounted(() => {
 
   edgePairs.forEach(([aIndex, bIndex]) => {
     const edge = new THREE.Mesh(edgeGeometry, edgeMaterial)
-    updateEdgeMesh(edge, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.012 : 0.016)
+    updateEdgeMesh(edge, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.016 : 0.022)
     group.add(edge)
     edgeMeshes.push(edge)
 
     const glow = new THREE.Mesh(edgeGeometry, glowMaterial)
-    updateEdgeMesh(glow, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.034 : 0.045)
+    updateEdgeMesh(glow, currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.045 : 0.06)
     group.add(glow)
     glowMeshes.push(glow)
   })
 
   const pulseMeshes = edgePairs.slice(0, mobile ? 7 : 12).map((_, index) => {
     const mesh = new THREE.Mesh(pulseGeometry, pulseMaterial)
-    mesh.scale.setScalar(mobile ? 0.045 : 0.055)
+    mesh.scale.setScalar(mobile ? 0.055 : 0.07)
     mesh.userData.phase = index / (mobile ? 7 : 12)
     group.add(mesh)
     return mesh
@@ -169,21 +170,21 @@ onMounted(() => {
     })
 
     edgePairs.forEach(([aIndex, bIndex], index) => {
-      updateEdgeMesh(edgeMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.012 : 0.016)
-      updateEdgeMesh(glowMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.034 : 0.045)
+      updateEdgeMesh(edgeMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.016 : 0.022)
+      updateEdgeMesh(glowMeshes[index], currentNodes[aIndex], currentNodes[bIndex], mobile ? 0.045 : 0.06)
     })
 
     pulseMeshes.forEach((mesh, index) => {
       const [aIndex, bIndex] = edgePairs[index]
       const progress = reducedMotion ? mesh.userData.phase : (t * 0.16 + mesh.userData.phase) % 1
       mesh.position.lerpVectors(currentNodes[aIndex], currentNodes[bIndex], progress)
-      const scale = (mobile ? 0.045 : 0.055) * (1 + Math.sin((progress + t) * Math.PI * 2) * 0.22)
+      const scale = (mobile ? 0.055 : 0.07) * (1 + Math.sin((progress + t) * Math.PI * 2) * 0.22)
       mesh.scale.setScalar(scale)
     })
 
     const hoverBoost = hoveredNode ? 1 : 0
-    edgeMaterial.opacity = (mobile ? 0.58 : 0.66) + hoverBoost * 0.22
-    glowMaterial.opacity = 0.18 + hoverBoost * 0.16
+    edgeMaterial.opacity = (mobile ? 0.62 : 0.74) + hoverBoost * 0.2
+    glowMaterial.opacity = 0.22 + hoverBoost * 0.18
 
     if (!reducedMotion) {
       group.rotation.y += ((mobile ? 0 : pointerX * 0.11) + Math.sin(t * 0.16) * 0.035 - group.rotation.y) * 0.035
@@ -208,5 +209,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas ref="canvas" class="webgl-canvas" aria-hidden="true" />
+  <canvas
+    ref="canvas"
+    aria-hidden="true"
+    style="position:absolute;inset:0;width:100%;height:100%;z-index:1;opacity:1;pointer-events:none"
+  />
 </template>
