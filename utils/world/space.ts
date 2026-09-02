@@ -107,7 +107,7 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
       uColor: { value: new THREE.Color(0xd5def0) },
       uOpacity: { value: 0.92 },
       uPixelRatio: { value: renderer.getPixelRatio() },
-      uSize: { value: 1 }
+      uSize: { value: 1.35 }
     },
     vertexShader: pointVertex,
     fragmentShader: pointFragment,
@@ -173,20 +173,20 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   group.add(corona)
 
   const earth = addPlanet(group, {
-    radius: mobile ? 1.55 : 2.05,
-    position: new THREE.Vector3(4.4, 0.15, -7.2),
-    deep: 0x07122c,
-    mid: 0x1d4a86,
-    high: 0xb7c9e8,
-    bands: 11,
-    clouds: 0.72,
+    radius: mobile ? 1.7 : 2.35,
+    position: new THREE.Vector3(4.8, 0.05, -6.4),
+    deep: 0x081526,
+    mid: 0x2a5a7a,
+    high: 0xc5d4e4,
+    bands: 2.2,
+    clouds: 0.82,
     seed: 1.4,
     atmosphere: 0x7aa7ff
   })
 
   const giant = addPlanet(group, {
-    radius: mobile ? 0.72 : 0.95,
-    position: new THREE.Vector3(-3.1, -1.7, -16),
+    radius: mobile ? 0.58 : 0.72,
+    position: new THREE.Vector3(-3.4, -1.9, -18),
     deep: 0x2a120c,
     mid: 0x8a3a22,
     high: 0xffb07a,
@@ -244,15 +244,22 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   group.add(new THREE.AmbientLight(0x6b7a99, 0.28))
 
   const setOpacity = (value: number) => {
-    group.visible = value > 0.01
-    starMat.uniforms.uOpacity.value = 0.18 + value * 0.74
-    coronaMat.opacity = 0.08 + value * 0.26
+    group.visible = value > 0.02
+    starMat.uniforms.uOpacity.value = value * 0.95
+    coronaMat.opacity = value * 0.28
     milkyWay.children.forEach((child, i) => {
       const material = (child as THREE.Sprite).material
       material.opacity = value * (0.03 + (i % 3) * 0.012)
     })
-    satellite.visible = value > 0.2
-    ufo.visible = value > 0.25
+    sun.visible = value > 0.18
+    earth.mesh.visible = value > 0.18
+    earth.atmo.visible = value > 0.18
+    giant.mesh.visible = value > 0.22
+    giant.atmo.visible = value > 0.22
+    ice.mesh.visible = value > 0.22
+    ice.atmo.visible = value > 0.22
+    satellite.visible = value > 0.35
+    ufo.visible = value > 0.28
   }
 
   const update = (time: number, progress: number, reduced: boolean) => {

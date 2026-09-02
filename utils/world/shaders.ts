@@ -198,9 +198,9 @@ float noise(vec2 p) {
 void main() {
   vec2 uv = gl_FragCoord.xy / uResolution;
   float depth = clamp(uDepth, 0.0, 1.0);
-  vec3 shallow = vec3(0.02, 0.28, 0.36);
-  vec3 mid = vec3(0.01, 0.09, 0.16);
-  vec3 abyss = vec3(0.002, 0.012, 0.03);
+  vec3 shallow = vec3(0.03, 0.34, 0.42);
+  vec3 mid = vec3(0.012, 0.11, 0.2);
+  vec3 abyss = vec3(0.002, 0.016, 0.04);
   float falloff = smoothstep(0.08, 0.92, 1.0 - uv.y + depth * 0.55);
   vec3 color = mix(shallow, mid, smoothstep(0.05, 0.55, falloff));
   color = mix(color, abyss, smoothstep(0.45, 1.0, falloff + depth * 0.35));
@@ -210,10 +210,11 @@ void main() {
   caustic += pow(max(sin((cUv.x + uTime * 0.07) * 18.0 + noise(cUv * 4.0 + uTime * 0.04) * 3.0), 0.0), 10.0);
   caustic += pow(max(sin((cUv.y - uTime * 0.05) * 14.0 + noise(cUv * 3.2 - uTime * 0.03) * 2.4), 0.0), 12.0);
   float nearSurface = (1.0 - depth) * smoothstep(0.55, 1.0, uv.y);
-  color += vec3(0.08, 0.32, 0.36) * caustic * 0.18 * nearSurface;
+  color += vec3(0.1, 0.4, 0.44) * caustic * 0.28 * nearSurface;
 
-  float ray = pow(max(1.0 - abs(uv.x - (0.62 + uPointer.x * 0.04)), 0.0), 6.0) * smoothstep(0.2, 0.95, uv.y);
-  color += vec3(0.12, 0.38, 0.42) * ray * 0.12 * (1.0 - depth);
+  float ray = pow(max(1.0 - abs(uv.x - (0.58 + uPointer.x * 0.05)), 0.0), 5.2) * smoothstep(0.15, 0.95, uv.y);
+  float ray2 = pow(max(1.0 - abs(uv.x - (0.36 + uPointer.x * 0.03)), 0.0), 7.0) * smoothstep(0.3, 1.0, uv.y);
+  color += vec3(0.16, 0.46, 0.5) * (ray * 0.2 + ray2 * 0.1) * (1.0 - depth);
 
   float grain = (hash(uv * uResolution * 0.25 + uTime * 8.0) - 0.5) * 0.02;
   color += grain;

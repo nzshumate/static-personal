@@ -95,7 +95,7 @@ export const createOcean = (mobile: boolean): OceanSystem => {
     const depth = smoothstep(0.86, 1, progress)
     material.uniforms.uTime.value = time
     material.uniforms.uDepth.value = depth
-    material.uniforms.uOpacity.value = amount * 0.92
+    material.uniforms.uOpacity.value = amount * 0.96
     material.uniforms.uResolution.value.copy(size)
     material.uniforms.uPointer.value.copy(pointer)
     volume.visible = amount > 0.02
