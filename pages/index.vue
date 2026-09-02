@@ -26,6 +26,7 @@ useSeoMeta({
   <main class="space-site">
     <ClientOnly><WebGLHero /></ClientOnly>
     <ClientOnly><SpaceDetails /></ClientOnly>
+    <ClientOnly><UnderwaterWorld /></ClientOnly>
     <div class="grain" aria-hidden="true" />
     <div class="edge-fade" aria-hidden="true" />
 
@@ -93,7 +94,7 @@ useSeoMeta({
 
     <section class="scene scene-notes">
       <div class="notes-heading">
-        <p class="scene-kicker">Notes from the work</p>
+        <p class="scene-kicker">Crossing the surface</p>
         <h2>Ideas I’m<br>working through.</h2>
       </div>
       <div class="notes-list">
@@ -107,7 +108,7 @@ useSeoMeta({
 
     <section id="about" class="scene scene-about">
       <div class="chapter-index">04 / 05</div>
-      <div class="about-title"><p class="scene-kicker">About</p><h2>Build things.<br>Make teams better.<br>Keep learning.</h2></div>
+      <div class="about-title"><p class="scene-kicker">Below the surface</p><h2>Build things.<br>Make teams better.<br>Keep learning.</h2></div>
       <div class="about-copy">
         <p>I’m a software engineer and technical leader focused on modern product development. My work spans frontend architecture, mobile, engineering systems, AI-assisted development, and technical direction.</p>
         <p>This site is where I share the work, experiments, and ideas that don’t fit neatly into a job title.</p>
@@ -118,11 +119,11 @@ useSeoMeta({
     <section id="contact" class="scene scene-contact">
       <div class="chapter-index">05 / 05</div>
       <div class="contact-lockup">
-        <p class="scene-kicker">Contact</p>
+        <p class="scene-kicker">The deep</p>
         <h2>Put a hard problem<br>in front of me.</h2>
         <a href="https://github.com/nzshumate" target="_blank" rel="noreferrer">Start a conversation <span>↗</span></a>
       </div>
-      <footer><span>© {{ year }} Nathan Shumate</span><a href="#top">Return to orbit ↑</a></footer>
+      <footer><span>© {{ year }} Nathan Shumate</span><a href="#top">Back to the stars ↑</a></footer>
     </section>
   </main>
 </template>
