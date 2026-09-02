@@ -226,6 +226,54 @@ void main() {
 }
 `
 
+export const domeVertex = `
+varying float vY;
+void main() {
+  vY = normalize(position).y;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`
+
+export const domeFragment = `
+uniform vec3 uZenith;
+uniform vec3 uHorizon;
+uniform float uOpacity;
+varying float vY;
+void main() {
+  float h = smoothstep(-0.2, 0.82, vY);
+  vec3 color = mix(uHorizon, uZenith, h);
+  gl_FragColor = vec4(color, uOpacity);
+}
+`
+
+export const waterVertex = `
+uniform float uTime;
+uniform float uAmp;
+varying vec2 vUv;
+varying float vWave;
+void main() {
+  vUv = uv;
+  vec3 p = position;
+  float wave = sin(p.x * 0.55 + uTime * 0.8) * uAmp + sin(p.y * 0.9 - uTime * 0.65) * uAmp * 0.55;
+  p.z += wave;
+  vWave = wave;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+}
+`
+
+export const waterFragment = `
+uniform vec3 uDeep;
+uniform vec3 uShallow;
+uniform float uOpacity;
+varying vec2 vUv;
+varying float vWave;
+void main() {
+  vec3 color = mix(uDeep, uShallow, smoothstep(0.08, 0.86, vUv.y));
+  color += vec3(0.18, 0.28, 0.3) * smoothstep(0.04, 0.12, vWave);
+  gl_FragColor = vec4(color, uOpacity);
+}
+`
+
 export const pointVertex = `
 uniform float uPixelRatio;
 uniform float uSize;
