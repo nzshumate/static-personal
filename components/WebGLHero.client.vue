@@ -110,7 +110,6 @@ onMounted(async () => {
     return m
   }
 
-  // Soft radial texture used as the actual nebula volume.
   const nebulaCanvas = document.createElement('canvas')
   nebulaCanvas.width = 256
   nebulaCanvas.height = 256
@@ -134,21 +133,9 @@ onMounted(async () => {
     const layers = mobile ? 2 : 5
     for (let n = 0; n < layers; n++) {
       const color = palette[ci].clone().lerp(new THREE.Color(0xffffff), n % 3 === 0 ? 0.18 : 0.03)
-      const material = new THREE.SpriteMaterial({
-        map: nebulaTexture,
-        color,
-        transparent: true,
-        opacity: mobile ? 0.07 : 0.095 + random() * 0.055,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        depthTest: false
-      })
+      const material = new THREE.SpriteMaterial({ map: nebulaTexture, color, transparent: true, opacity: mobile ? 0.07 : 0.095 + random() * 0.055, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })
       const sprite = new THREE.Sprite(material)
-      sprite.position.copy(center).add(new THREE.Vector3(
-        (random() - 0.5) * 1.5,
-        (random() - 0.5) * 1.15,
-        -0.7 - random() * 1.7
-      ))
+      sprite.position.copy(center).add(new THREE.Vector3((random() - 0.5) * 1.5, (random() - 0.5) * 1.15, -0.7 - random() * 1.7))
       const sx = 2.4 + random() * 2.4
       const sy = sx * (0.55 + random() * 0.45)
       sprite.scale.set(sx, sy, 1)
@@ -159,17 +146,8 @@ onMounted(async () => {
     }
   })
 
-  // Larger, dimmer wisps make the five regions feel like one continuous nebula.
   for (let i = 0; i < (mobile ? 2 : 7); i++) {
-    const material = new THREE.SpriteMaterial({
-      map: nebulaTexture,
-      color: i % 3 === 2 ? 0xa3b6ff : 0x5c73cf,
-      transparent: true,
-      opacity: mobile ? 0.025 : 0.035 + random() * 0.025,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      depthTest: false
-    })
+    const material = new THREE.SpriteMaterial({ map: nebulaTexture, color: i % 3 === 2 ? 0xa3b6ff : 0x5c73cf, transparent: true, opacity: mobile ? 0.025 : 0.035 + random() * 0.025, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })
     const sprite = new THREE.Sprite(material)
     sprite.position.set((random() - .5) * 4.8, (random() - .5) * 3.5, -2.2 - random() * 1.8)
     const sx = 4 + random() * 4
@@ -254,7 +232,6 @@ onMounted(async () => {
     clouds.push({ count, base, velocity, phases, geometry, material, links, linkGeometry, linkMaterial, trailIndices, trailGeometry, trailMaterial })
   })
 
-  // Glowing dust is intentionally a separate, brighter field sitting inside the nebula.
   const dustCount = mobile ? 520 : 2300
   const dustPositions = new Float32Array(dustCount * 3)
   const dustBase = new Float32Array(dustCount * 3)
@@ -312,7 +289,7 @@ onMounted(async () => {
       previousPointerLocal.copy(pointerLocal)
       pointerLocal.copy(pointerWorld)
       field.worldToLocal(pointerLocal)
-      if (previousPointerLocal.x < 100) pointerVelocity = Math.min(3.6, pointerVelocity * .34 + previousPointerLocal.distanceTo(pointerLocal) * 4.8)
+      if (previousPointerLocal.x < 100) pointerVelocity = Math.min(1.6, pointerVelocity * .45 + previousPointerLocal.distanceTo(pointerLocal) * 2.2)
     }
   }
 
@@ -355,12 +332,12 @@ onMounted(async () => {
     const dy = y - pointerLocal.y
     const d = Math.sqrt(dx * dx + dy * dy)
     if (d >= radius || d < .001) return
-    const falloff = Math.pow(1 - d / radius, 2.1)
-    const impulse = force * falloff * (.65 + pointerVelocity * 1.45)
+    const falloff = Math.pow(1 - d / radius, 2.35)
+    const impulse = force * falloff * (.3 + pointerVelocity * .75)
     const nx = dx / d, ny = dy / d
-    velocity[o] += nx * impulse - ny * impulse * .12
-    velocity[o + 1] += ny * impulse + nx * impulse * .12
-    velocity[o + 2] += (z >= 0 ? 1 : -1) * impulse * .14
+    velocity[o] += nx * impulse - ny * impulse * .07
+    velocity[o + 1] += ny * impulse + nx * impulse * .07
+    velocity[o + 2] += (z >= 0 ? 1 : -1) * impulse * .08
   }
 
   const render = () => {
@@ -368,7 +345,7 @@ onMounted(async () => {
     const dt = Math.min((now - last) / 16.667, 2)
     last = now
     const t = clock.getElapsedTime()
-    pointerVelocity *= .9
+    pointerVelocity *= .86
 
     clouds.forEach((cloud, ci) => {
       focusValues[ci] += (((focused === ci) ? 1 : 0) - focusValues[ci]) * .075
@@ -383,13 +360,13 @@ onMounted(async () => {
         const tx = bx + (reducedMotion ? 0 : Math.sin(t * (.28 + ci * .016) + p + by * .22) * (.045 + focus * .025))
         const ty = by + (reducedMotion ? 0 : Math.cos(t * (.24 + ci * .014) + p * 1.13 + bx * .21) * (.04 + focus * .025))
         const tz = bz + (reducedMotion ? 0 : Math.sin(t * .31 + p * .74) * (.07 + focus * .04))
-        scatter(x, y, z, cloud.velocity, o, 1.75, .11)
-        cloud.velocity[o] += (tx - x) * .0048 * dt
-        cloud.velocity[o + 1] += (ty - y) * .0048 * dt
-        cloud.velocity[o + 2] += (tz - z) * .0042 * dt
-        cloud.velocity[o] *= .955
-        cloud.velocity[o + 1] *= .955
-        cloud.velocity[o + 2] *= .955
+        scatter(x, y, z, cloud.velocity, o, 1.35, .055)
+        cloud.velocity[o] += (tx - x) * .0058 * dt
+        cloud.velocity[o + 1] += (ty - y) * .0058 * dt
+        cloud.velocity[o + 2] += (tz - z) * .0052 * dt
+        cloud.velocity[o] *= .95
+        cloud.velocity[o + 1] *= .95
+        cloud.velocity[o + 2] *= .95
         x += cloud.velocity[o] * dt
         y += cloud.velocity[o + 1] * dt
         z += cloud.velocity[o + 2] * dt
@@ -409,7 +386,7 @@ onMounted(async () => {
       cloud.trailIndices.forEach((pi, idx) => {
         const po = pi * 3
         const x = attr.getX(pi), y = attr.getY(pi), z = attr.getZ(pi)
-        const len = 2.4 + Math.min(2, Math.hypot(cloud.velocity[po], cloud.velocity[po + 1]) * 9) * 3
+        const len = 1.8 + Math.min(1.1, Math.hypot(cloud.velocity[po], cloud.velocity[po + 1]) * 7) * 2.2
         const o = idx * 2
         trailAttr.setXYZ(o, x, y, z)
         trailAttr.setXYZ(o + 1, x - cloud.velocity[po] * len, y - cloud.velocity[po + 1] * len, z - cloud.velocity[po + 2] * len)
@@ -418,7 +395,7 @@ onMounted(async () => {
       cloud.material.uniforms.uOpacity.value = (ci === 3 ? .8 : .68) + focus * .18
       cloud.material.uniforms.uScale.value = 1 + focus * .2
       cloud.linkMaterial.opacity = (ci === 3 ? .07 : .04) + focus * .04
-      cloud.trailMaterial.opacity = .02 + Math.min(.23, pointerVelocity * .08) + focus * .025
+      cloud.trailMaterial.opacity = .015 + Math.min(.1, pointerVelocity * .045) + focus * .02
     })
 
     for (let i = 0; i < dustCount; i++) {
@@ -429,20 +406,20 @@ onMounted(async () => {
       const tx = bx + (reducedMotion ? 0 : Math.sin(t * .105 + p + by * .04) * .055)
       const ty = by + (reducedMotion ? 0 : Math.cos(t * .09 + p * 1.2 + bx * .04) * .05)
       const tz = bz + (reducedMotion ? 0 : Math.sin(t * .08 + p) * .075)
-      scatter(x, y, z, dustVelocity, o, 2.1, .085)
-      dustVelocity[o] += (tx - x) * .003 * dt
-      dustVelocity[o + 1] += (ty - y) * .003 * dt
-      dustVelocity[o + 2] += (tz - z) * .0028 * dt
-      dustVelocity[o] *= .96
-      dustVelocity[o + 1] *= .96
-      dustVelocity[o + 2] *= .96
+      scatter(x, y, z, dustVelocity, o, 1.55, .04)
+      dustVelocity[o] += (tx - x) * .0038 * dt
+      dustVelocity[o + 1] += (ty - y) * .0038 * dt
+      dustVelocity[o + 2] += (tz - z) * .0034 * dt
+      dustVelocity[o] *= .955
+      dustVelocity[o + 1] *= .955
+      dustVelocity[o + 2] *= .955
       x += dustVelocity[o] * dt
       y += dustVelocity[o + 1] * dt
       z += dustVelocity[o + 2] * dt
       dustAttr.setXYZ(i, x, y, z)
     }
     dustAttr.needsUpdate = true
-    dustMaterial.uniforms.uOpacity.value = .48 + Math.min(.16, pointerVelocity * .035)
+    dustMaterial.uniforms.uOpacity.value = .48 + Math.min(.07, pointerVelocity * .02)
 
     nebulae.forEach((n, i) => {
       const focus = n.cluster >= 0 ? focusValues[n.cluster] : 0
