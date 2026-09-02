@@ -4,41 +4,301 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
-let frame=0;let renderer:THREE.WebGLRenderer|null=null;let composer:EffectComposer|null=null;let resizeHandler:(()=>void)|null=null;let pointerMoveHandler:((e:PointerEvent)=>void)|null=null;let pointerLeaveHandler:(()=>void)|null=null;let focusHandler:((e:Event)=>void)|null=null
-const disposables:Array<THREE.BufferGeometry|THREE.Material|THREE.Texture>=[]
-const particleVertex=`uniform float uPixelRatio;uniform float uScale;attribute float aSize;attribute float aGlow;varying float vGlow;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=aSize*uScale*uPixelRatio*(9./max(2.5,-mv.z));vGlow=aGlow;}`
-const particleFragment=`uniform vec3 uColor;uniform float uOpacity;varying float vGlow;void main(){vec2 p=gl_PointCoord-.5;float d=length(p);float core=1.-smoothstep(.015,.085,d);float halo=1.-smoothstep(.07,.5,d);float a=(core*1.65+halo*(.26+vGlow*.74))*uOpacity;if(a<.01)discard;gl_FragColor=vec4(uColor,a);}`
+let frame = 0
+let renderer: THREE.WebGLRenderer | null = null
+let composer: EffectComposer | null = null
+let onResize: (() => void) | null = null
+let onScroll: (() => void) | null = null
+let onPointer: ((e: PointerEvent) => void) | null = null
+const disposables: Array<THREE.BufferGeometry | THREE.Material | THREE.Texture> = []
 
-onMounted(async()=>{await nextTick();const canvas=document.getElementById('webgl-hero-canvas') as HTMLCanvasElement|null;if(!canvas)return
- const mobile=window.innerWidth<800,reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches,scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(mobile?58:46,1,.1,90);camera.position.z=mobile?9.6:10.6
- renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});renderer.setClearColor(0x000000,0);renderer.setPixelRatio(Math.min(devicePixelRatio,mobile?1.1:1.5));renderer.outputColorSpace=THREE.SRGBColorSpace
- composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));const bloom=new UnrealBloomPass(new THREE.Vector2(1,1),.68,.82,.045);bloom.strength=mobile?.42:.62;bloom.radius=.82;bloom.threshold=.045;composer.addPass(bloom)
- const field=new THREE.Group();field.position.set(mobile?1.35:2.68,mobile?.55:.03,0);scene.add(field)
- let seed=91873;const random=()=>{seed=seed*16807%2147483647;return(seed-1)/2147483646}
- const centers=[new THREE.Vector3(-1.55,1.55,0),new THREE.Vector3(1.32,1.92,-.25),new THREE.Vector3(2.28,.2,.05),new THREE.Vector3(.88,-1.72,.05),new THREE.Vector3(-1.42,-1.48,-.08)]
- const palette=[new THREE.Color(0x4969ff),new THREE.Color(0xc9d7f2),new THREE.Color(0x4b82ff),new THREE.Color(0xf48658),new THREE.Color(0x687fff)],counts=mobile?[70,58,66,72,66]:[185,155,175,195,170],focusValues=[0,0,0,0,0];let focused=-1
- const makePointMaterial=(color:THREE.Color,opacity:number)=>{const m=new THREE.ShaderMaterial({uniforms:{uColor:{value:color},uOpacity:{value:opacity},uPixelRatio:{value:renderer!.getPixelRatio()},uScale:{value:1}},vertexShader:particleVertex,fragmentShader:particleFragment,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});disposables.push(m);return m}
- const nc=document.createElement('canvas');nc.width=256;nc.height=256;const ctx=nc.getContext('2d')!,g=ctx.createRadialGradient(128,128,0,128,128,128);g.addColorStop(0,'rgba(255,255,255,.68)');g.addColorStop(.12,'rgba(255,255,255,.38)');g.addColorStop(.38,'rgba(255,255,255,.13)');g.addColorStop(.7,'rgba(255,255,255,.035)');g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.fillRect(0,0,256,256);const nt=new THREE.CanvasTexture(nc);nt.colorSpace=THREE.SRGBColorSpace;disposables.push(nt)
- type Nebula={sprite:THREE.Sprite;material:THREE.SpriteMaterial;baseScale:THREE.Vector3;phase:number;cluster:number;baseOpacity:number};const nebulae:Nebula[]=[]
- centers.forEach((center,ci)=>{for(let n=0;n<(mobile?2:5);n++){const whiteMix=ci===1?.03:(n%3===0?.14:.025),color=palette[ci].clone().lerp(new THREE.Color(0xffffff),whiteMix),clusterScale=ci===1?.72:ci===3?.86:1,baseOpacity=(mobile?.055:.078+random()*.038)*(ci===1?.58:ci===3?.72:1),material=new THREE.SpriteMaterial({map:nt,color,transparent:true,opacity:baseOpacity,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false}),sprite=new THREE.Sprite(material);sprite.position.copy(center).add(new THREE.Vector3((random()-.5)*1.5,(random()-.5)*1.15,-.7-random()*1.7));const sx=(2.4+random()*2.4)*clusterScale;sprite.scale.set(sx,sx*(.55+random()*.45),1);sprite.material.rotation=random()*Math.PI;field.add(sprite);nebulae.push({sprite,material,baseScale:sprite.scale.clone(),phase:random()*Math.PI*2,cluster:ci,baseOpacity});disposables.push(material)}})
- for(let i=0;i<(mobile?2:7);i++){const baseOpacity=mobile?.018:.026+random()*.016,material=new THREE.SpriteMaterial({map:nt,color:i%3===2?0x879bd8:0x4d64aa,transparent:true,opacity:baseOpacity,blending:THREE.AdditiveBlending,depthWrite:false,depthTest:false}),sprite=new THREE.Sprite(material);sprite.position.set((random()-.5)*4.8,(random()-.5)*3.5,-2.2-random()*1.8);const sx=4+random()*4;sprite.scale.set(sx,sx*(.35+random()*.35),1);sprite.material.rotation=random()*Math.PI;field.add(sprite);nebulae.push({sprite,material,baseScale:sprite.scale.clone(),phase:random()*Math.PI*2,cluster:-1,baseOpacity});disposables.push(material)}
- type Cloud={count:number;base:Float32Array;velocity:Float32Array;phases:Float32Array;geometry:THREE.BufferGeometry;material:THREE.ShaderMaterial;links:Array<[number,number]>;linkGeometry:THREE.BufferGeometry;linkMaterial:THREE.LineBasicMaterial;trailIndices:number[];trailGeometry:THREE.BufferGeometry;trailMaterial:THREE.LineBasicMaterial};const clouds:Cloud[]=[]
- centers.forEach((center,ci)=>{const count=counts[ci],positions=new Float32Array(count*3),base=new Float32Array(count*3),velocity=new Float32Array(count*3),phases=new Float32Array(count),sizes=new Float32Array(count),glows=new Float32Array(count);for(let i=0;i<count;i++){const a=random()*Math.PI*2,r=Math.pow(random(),.84)*(ci===3?1.8:1.52),tw=a+r*(ci%2?1.85:-1.58),x=center.x+Math.cos(tw)*r*(.5+random()*.55),y=center.y+Math.sin(tw)*r*(.38+random()*.52),z=(random()-.5)*3.8+Math.sin(a*2.1)*.32;positions.set([x,y,z],i*3);base.set([x,y,z],i*3);phases[i]=random()*Math.PI*2;sizes[i]=mobile?2.3+random()*4.2:1.35+random()*4;glows[i]=random()>.92?.65+random()*.65:random()*.13}const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('aSize',new THREE.BufferAttribute(sizes,1));geometry.setAttribute('aGlow',new THREE.BufferAttribute(glows,1));const material=makePointMaterial(palette[ci],ci===1?.6:ci===3?.72:.66);field.add(new THREE.Points(geometry,material));const links:Array<[number,number]>=[];for(let i=0;i<count;i++){if(random()>.2)continue;let nearest=-1,nd=.42;const ix=base[i*3],iy=base[i*3+1],iz=base[i*3+2];for(let j=i+1;j<count;j++){const dx=ix-base[j*3],dy=iy-base[j*3+1],dz=iz-base[j*3+2],d=Math.sqrt(dx*dx+dy*dy+dz*dz);if(d<nd){nd=d;nearest=j}}if(nearest>=0)links.push([i,nearest])}const lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(links.length*6),3));const lm=new THREE.LineBasicMaterial({color:palette[ci],transparent:true,opacity:ci===1?.026:ci===3?.05:.04,blending:THREE.AdditiveBlending,depthWrite:false});field.add(new THREE.LineSegments(lg,lm));const ti=Array.from({length:mobile?18:70},()=>Math.floor(random()*count)),tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(ti.length*6),3));const tm=new THREE.LineBasicMaterial({color:palette[ci].clone().lerp(new THREE.Color(0xffffff),.25),transparent:true,opacity:.025,blending:THREE.AdditiveBlending,depthWrite:false});field.add(new THREE.LineSegments(tg,tm));disposables.push(geometry,lg,lm,tg,tm);clouds.push({count,base,velocity,phases,geometry,material,links,linkGeometry:lg,linkMaterial:lm,trailIndices:ti,trailGeometry:tg,trailMaterial:tm})})
- const dustCount=mobile?650:3000,dp=new Float32Array(dustCount*3),db=new Float32Array(dustCount*3),dv=new Float32Array(dustCount*3),dph=new Float32Array(dustCount),ds=new Float32Array(dustCount),dg=new Float32Array(dustCount);for(let i=0;i<dustCount;i++){const clustered=random()<.7;let x:number,y:number,z:number;if(clustered){const c=centers[Math.floor(random()*centers.length)],a=random()*Math.PI*2,r=Math.pow(random(),.72)*2.1;x=c.x+Math.cos(a)*r*(.55+random()*.65);y=c.y+Math.sin(a)*r*(.35+random()*.55);z=(random()-.5)*5.2}else{const a=random()*Math.PI*2,r=.3+Math.pow(random(),.62)*5.5;x=Math.cos(a)*r*.98;y=Math.sin(a)*r*.64;z=(random()-.5)*6.2}dp.set([x,y,z],i*3);db.set([x,y,z],i*3);dph[i]=random()*Math.PI*2;const bright=random();ds[i]=bright>.972?3.5+random()*3.6:mobile?.85+random()*2.1:.6+random()*1.75;dg[i]=bright>.972?1.25:bright>.9?.42:.06+random()*.11}const dustGeometry=new THREE.BufferGeometry();dustGeometry.setAttribute('position',new THREE.BufferAttribute(dp,3));dustGeometry.setAttribute('aSize',new THREE.BufferAttribute(ds,1));dustGeometry.setAttribute('aGlow',new THREE.BufferAttribute(dg,1));const dustMaterial=makePointMaterial(new THREE.Color(0xb7c7ed),.43);field.add(new THREE.Points(dustGeometry,dustMaterial));disposables.push(dustGeometry)
+const pointVertex = `
+uniform float uPixelRatio;
+uniform float uSize;
+attribute float aSize;
+attribute float aGlow;
+varying float vGlow;
+void main(){
+  vec4 mv = modelViewMatrix * vec4(position,1.0);
+  gl_Position = projectionMatrix * mv;
+  gl_PointSize = aSize * uSize * uPixelRatio * (10.0 / max(2.0,-mv.z));
+  vGlow = aGlow;
+}`
 
- // Full-viewport ambient field: independent of the right-shifted semantic nebula group.
- const ambientCount=mobile?360:1850,ambientPositions=new Float32Array(ambientCount*3),ambientSizes=new Float32Array(ambientCount),ambientGlows=new Float32Array(ambientCount)
- for(let i=0;i<ambientCount;i++){ambientPositions.set([-10.8+random()*21.6,-5.4+random()*10.8,-3.2+random()*6.2],i*3);const bright=random();ambientSizes[i]=bright>.986?2.1+random()*2.4:.5+random()*1.3;ambientGlows[i]=bright>.986?.88:.04+random()*.09}
- const ambientGeometry=new THREE.BufferGeometry();ambientGeometry.setAttribute('position',new THREE.BufferAttribute(ambientPositions,3));ambientGeometry.setAttribute('aSize',new THREE.BufferAttribute(ambientSizes,1));ambientGeometry.setAttribute('aGlow',new THREE.BufferAttribute(ambientGlows,1));const ambientMaterial=makePointMaterial(new THREE.Color(0xaebcdf),mobile?.22:.34);const ambientPoints=new THREE.Points(ambientGeometry,ambientMaterial);scene.add(ambientPoints);disposables.push(ambientGeometry)
+const pointFragment = `
+uniform vec3 uColor;
+uniform float uOpacity;
+varying float vGlow;
+void main(){
+  vec2 p = gl_PointCoord - .5;
+  float d = length(p);
+  float core = 1.0 - smoothstep(.025,.11,d);
+  float halo = 1.0 - smoothstep(.08,.5,d);
+  float alpha = (core * 1.5 + halo * (.18 + vGlow * .68)) * uOpacity;
+  if(alpha < .008) discard;
+  gl_FragColor = vec4(uColor,alpha);
+}`
 
- const pointer=new THREE.Vector2(2,2),pw=new THREE.Vector3(999,999,0),pl=new THREE.Vector3(999,999,0),ppl=new THREE.Vector3(999,999,0),ray=new THREE.Raycaster(),plane=new THREE.Plane(new THREE.Vector3(0,0,1),0);let active=false,pv=0,px=0,py=0
- const project=()=>{ray.setFromCamera(pointer,camera);if(ray.ray.intersectPlane(plane,pw)){ppl.copy(pl);pl.copy(pw);field.worldToLocal(pl);if(ppl.x<100)pv=Math.min(.92,pv*.4+ppl.distanceTo(pl)*1.035)}};pointerMoveHandler=e=>{pointer.x=e.clientX/innerWidth*2-1;pointer.y=-(e.clientY/innerHeight)*2+1;px=pointer.x;py=pointer.y;active=true;if(!mobile)project()};pointerLeaveHandler=()=>{active=false};window.addEventListener('pointermove',pointerMoveHandler,{passive:true});window.addEventListener('pointerleave',pointerLeaveHandler,{passive:true});focusHandler=e=>{focused=Number((e as CustomEvent<number>).detail)};window.addEventListener('network-focus',focusHandler)
- resizeHandler=()=>{if(!renderer||!composer)return;const r=canvas.getBoundingClientRect();camera.aspect=r.width/Math.max(r.height,1);camera.updateProjectionMatrix();renderer.setSize(r.width,r.height,false);composer.setSize(r.width,r.height);const ratio=renderer.getPixelRatio();clouds.forEach(c=>c.material.uniforms.uPixelRatio.value=ratio);dustMaterial.uniforms.uPixelRatio.value=ratio;ambientMaterial.uniforms.uPixelRatio.value=ratio};window.addEventListener('resize',resizeHandler);resizeHandler()
- const da=dustGeometry.getAttribute('position') as THREE.BufferAttribute,clock=new THREE.Clock();let last=performance.now();const scatter=(x:number,y:number,z:number,v:Float32Array,o:number,r:number,f:number)=>{if(!active||mobile)return;const dx=x-pl.x,dy=y-pl.y,d=Math.sqrt(dx*dx+dy*dy);if(d>=r||d<.001)return;const fall=Math.pow(1-d/r,2.5),imp=f*fall*(.18+pv*.38),nx=dx/d,ny=dy/d;v[o]+=nx*imp-ny*imp*.035;v[o+1]+=ny*imp+nx*imp*.035;v[o+2]+=(z>=0?1:-1)*imp*.04}
- const render=()=>{const now=performance.now(),dt=Math.min((now-last)/16.667,2);last=now;const t=clock.getElapsedTime();pv*=.82;clouds.forEach((c,ci)=>{focusValues[ci]+=(((focused===ci)?1:0)-focusValues[ci])*.075;const focus=focusValues[ci],a=c.geometry.getAttribute('position') as THREE.BufferAttribute;for(let i=0;i<c.count;i++){const o=i*3,bx=c.base[o],by=c.base[o+1],bz=c.base[o+2],p=c.phases[i];let x=a.getX(i),y=a.getY(i),z=a.getZ(i);const tx=bx+(reducedMotion?0:Math.sin(t*(.28+ci*.016)+p+by*.22)*(.045+focus*.025)),ty=by+(reducedMotion?0:Math.cos(t*(.24+ci*.014)+p*1.13+bx*.21)*(.04+focus*.025)),tz=bz+(reducedMotion?0:Math.sin(t*.31+p*.74)*(.07+focus*.04));scatter(x,y,z,c.velocity,o,.95,.0253);c.velocity[o]+=(tx-x)*.0064*dt;c.velocity[o+1]+=(ty-y)*.0064*dt;c.velocity[o+2]+=(tz-z)*.0058*dt;c.velocity[o]*=.947;c.velocity[o+1]*=.947;c.velocity[o+2]*=.947;x+=c.velocity[o]*dt;y+=c.velocity[o+1]*dt;z+=c.velocity[o+2]*dt;a.setXYZ(i,x,y,z)}a.needsUpdate=true;const la=c.linkGeometry.getAttribute('position') as THREE.BufferAttribute;c.links.forEach(([x,y],i)=>{const o=i*2;la.setXYZ(o,a.getX(x),a.getY(x),a.getZ(x));la.setXYZ(o+1,a.getX(y),a.getY(y),a.getZ(y))});la.needsUpdate=true;const ta=c.trailGeometry.getAttribute('position') as THREE.BufferAttribute;c.trailIndices.forEach((pi,i)=>{const po=pi*3,x=a.getX(pi),y=a.getY(pi),z=a.getZ(pi),len=1.3+Math.min(.7,Math.hypot(c.velocity[po],c.velocity[po+1])*5)*1.5,o=i*2;ta.setXYZ(o,x,y,z);ta.setXYZ(o+1,x-c.velocity[po]*len,y-c.velocity[po+1]*len,z-c.velocity[po+2]*len)});ta.needsUpdate=true;const baseOp=ci===1?.6:ci===3?.72:.66;c.material.uniforms.uOpacity.value=baseOp+focus*.14;c.material.uniforms.uScale.value=1+focus*.16;c.linkMaterial.opacity=(ci===1?.026:ci===3?.05:.04)+focus*.035;c.trailMaterial.opacity=.006+Math.min(.03,pv*.016)+focus*.016})
- for(let i=0;i<dustCount;i++){const o=i*3,p=dph[i];let x=da.getX(i),y=da.getY(i),z=da.getZ(i);const bx=db[o],by=db[o+1],bz=db[o+2],tx=bx+(reducedMotion?0:Math.sin(t*.105+p+by*.04)*.055),ty=by+(reducedMotion?0:Math.cos(t*.09+p*1.2+bx*.04)*.05),tz=bz+(reducedMotion?0:Math.sin(t*.08+p)*.075);scatter(x,y,z,dv,o,1.05,.0184);dv[o]+=(tx-x)*.0043*dt;dv[o+1]+=(ty-y)*.0043*dt;dv[o+2]+=(tz-z)*.0039*dt;dv[o]*=.952;dv[o+1]*=.952;dv[o+2]*=.952;x+=dv[o]*dt;y+=dv[o+1]*dt;z+=dv[o+2]*dt;da.setXYZ(i,x,y,z)}da.needsUpdate=true;dustMaterial.uniforms.uOpacity.value=.43+Math.min(.018,pv*.006)
- nebulae.forEach((n,i)=>{const focus=n.cluster>=0?focusValues[n.cluster]:0,breathe=reducedMotion?1:1+Math.sin(t*.17+n.phase)*.032,activeScale=1+focus*.07;n.sprite.scale.set(n.baseScale.x*breathe*activeScale,n.baseScale.y*breathe*activeScale,1);n.material.opacity=n.baseOpacity+focus*(n.cluster===1?.018:.035)+Math.sin(t*.13+i)*.004;if(!reducedMotion)n.material.rotation+=.00014*(i%2?1:-1)});if(!reducedMotion){field.rotation.y+=((mobile?0:px*.048)+Math.sin(t*.07)*.016-field.rotation.y)*.018;field.rotation.x+=((mobile?0:py*.021)+Math.cos(t*.06)*.01-field.rotation.x)*.018;field.position.y=(mobile?.55:.03)+Math.sin(t*.16)*.04;ambientPoints.rotation.z=Math.sin(t*.035)*.003;ambientPoints.position.x=px*.08;ambientPoints.position.y=py*.04}composer?.render();frame=requestAnimationFrame(render)};render()
+onMounted(async () => {
+  await nextTick()
+  const canvas = document.getElementById('webgl-hero-canvas') as HTMLCanvasElement | null
+  if (!canvas) return
+
+  const mobile = window.innerWidth < 800
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const scene = new THREE.Scene()
+  scene.fog = new THREE.FogExp2(0x02040a, mobile ? .035 : .025)
+
+  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 48, 1, .1, 100)
+  camera.position.set(0, 0, mobile ? 12.5 : 11.5)
+
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.1 : 1.5))
+  renderer.setClearColor(0x02040a, 1)
+  renderer.outputColorSpace = THREE.SRGBColorSpace
+
+  composer = new EffectComposer(renderer)
+  composer.addPass(new RenderPass(scene, camera))
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), mobile ? .42 : .72, .82, .045)
+  bloom.threshold = .035
+  bloom.radius = .82
+  bloom.strength = mobile ? .42 : .72
+  composer.addPass(bloom)
+
+  const world = new THREE.Group()
+  scene.add(world)
+
+  let seed = 42071
+  const random = () => {
+    seed = (seed * 16807) % 2147483647
+    return (seed - 1) / 2147483646
+  }
+
+  const makePointMaterial = (color: number, opacity: number, size = 1) => {
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(color) },
+        uOpacity: { value: opacity },
+        uPixelRatio: { value: renderer!.getPixelRatio() },
+        uSize: { value: size }
+      },
+      vertexShader: pointVertex,
+      fragmentShader: pointFragment,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+    disposables.push(material)
+    return material
+  }
+
+  type Layer = { points: THREE.Points; material: THREE.ShaderMaterial; speed: number }
+  const layers: Layer[] = []
+  const starSpecs = mobile
+    ? [[850, 26, .26, 0xaebbd6], [520, 34, .18, 0x7182ad]]
+    : [[2200, 27, .34, 0xc5d0e6], [1500, 36, .22, 0x8192ba], [1000, 48, .13, 0x5c6e98]]
+
+  starSpecs.forEach((spec, li) => {
+    const [count, spread, opacity, color] = spec as number[]
+    const positions = new Float32Array(count * 3)
+    const sizes = new Float32Array(count)
+    const glows = new Float32Array(count)
+    for (let i = 0; i < count; i++) {
+      const z = 8 - random() * 58
+      const depthScale = 1 + Math.abs(z) * .055
+      positions.set([(random() - .5) * spread * depthScale, (random() - .5) * spread * .58 * depthScale, z], i * 3)
+      const bright = random()
+      sizes[i] = bright > .988 ? 2.5 + random() * 3.8 : .55 + random() * 1.55
+      glows[i] = bright > .988 ? 1.2 : .04 + random() * .14
+    }
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+    geometry.setAttribute('aGlow', new THREE.BufferAttribute(glows, 1))
+    const material = makePointMaterial(color, opacity, 1)
+    const points = new THREE.Points(geometry, material)
+    world.add(points)
+    disposables.push(geometry)
+    layers.push({ points, material, speed: .0025 + li * .0015 })
+  })
+
+  const cloudCanvas = document.createElement('canvas')
+  cloudCanvas.width = 256
+  cloudCanvas.height = 256
+  const ctx = cloudCanvas.getContext('2d')!
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
+  gradient.addColorStop(0, 'rgba(255,255,255,.72)')
+  gradient.addColorStop(.14, 'rgba(255,255,255,.34)')
+  gradient.addColorStop(.38, 'rgba(255,255,255,.11)')
+  gradient.addColorStop(.72, 'rgba(255,255,255,.025)')
+  gradient.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, 256, 256)
+  const cloudTexture = new THREE.CanvasTexture(cloudCanvas)
+  cloudTexture.colorSpace = THREE.SRGBColorSpace
+  disposables.push(cloudTexture)
+
+  type Nebula = { sprite: THREE.Sprite; base: THREE.Vector3; phase: number; opacity: number }
+  const nebulae: Nebula[] = []
+  const nebulaStops = [
+    [-3.8, 1.7, 1.5, 0x4d67ff, 5.6, .072],
+    [3.4, .8, -2.8, 0xb9c8ec, 4.5, .046],
+    [1.8, -2.2, -6.5, 0x4a6fff, 6.4, .065],
+    [-4.5, -1.4, -11, 0x6f80ff, 7.2, .055],
+    [3.6, 2.1, -15, 0xff8255, 5.0, .047],
+    [-1.2, .2, -20, 0x5378ff, 8.2, .058],
+    [4.7, -1.9, -25, 0x9caee0, 6.0, .038],
+    [-4.3, 2.3, -31, 0x395dce, 8.5, .045]
+  ]
+  nebulaStops.forEach((stop, i) => {
+    const [x, y, z, color, scale, opacity] = stop as number[]
+    const material = new THREE.SpriteMaterial({ map: cloudTexture, color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false })
+    const sprite = new THREE.Sprite(material)
+    sprite.position.set(x, y, z)
+    sprite.scale.set(scale, scale * (.55 + random() * .24), 1)
+    material.rotation = random() * Math.PI
+    world.add(sprite)
+    nebulae.push({ sprite, base: sprite.scale.clone(), phase: random() * Math.PI * 2, opacity })
+    disposables.push(material)
+  })
+
+  const createCluster = (x: number, y: number, z: number, color: number, count: number, radius: number) => {
+    const positions = new Float32Array(count * 3)
+    const sizes = new Float32Array(count)
+    const glows = new Float32Array(count)
+    for (let i = 0; i < count; i++) {
+      const a = random() * Math.PI * 2
+      const r = Math.pow(random(), .72) * radius
+      positions.set([x + Math.cos(a) * r, y + Math.sin(a) * r * .68, z + (random() - .5) * radius * 1.5], i * 3)
+      sizes[i] = .8 + random() * 2.7
+      glows[i] = random() > .94 ? .95 : .08 + random() * .18
+    }
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+    geometry.setAttribute('aGlow', new THREE.BufferAttribute(glows, 1))
+    const material = makePointMaterial(color, .56, 1)
+    const points = new THREE.Points(geometry, material)
+    world.add(points)
+    disposables.push(geometry)
+    return points
+  }
+
+  const clusters = [
+    createCluster(-2.4, 1.2, .5, 0x5876ff, mobile ? 110 : 280, 2.2),
+    createCluster(2.9, .8, -7.5, 0xd3ddf1, mobile ? 90 : 220, 1.8),
+    createCluster(1.9, -1.6, -14, 0xff8a5b, mobile ? 90 : 240, 2.0),
+    createCluster(-3.2, -1.1, -21, 0x6581ff, mobile ? 95 : 250, 2.2)
+  ]
+
+  const planetVertex = `varying vec3 vNormal;varying vec3 vView;void main(){vec4 mv=modelViewMatrix*vec4(position,1.0);vNormal=normalize(normalMatrix*normal);vView=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`
+  const planetFragment = `uniform vec3 uColor;uniform float uAlpha;varying vec3 vNormal;varying vec3 vView;void main(){float fres=pow(1.0-max(dot(normalize(vNormal),normalize(vView)),0.0),3.0);float body=.06+fres*.9;gl_FragColor=vec4(uColor*body,uAlpha*(.22+fres*.95));}`
+  const planetGeo = new THREE.SphereGeometry(mobile ? 1.8 : 2.7, 64, 64)
+  const planetMat = new THREE.ShaderMaterial({ uniforms: { uColor: { value: new THREE.Color(0x6f83ff) }, uAlpha: { value: .72 } }, vertexShader: planetVertex, fragmentShader: planetFragment, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })
+  const planet = new THREE.Mesh(planetGeo, planetMat)
+  planet.position.set(mobile ? 3.8 : 4.7, .2, -5.8)
+  world.add(planet)
+  disposables.push(planetGeo, planetMat)
+
+  const ringGeo = new THREE.TorusGeometry(mobile ? 2.4 : 3.5, .012, 8, 220)
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x7f91ff, transparent: true, opacity: .22, blending: THREE.AdditiveBlending, depthWrite: false })
+  const ring = new THREE.Mesh(ringGeo, ringMat)
+  ring.position.copy(planet.position)
+  ring.rotation.set(1.12, .28, .18)
+  world.add(ring)
+  disposables.push(ringGeo, ringMat)
+
+  const farGeo = new THREE.SphereGeometry(1.4, 48, 48)
+  const farMat = planetMat.clone()
+  farMat.uniforms.uColor.value = new THREE.Color(0xff8c63)
+  farMat.uniforms.uAlpha.value = .36
+  const farPlanet = new THREE.Mesh(farGeo, farMat)
+  farPlanet.position.set(-5.2, -2.4, -24)
+  world.add(farPlanet)
+  disposables.push(farGeo, farMat)
+
+  let targetScroll = 0
+  let smoothScroll = 0
+  let px = 0
+  let py = 0
+
+  onScroll = () => {
+    const max = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1)
+    targetScroll = window.scrollY / max
+  }
+  onPointer = (e: PointerEvent) => {
+    px = e.clientX / window.innerWidth * 2 - 1
+    py = -(e.clientY / window.innerHeight) * 2 + 1
+  }
+  onResize = () => {
+    if (!renderer || !composer) return
+    const w = window.innerWidth
+    const h = window.innerHeight
+    camera.aspect = w / Math.max(h, 1)
+    camera.updateProjectionMatrix()
+    renderer.setSize(w, h, false)
+    composer.setSize(w, h)
+    const ratio = renderer.getPixelRatio()
+    layers.forEach(l => { l.material.uniforms.uPixelRatio.value = ratio })
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('pointermove', onPointer, { passive: true })
+  window.addEventListener('resize', onResize)
+  onScroll()
+  onResize()
+
+  const clock = new THREE.Clock()
+  const render = () => {
+    const t = clock.getElapsedTime()
+    smoothScroll += (targetScroll - smoothScroll) * (reduced ? 1 : .035)
+
+    world.position.z = smoothScroll * 28
+    world.rotation.y += ((reduced ? 0 : px * .018 + smoothScroll * .065) - world.rotation.y) * .018
+    world.rotation.x += ((reduced ? 0 : py * .01) - world.rotation.x) * .018
+
+    camera.position.x += ((reduced ? 0 : px * .28) - camera.position.x) * .025
+    camera.position.y += ((reduced ? 0 : py * .18) - camera.position.y) * .025
+
+    layers.forEach((layer, i) => {
+      if (!reduced) {
+        layer.points.rotation.z += layer.speed * .08
+        layer.points.rotation.y = Math.sin(t * (.025 + i * .008)) * .018
+      }
+    })
+
+    nebulae.forEach((n, i) => {
+      const breathe = reduced ? 1 : 1 + Math.sin(t * .16 + n.phase) * .045
+      n.sprite.scale.set(n.base.x * breathe, n.base.y * breathe, 1)
+      ;(n.sprite.material as THREE.SpriteMaterial).opacity = n.opacity + Math.sin(t * .11 + i) * .005
+      if (!reduced) (n.sprite.material as THREE.SpriteMaterial).rotation += .00012 * (i % 2 ? 1 : -1)
+    })
+
+    if (!reduced) {
+      planet.rotation.y = t * .035
+      planet.rotation.x = Math.sin(t * .09) * .05
+      ring.rotation.z = .18 + t * .012
+      farPlanet.rotation.y = -t * .018
+      clusters.forEach((cluster, i) => { cluster.rotation.z = Math.sin(t * (.04 + i * .008)) * .045 })
+    }
+
+    composer?.render()
+    frame = requestAnimationFrame(render)
+  }
+  render()
 })
-onBeforeUnmount(()=>{cancelAnimationFrame(frame);if(pointerMoveHandler)window.removeEventListener('pointermove',pointerMoveHandler);if(pointerLeaveHandler)window.removeEventListener('pointerleave',pointerLeaveHandler);if(focusHandler)window.removeEventListener('network-focus',focusHandler);if(resizeHandler)window.removeEventListener('resize',resizeHandler);disposables.forEach(x=>x.dispose());composer?.dispose();renderer?.dispose()})
+
+onBeforeUnmount(() => {
+  cancelAnimationFrame(frame)
+  if (onResize) window.removeEventListener('resize', onResize)
+  if (onScroll) window.removeEventListener('scroll', onScroll)
+  if (onPointer) window.removeEventListener('pointermove', onPointer)
+  disposables.forEach(item => item.dispose())
+  composer?.dispose()
+  renderer?.dispose()
+})
 </script>
-<template><canvas id="webgl-hero-canvas" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:1;opacity:1;pointer-events:none" /></template>
+
+<template>
+  <canvas id="webgl-hero-canvas" aria-hidden="true" style="position:fixed;inset:0;width:100vw;height:100vh;z-index:0;pointer-events:none" />
+</template>
