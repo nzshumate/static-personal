@@ -11,6 +11,7 @@ let coreGeometry: THREE.BufferGeometry | null = null
 let coreMaterial: THREE.PointsMaterial | null = null
 let lineGeometry: THREE.BufferGeometry | null = null
 let lineMaterial: THREE.LineBasicMaterial | null = null
+let glowLineMaterial: THREE.LineBasicMaterial | null = null
 let onPointerMove: ((event: PointerEvent) => void) | null = null
 let resize: (() => void) | null = null
 
@@ -28,8 +29,8 @@ onMounted(() => {
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const mobile = window.innerWidth < 800
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(mobile ? 56 : 50, 1, 0.1, 100)
-  camera.position.set(0, 0, mobile ? 7.4 : 8.2)
+  const camera = new THREE.PerspectiveCamera(mobile ? 56 : 49, 1, 0.1, 100)
+  camera.position.set(0, 0, mobile ? 7.2 : 8)
 
   renderer = new THREE.WebGLRenderer({
     canvas: canvas.value,
@@ -37,23 +38,25 @@ onMounted(() => {
     alpha: true,
     powerPreference: 'high-performance'
   })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.35 : 1.75))
+  renderer.setClearColor(0x000000, 0)
+  renderer.outputColorSpace = THREE.SRGBColorSpace
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.4 : 2))
 
   const group = new THREE.Group()
-  group.position.set(mobile ? 1.15 : 2.15, mobile ? 0.35 : 0.15, 0)
+  group.position.set(mobile ? 1.15 : 2.25, mobile ? 0.25 : 0.1, 0)
   group.rotation.z = -0.08
   scene.add(group)
 
-  const pointCount = mobile ? 130 : 230
+  const pointCount = mobile ? 115 : 210
   const positions = new Float32Array(pointCount * 3)
   const pointsData: THREE.Vector3[] = []
 
   for (let i = 0; i < pointCount; i++) {
     const angle = seededRandom() * Math.PI * 2
-    const radius = 0.8 + Math.pow(seededRandom(), 0.72) * (mobile ? 3.6 : 4.8)
-    const x = Math.cos(angle) * radius * 1.28
+    const radius = 0.65 + Math.pow(seededRandom(), 0.72) * (mobile ? 3.45 : 4.55)
+    const x = Math.cos(angle) * radius * 1.25
     const y = Math.sin(angle) * radius * 0.72
-    const z = (seededRandom() - 0.5) * 2.8
+    const z = (seededRandom() - 0.5) * 2.2
     positions.set([x, y, z], i * 3)
     pointsData.push(new THREE.Vector3(x, y, z))
   }
@@ -61,10 +64,11 @@ onMounted(() => {
   pointGeometry = new THREE.BufferGeometry()
   pointGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
   pointMaterial = new THREE.PointsMaterial({
-    color: 0x78e7ff,
-    size: mobile ? 0.048 : 0.043,
+    color: 0x8befff,
+    size: mobile ? 0.075 : 0.065,
+    sizeAttenuation: true,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.96,
     blending: THREE.AdditiveBlending,
     depthWrite: false
   })
@@ -82,8 +86,9 @@ onMounted(() => {
 
   coreGeometry = new THREE.BufferGeometry().setFromPoints(corePoints)
   coreMaterial = new THREE.PointsMaterial({
-    color: 0xc9f7ff,
-    size: mobile ? 0.14 : 0.12,
+    color: 0xe2fbff,
+    size: mobile ? 0.23 : 0.2,
+    sizeAttenuation: true,
     transparent: true,
     opacity: 1,
     blending: THREE.AdditiveBlending,
@@ -99,39 +104,52 @@ onMounted(() => {
   for (let i = 0; i < pointCount; i++) {
     for (let j = i + 1; j < pointCount; j++) {
       const distance = pointsData[i].distanceTo(pointsData[j])
-      if (distance < (mobile ? 0.95 : 1.08) && seededRandom() > 0.82) addLine(pointsData[i], pointsData[j])
+      if (distance < (mobile ? 1.05 : 1.15) && seededRandom() > 0.78) addLine(pointsData[i], pointsData[j])
     }
   }
 
   corePoints.forEach((core) => {
     pointsData
       .map(point => ({ point, distance: point.distanceTo(core) }))
-      .filter(item => item.distance < 2.25)
+      .filter(item => item.distance < 2.4)
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, mobile ? 7 : 11)
+      .slice(0, mobile ? 9 : 14)
       .forEach(item => addLine(core, item.point))
   })
 
   for (let i = 0; i < corePoints.length; i++) {
     addLine(corePoints[i], corePoints[(i + 1) % corePoints.length])
+    addLine(corePoints[i], corePoints[(i + 2) % corePoints.length])
   }
 
   lineGeometry = new THREE.BufferGeometry()
   lineGeometry.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3))
-  lineMaterial = new THREE.LineBasicMaterial({
-    color: 0x3b82f6,
+
+  glowLineMaterial = new THREE.LineBasicMaterial({
+    color: 0x0b5cff,
     transparent: true,
-    opacity: mobile ? 0.42 : 0.34,
+    opacity: mobile ? 0.34 : 0.28,
     blending: THREE.AdditiveBlending,
     depthWrite: false
   })
-  group.add(new THREE.LineSegments(lineGeometry, lineMaterial))
+  const glowLines = new THREE.LineSegments(lineGeometry, glowLineMaterial)
+  glowLines.scale.setScalar(1.008)
+  group.add(glowLines)
+
+  lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x65dcff,
+    transparent: true,
+    opacity: mobile ? 0.72 : 0.62,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  })
+  const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial)
+  group.add(lineSegments)
 
   const targetRotation = new THREE.Vector2()
-
   onPointerMove = (event: PointerEvent) => {
-    targetRotation.y = ((event.clientX / window.innerWidth) * 2 - 1) * 0.12
-    targetRotation.x = (-(event.clientY / window.innerHeight) * 2 + 1) * 0.06
+    targetRotation.y = ((event.clientX / window.innerWidth) * 2 - 1) * 0.2
+    targetRotation.x = (-(event.clientY / window.innerHeight) * 2 + 1) * 0.1
   }
 
   resize = () => {
@@ -150,11 +168,15 @@ onMounted(() => {
   const render = () => {
     const t = clock.getElapsedTime()
     if (!prefersReducedMotion) {
-      group.rotation.y += (targetRotation.y - group.rotation.y) * 0.018
-      group.rotation.x += (targetRotation.x - group.rotation.x) * 0.018
-      group.rotation.z = -0.08 + Math.sin(t * 0.16) * 0.018
-      points.rotation.y = t * 0.012
-      if (coreMaterial) coreMaterial.size = (mobile ? 0.14 : 0.12) + Math.sin(t * 1.4) * 0.012
+      const idleY = Math.sin(t * 0.22) * 0.055
+      const idleX = Math.cos(t * 0.18) * 0.025
+      group.rotation.y += (targetRotation.y + idleY - group.rotation.y) * 0.028
+      group.rotation.x += (targetRotation.x + idleX - group.rotation.x) * 0.028
+      group.rotation.z = -0.08 + Math.sin(t * 0.2) * 0.025
+      group.position.y = (mobile ? 0.25 : 0.1) + Math.sin(t * 0.35) * 0.08
+      points.rotation.y = t * 0.025
+      if (coreMaterial) coreMaterial.size = (mobile ? 0.23 : 0.2) + Math.sin(t * 1.8) * 0.025
+      if (lineMaterial) lineMaterial.opacity = (mobile ? 0.72 : 0.62) + Math.sin(t * 0.9) * 0.08
     }
     renderer?.render(scene, camera)
     frame = requestAnimationFrame(render)
@@ -173,6 +195,7 @@ onBeforeUnmount(() => {
   coreMaterial?.dispose()
   lineGeometry?.dispose()
   lineMaterial?.dispose()
+  glowLineMaterial?.dispose()
   renderer?.dispose()
 })
 </script>
