@@ -4,7 +4,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { createBiomes, Z_STEP } from './biomes'
-import { lerp, pulse, smoothstep } from './math'
+import { lerp, smoothstep } from './math'
 import { createSpace } from './space'
 
 export type WorldHandle = {
@@ -106,24 +106,14 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
 
     const travel = progress * Z_STEP * 7
     journey.position.z = travel
-    space.setOpacity(1 - smoothstep(0.05, 0.16, progress))
+    space.setOpacity(1 - smoothstep(0.03, 0.09, progress))
     space.update(time, progress, reduced)
     biomes.update(time, progress, reduced)
 
     const stations = [space.group, ...biomes.groups]
-    const windows: Array<[number, number, number]> = [
-      [0, 0.04, 0.15],
-      [0.08, 0.17, 0.27],
-      [0.2, 0.3, 0.4],
-      [0.34, 0.43, 0.52],
-      [0.47, 0.56, 0.66],
-      [0.61, 0.69, 0.78],
-      [0.73, 0.81, 0.9],
-      [0.84, 0.93, 1.05]
-    ]
+    const chapter = Math.min(stations.length - 1, Math.max(0, Math.round(progress * 7)))
     stations.forEach((group, index) => {
-      const [start, peak, end] = windows[index]
-      group.visible = pulse(progress, start, peak, end) > 0.03
+      group.visible = index === chapter
     })
 
     const bg = mixColor(progress)
