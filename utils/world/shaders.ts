@@ -227,9 +227,9 @@ void main() {
 `
 
 export const domeVertex = `
-varying float vY;
+varying vec3 vDir;
 void main() {
-  vY = normalize(position).y;
+  vDir = position;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
@@ -237,12 +237,91 @@ void main() {
 export const domeFragment = `
 uniform vec3 uZenith;
 uniform vec3 uHorizon;
+uniform vec3 uSunColor;
+uniform vec3 uSunPos;
 uniform float uOpacity;
-varying float vY;
+varying vec3 vDir;
 void main() {
-  float h = smoothstep(-0.2, 0.82, vY);
+  vec3 dir = normalize(vDir);
+  float h = smoothstep(-0.18, 0.82, dir.y);
   vec3 color = mix(uHorizon, uZenith, h);
+  vec3 sunDir = normalize(uSunPos);
+  float sun = pow(max(dot(dir, sunDir), 0.0), 92.0);
+  float glow = pow(max(dot(dir, sunDir), 0.0), 7.0);
+  float haze = pow(max(1.0 - abs(dir.y), 0.0), 2.4);
+  color += uSunColor * (sun * 1.55 + glow * 0.38);
+  color += uHorizon * haze * 0.18;
   gl_FragColor = vec4(color, uOpacity);
+}
+`
+
+export const terrainVertex = `
+varying vec3 vWorldPos;
+varying vec3 vNormalW;
+varying float vHeight;
+void main() {
+  vHeight = position.y;
+  vNormalW = normalize(mat3(modelMatrix) * normal);
+  vec4 world = modelMatrix * vec4(position, 1.0);
+  vWorldPos = world.xyz;
+  gl_Position = projectionMatrix * viewMatrix * world;
+}
+`
+
+export const terrainFragment = `
+uniform vec3 uLow;
+uniform vec3 uMid;
+uniform vec3 uHigh;
+uniform vec3 uLightDir;
+uniform float uTime;
+uniform float uSeed;
+varying vec3 vWorldPos;
+varying vec3 vNormalW;
+varying float vHeight;
+
+float hash(vec3 p) {
+  p = fract(p * 0.3183099 + 0.1);
+  p *= 17.0;
+  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float noise(vec3 p) {
+  vec3 i = floor(p);
+  vec3 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(
+    mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
+    mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y),
+    f.z
+  );
+}
+
+float fbm(vec3 p) {
+  float value = 0.0;
+  float amp = 0.5;
+  for (int i = 0; i < 5; i++) {
+    value += amp * noise(p);
+    p = p * 2.03 + vec3(1.7, 9.2, 4.1);
+    amp *= 0.5;
+  }
+  return value;
+}
+
+void main() {
+  vec3 n = normalize(vNormalW);
+  vec3 view = normalize(cameraPosition - vWorldPos);
+  float light = max(dot(n, normalize(uLightDir)), 0.0);
+  float rim = pow(1.0 - max(dot(n, view), 0.0), 3.2);
+  float slope = 1.0 - abs(n.y);
+  vec3 p = vWorldPos * (0.22 + uSeed * 0.04) + vec3(uTime * 0.01, 0.0, uTime * 0.006);
+  float grain = fbm(p * 1.6);
+  float fine = fbm(p * 5.2);
+  vec3 color = mix(uLow, uMid, smoothstep(-3.4, -1.6, vHeight) + grain * 0.18);
+  color = mix(color, uHigh, smoothstep(-0.7, 1.1, vHeight) * (1.0 - slope * 0.72));
+  color = mix(color, uLow, slope * 0.32 + fine * 0.08);
+  color *= 0.16 + light * 0.92;
+  color += uHigh * rim * 0.14;
+  gl_FragColor = vec4(color, 1.0);
 }
 `
 
@@ -267,9 +346,17 @@ uniform vec3 uShallow;
 uniform float uOpacity;
 varying vec2 vUv;
 varying float vWave;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
 void main() {
-  vec3 color = mix(uDeep, uShallow, smoothstep(0.08, 0.86, vUv.y));
-  color += vec3(0.18, 0.28, 0.3) * smoothstep(0.04, 0.12, vWave);
+  float spark = pow(max(sin((vUv.x * 38.0) + vWave * 18.0) * sin(vUv.y * 22.0), 0.0), 10.0);
+  vec3 color = mix(uDeep, uShallow, smoothstep(0.08, 0.86, vUv.y + vWave * 1.8));
+  color += vec3(0.22, 0.34, 0.36) * smoothstep(0.03, 0.11, vWave);
+  color += vec3(0.55, 0.78, 0.82) * spark * 0.18;
+  color += (hash(vUv * 80.0) - 0.5) * 0.03;
   gl_FragColor = vec4(color, uOpacity);
 }
 `

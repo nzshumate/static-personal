@@ -4,7 +4,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { createBiomes, Z_STEP } from './biomes'
-import { lerp, smoothstep } from './math'
+import { lerp, pulse, smoothstep } from './math'
 import { createSpace } from './space'
 
 export type WorldHandle = {
@@ -13,13 +13,13 @@ export type WorldHandle = {
 
 const backgrounds = [
   new THREE.Color(0x02040a),
-  new THREE.Color(0x16324c),
-  new THREE.Color(0x6f8294),
-  new THREE.Color(0x0c1812),
-  new THREE.Color(0x2a1c12),
-  new THREE.Color(0x0c1816),
-  new THREE.Color(0x163844),
-  new THREE.Color(0x021018)
+  new THREE.Color(0x0b1c3a),
+  new THREE.Color(0x2a3a4c),
+  new THREE.Color(0x06140f),
+  new THREE.Color(0x1a2438),
+  new THREE.Color(0x071412),
+  new THREE.Color(0x16344c),
+  new THREE.Color(0x01080e)
 ]
 
 const mixColor = (value: number) => {
@@ -34,9 +34,8 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
 
   const scene = new THREE.Scene()
   scene.background = backgrounds[0].clone()
-  scene.fog = new THREE.FogExp2(0x02040a, 0.014)
 
-  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 46, 1, 0.1, 180)
+  const camera = new THREE.PerspectiveCamera(mobile ? 58 : 46, 1, 0.1, 240)
   camera.position.set(0, 0.35, 11)
 
   const renderer = new THREE.WebGLRenderer({
@@ -112,21 +111,29 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
     biomes.update(time, progress, reduced)
 
     const stations = [space.group, ...biomes.groups]
-    stations.forEach((group) => {
-      const worldZ = journey.position.z + group.position.z
-      group.visible = worldZ > -48 && worldZ < 22
+    const windows: Array<[number, number, number]> = [
+      [0, 0.04, 0.15],
+      [0.08, 0.17, 0.27],
+      [0.2, 0.3, 0.4],
+      [0.34, 0.43, 0.52],
+      [0.47, 0.56, 0.66],
+      [0.61, 0.69, 0.78],
+      [0.73, 0.81, 0.9],
+      [0.84, 0.93, 1.05]
+    ]
+    stations.forEach((group, index) => {
+      const [start, peak, end] = windows[index]
+      group.visible = pulse(progress, start, peak, end) > 0.03
     })
 
     const bg = mixColor(progress)
     scene.background = bg
-    ;(scene.fog as THREE.FogExp2).color.copy(bg)
-    ;(scene.fog as THREE.FogExp2).density = 0.012 + smoothstep(0.82, 1, progress) * 0.02
-    hemi.intensity = 0.48 - smoothstep(0.82, 1, progress) * 0.2
-    key.intensity = 1.9 - smoothstep(0.5, 0.72, progress) * 0.4 - smoothstep(0.82, 1, progress) * 0.8
+    hemi.intensity = 0.42 - smoothstep(0.82, 1, progress) * 0.16
+    key.intensity = 2.05 - smoothstep(0.5, 0.72, progress) * 0.35 - smoothstep(0.82, 1, progress) * 0.7
     key.color.set(progress < 0.5 ? 0xffe6c4 : progress < 0.72 ? 0xc8e0d4 : 0x7ec8d4)
-    renderer.toneMappingExposure = 0.98 - smoothstep(0.84, 1, progress) * 0.14
-    bloom.strength = lerp(mobile ? 0.18 : 0.26, mobile ? 0.08 : 0.12, smoothstep(0.08, 0.22, progress))
-    bloom.strength = lerp(bloom.strength, mobile ? 0.12 : 0.18, smoothstep(0.84, 1, progress))
+    renderer.toneMappingExposure = 1.02 - smoothstep(0.84, 1, progress) * 0.16
+    bloom.strength = lerp(mobile ? 0.2 : 0.28, mobile ? 0.08 : 0.12, smoothstep(0.08, 0.22, progress))
+    bloom.strength = lerp(bloom.strength, mobile ? 0.12 : 0.2, smoothstep(0.84, 1, progress))
 
     camera.position.x += (px * 0.24 - camera.position.x) * 0.04
     camera.position.y += (0.28 - progress * 0.9 - smoothstep(0.84, 1, progress) * 0.5 + py * 0.08 - camera.position.y) * 0.04
