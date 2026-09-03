@@ -24,7 +24,7 @@ import {
   makeYeti,
   matte
 } from './details'
-import { makeRng, pulse } from './math'
+import { makeRng } from './math'
 import { domeFragment, domeVertex, pointFragment, pointVertex, sunFragment, sunVertex, terrainFragment, terrainVertex, waterFragment, waterVertex } from './shaders'
 
 export const Z_STEP = 26
@@ -193,7 +193,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const dummy = new THREE.Object3D()
 
   const sky = new THREE.Group()
-  addDome(sky, 0x0b1c3a, 0x8fb4d2, 0xffc878, new THREE.Vector3(-10, 6, -8))
+  addDome(sky, 0x10346a, 0x9cc6e6, 0xffc878, new THREE.Vector3(-10, 6, -8))
   sky.add(new THREE.HemisphereLight(0xb7d4f0, 0x243044, 0.62))
   const skyFill = new THREE.DirectionalLight(0xe8f0f8, 0.9)
   skyFill.position.set(-6, 8, 4)
@@ -391,12 +391,18 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   dunes.rotateX(-Math.PI / 2)
   displace(dunes, (x, z) => -2.7 + Math.sin(x * 0.36 + z * 0.16) * 0.82 + Math.sin(x * 0.14 - z * 0.28) * 0.48)
   const duneMat = addTerrain(desert, dunes, 0x8a4a22, 0xc48a48, 0xf0d08a, 3.1)
-  for (let i = 0; i < 5; i++) {
+  const cactusSpots = [
+    [-7.4, -3.2, 1.05],
+    [-5.9, -5.6, 0.8],
+    [-2.1, -4.1, 0.95],
+    [1.8, -6.4, 0.7]
+  ]
+  cactusSpots.forEach(([x, z, s]) => {
     const cactus = makeCactus(random)
-    cactus.position.set(-7.2 + i * 3.1, -2.55, -3.8 - random() * 2.4)
-    cactus.scale.setScalar(0.85 + random() * 0.25)
+    cactus.position.set(x, -2.55, z)
+    cactus.scale.setScalar(s)
     desert.add(cactus)
-  }
+  })
   const pyramid = new THREE.Mesh(new THREE.ConeGeometry(1.35, 1.6, 4), matte(0xb8864c, { roughness: 1 }))
   pyramid.position.set(6.6, -1.55, -8.2)
   pyramid.rotation.y = 0.62
@@ -430,7 +436,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   swamp.add(swampWater.mesh)
   const cypressCount = mobile ? 16 : 30
   const cypress = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.26, 4.4, 7), matte(0x2e2620), cypressCount)
-  const moss = new THREE.InstancedMesh(new THREE.ConeGeometry(0.62, 2.6, 7), matte(0x16301f, { roughness: 1 }), cypressCount)
+  const moss = new THREE.InstancedMesh(new THREE.ConeGeometry(0.78, 2.1, 7), matte(0x18341f, { roughness: 1 }), cypressCount)
   for (let i = 0; i < cypressCount; i++) {
     const depth = random()
     const x = (random() - 0.5) * 24
@@ -498,7 +504,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   eyeR.position.set(0.22, 0.06, -0.06)
   gator.add(gatorBody, eyeL, eyeR)
   swamp.add(gator)
-  tick.push((time, progress, reduced) => {
+  tick.push((time, _progress, reduced) => {
     swampWater.material.uniforms.uTime.value = time
     wisps.points.position.y = Math.sin(time * 0.25) * 0.12
     if (reduced) return
@@ -512,8 +518,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     boat.position.set(-1.4 + Math.sin(time * 0.12) * 1.1, -2.72, -4.2)
     boat.rotation.z = Math.sin(time * 0.5) * 0.04
     heron.position.set(-2.8, -2.12 + Math.sin(time * 0.4) * 0.03, -2.7)
-    gator.visible = pulse(progress, 0.62, 0.68, 0.74) > 0.12 || Math.sin(time * 0.25) > 0.2
-    gator.position.set(3.2 + Math.sin(time * 0.08) * 0.45, -2.82, -3.5)
+    gator.position.set(3.2 + Math.sin(time * 0.08) * 0.45, -2.9 + Math.sin(time * 0.3) * 0.02, -3.5)
   })
   groups.push(swamp)
 
@@ -620,9 +625,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   )
   veil.position.z = -11
   ocean.add(veil)
-  const marine = addPoints(ocean, renderer, mobile ? 360 : 980, 0xb7eef2, 0.6, () =>
+  const marine = addPoints(ocean, renderer, mobile ? 180 : 420, 0xb7eef2, 0.5, () =>
     new THREE.Vector3((random() - 0.5) * 20, (random() - 0.5) * 12, -1 - random() * 14)
   )
+  marine.material.uniforms.uOpacity.value = 0.38
   const fishColors = [0x3aa8ae, 0x7ec8d4, 0xf2b24a, 0x6f9ae0]
   const fish = Array.from({ length: mobile ? 8 : 12 }, (_, i) => {
     const item = makeFish(fishColors[i % fishColors.length])
@@ -636,22 +642,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   jelly.forEach((item) => ocean.add(item.group))
   const shark = makeShark()
   ocean.add(shark.group)
-  const whale = new THREE.Group()
-  const whaleBody = new THREE.Mesh(new THREE.SphereGeometry(0.72, 20, 14), new THREE.MeshBasicMaterial({ color: 0x2a5a68 }))
-  whaleBody.scale.set(2.5, 0.7, 0.82)
-  const fluke = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.4, 5), new THREE.MeshBasicMaterial({ color: 0x2a5a68 }))
-  fluke.rotation.z = -Math.PI / 2
-  fluke.position.x = -1.85
-  whale.add(whaleBody, fluke)
-  ocean.add(whale)
-  const wreck = new THREE.Group()
-  wreck.add(new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.35, 0.55), matte(0x3a2a1c, { roughness: 1 })))
-  wreck.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.4), matte(0x2a2018)))
-  wreck.children[1].position.set(0.4, 0.3, 0)
-  wreck.position.set(-5.2, -3.1, -7)
-  wreck.rotation.z = -0.18
-  ocean.add(wreck)
-  tick.push((time, progress, reduced) => {
+  tick.push((time, _progress, reduced) => {
     ;(veil.material as THREE.ShaderMaterial).uniforms.uTime.value = time
     marine.points.position.y = -((time * 0.08) % 1.2)
     if (reduced) return
@@ -671,8 +662,6 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     shark.group.visible = patrol < 0.42
     shark.group.position.set(-9 + (patrol / 0.42) * 18, -0.6 + Math.sin(time * 0.4) * 0.14, -5.4)
     shark.update(time, reduced)
-    whale.visible = pulse(progress, 0.88, 0.94, 1.02) > 0.12
-    whale.position.set(-10 + ((time * 0.1) % 18), -2.15, -8.5)
   })
   groups.push(ocean)
 
