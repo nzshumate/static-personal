@@ -100,20 +100,20 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
   const render = () => {
     const time = clock.getElapsedTime()
     const delta = target - progress
-    progress += reduced || Math.abs(delta) > 0.22 ? delta : delta * 0.07
+    progress += reduced || Math.abs(delta) > 0.28 ? delta : delta * 0.055
     const px = reduced ? 0 : pointerX
     const py = reduced ? 0 : pointerY
 
     const travel = progress * Z_STEP * 7
     journey.position.z = travel
-    space.setOpacity(1 - smoothstep(0.03, 0.09, progress))
+    space.setOpacity(1 - smoothstep(0.04, 0.12, progress))
     space.update(time, progress, reduced)
     biomes.update(time, progress, reduced)
 
     const stations = [space.group, ...biomes.groups]
-    const chapter = Math.min(stations.length - 1, Math.max(0, Math.round(progress * 7)))
+    const scaled = progress * 7
     stations.forEach((group, index) => {
-      group.visible = index === chapter
+      group.visible = Math.abs(scaled - index) < 0.72
     })
 
     const bg = mixColor(progress)
@@ -125,10 +125,10 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
     bloom.strength = lerp(mobile ? 0.2 : 0.28, mobile ? 0.08 : 0.12, smoothstep(0.08, 0.22, progress))
     bloom.strength = lerp(bloom.strength, mobile ? 0.12 : 0.2, smoothstep(0.84, 1, progress))
 
-    camera.position.x += (px * 0.24 - camera.position.x) * 0.04
-    camera.position.y += (0.28 - progress * 0.9 - smoothstep(0.84, 1, progress) * 0.5 + py * 0.08 - camera.position.y) * 0.04
-    camera.rotation.z += (px * 0.012 - camera.rotation.z) * 0.03
-    camera.rotation.x += ((-0.02 - progress * 0.035) - camera.rotation.x) * 0.03
+    camera.position.x += (px * 0.14 - camera.position.x) * 0.03
+    camera.position.y += (0.28 - progress * 0.9 - smoothstep(0.84, 1, progress) * 0.5 + py * 0.05 - camera.position.y) * 0.03
+    camera.rotation.z += (px * 0.008 - camera.rotation.z) * 0.025
+    camera.rotation.x += ((-0.02 - progress * 0.035) - camera.rotation.x) * 0.025
 
     composer.render()
     frame = requestAnimationFrame(render)
@@ -141,6 +141,19 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('pointermove', onPointer)
       window.removeEventListener('resize', onResize)
+      journey.traverse((object) => {
+        const mesh = object as THREE.Mesh
+        if (mesh.geometry) mesh.geometry.dispose()
+        const material = mesh.material
+        if (!material) return
+        const list = Array.isArray(material) ? material : [material]
+        list.forEach((item) => {
+          Object.values(item).forEach((value) => {
+            if (value && typeof value === 'object' && 'dispose' in value && typeof value.dispose === 'function') value.dispose()
+          })
+          item.dispose()
+        })
+      })
       composer.dispose()
       renderer.dispose()
     }

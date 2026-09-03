@@ -8,11 +8,11 @@ export default defineNuxtConfig({
     families: { Inter: [400, 500, 600, 700, 800], 'Space+Grotesk': [500, 600, 700] },
     display: 'swap', prefetch: true, preconnect: true
   },
-  app: { head: { htmlAttrs: { lang: 'en' }, title: 'Nathan Shumate — Software Engineer & Technical Leader', meta: [
-    { name: 'description', content: 'Software engineering, technical leadership, AI, architecture, and experiments by Nathan Shumate.' },
+  app: { head: { htmlAttrs: { lang: 'en' }, title: 'Nathan Shumate, software engineer', meta: [
+    { name: 'description', content: 'Software engineering, technical leadership, architecture, and the ways AI is changing how we build.' },
     { name: 'theme-color', content: '#02040a' },
-    { property: 'og:title', content: 'Nathan Shumate — Software Engineer & Technical Leader' },
-    { property: 'og:description', content: 'I build software and the teams that build it.' },
+    { property: 'og:title', content: 'Nathan Shumate, software engineer' },
+    { property: 'og:description', content: 'I’ve been building software for 15 years. It’s somehow getting interesting again.' },
     { property: 'og:type', content: 'website' }
   ] } },
   nitro: { preset: 'static' }

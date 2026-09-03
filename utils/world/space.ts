@@ -251,8 +251,21 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     lights.push(lamp)
   }
   ufo.add(hull, rim, dome)
-  ufo.scale.setScalar(mobile ? 0.95 : 1.35)
+  ufo.scale.setScalar(mobile ? 0.62 : 0.82)
   group.add(ufo)
+
+  const streakMat = new THREE.SpriteMaterial({
+    map: dustTex,
+    color: 0xe8f0ff,
+    transparent: true,
+    opacity: 0,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  })
+  const streak = new THREE.Sprite(streakMat)
+  streak.scale.set(2.8, 0.08, 1)
+  streak.visible = false
+  group.add(streak)
 
   const key = new THREE.DirectionalLight(0xffe7c4, 2.4)
   key.position.copy(sun.position)
@@ -276,6 +289,7 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     ice.atmo.visible = value > 0.22
     satellite.visible = value > 0.2
     ufo.visible = value > 0.18
+    streak.visible = value > 0.2 && streakMat.opacity > 0.02
   }
 
   const update = (time: number, progress: number, reduced: boolean) => {
@@ -291,13 +305,24 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     ice.mesh.rotation.y = time * 0.04
     satellite.position.set(5.4 - progress * 9, 1.15 + Math.sin(time * 0.22) * 0.18, -1.2)
     satellite.rotation.set(0.4, time * 0.08, 0.18 + Math.sin(time * 0.2) * 0.12)
-    ufo.position.set(Math.sin(time * 0.22) * 4.6, 1.85 + Math.sin(time * 0.9) * 0.28, -1.15)
-    ufo.rotation.z = Math.sin(time * 0.7) * 0.06
-    ufo.rotation.y = time * 0.15
+    ufo.position.set(Math.sin(time * 0.11) * 6.8, 2.35 + Math.sin(time * 0.4) * 0.16, -4.8)
+    ufo.rotation.z = Math.sin(time * 0.4) * 0.04
+    ufo.rotation.y = time * 0.08
     lights.forEach((lamp, i) => {
       const mat = lamp.material as THREE.MeshStandardMaterial
-      mat.emissiveIntensity = 0.7 + Math.pow(Math.max(0, Math.sin(time * 6 + i)), 4) * 1.4
+      mat.emissiveIntensity = 0.55 + Math.pow(Math.max(0, Math.sin(time * 4 + i)), 4) * 1.1
     })
+    const burst = (time * 0.07) % 1
+    if (burst < 0.09) {
+      const t = burst / 0.09
+      streak.visible = true
+      streak.position.set(-11 + t * 22, 3.2 - t * 3.6, -9)
+      streak.material.rotation = -0.42
+      streakMat.opacity = Math.sin(t * Math.PI) * 0.55
+    } else {
+      streak.visible = false
+      streakMat.opacity = 0
+    }
     stars.rotation.z = Math.sin(time * 0.02) * 0.01
   }
 
