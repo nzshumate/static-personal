@@ -150,10 +150,10 @@ export const makeBalloon = (envelope: number): Tickable => {
     new THREE.Vector2(0.065, -0.54)
   ]
   const bulb = new THREE.Mesh(new THREE.LatheGeometry(profile, 22), cloth)
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.016, 6, 24), cream)
+  const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.485, 0.022, 6, 24), cream)
   stripe.rotation.x = Math.PI / 2
   stripe.position.y = 0.06
-  const stripe2 = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.014, 6, 22), cream)
+  const stripe2 = new THREE.Mesh(new THREE.TorusGeometry(0.405, 0.02, 6, 22), cream)
   stripe2.rotation.x = Math.PI / 2
   stripe2.position.y = -0.2
   const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.08, 0.045, 10), cream)
@@ -969,41 +969,46 @@ export const makeShark = (): Tickable => {
 // Bell is a revolved cap with a rim and a glowing core; oral arms hang thick under the mouth, tentacles drape from the edge.
 export const makeJelly = (color: number): Tickable => {
   const group = new THREE.Group()
-  const glass = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide })
-  const inner = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.42, depthWrite: false })
-  const strandMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.34, depthWrite: false })
+  const glass = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.48, depthWrite: false, side: THREE.DoubleSide })
+  const inner = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.62, depthWrite: false })
+  const strandMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.5, depthWrite: false })
   const bell = new THREE.Group()
   const shell = new THREE.Mesh(new THREE.LatheGeometry([
-    new THREE.Vector2(0.01, 0.22),
-    new THREE.Vector2(0.14, 0.18),
-    new THREE.Vector2(0.24, 0.08),
-    new THREE.Vector2(0.27, -0.01),
-    new THREE.Vector2(0.22, -0.05),
-    new THREE.Vector2(0.16, -0.04)
-  ], 20), glass)
-  const core = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), emit(color, 0.55))
-  core.scale.set(1, 0.7, 1)
-  core.position.y = 0.06
+    new THREE.Vector2(0.01, 0.24),
+    new THREE.Vector2(0.12, 0.2),
+    new THREE.Vector2(0.22, 0.1),
+    new THREE.Vector2(0.28, 0.0),
+    new THREE.Vector2(0.3, -0.04),
+    new THREE.Vector2(0.2, -0.07),
+    new THREE.Vector2(0.12, -0.04)
+  ], 22), glass)
+  const core = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), emit(color, 0.85))
+  core.scale.set(1.15, 0.65, 1.15)
+  core.position.y = 0.05
+  const gonad = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), emit(color, 1.1))
+  gonad.position.set(0.04, 0.08, 0.02)
+  const gonad2 = gonad.clone()
+  gonad2.position.set(-0.035, 0.07, -0.03)
   const rim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.22, 0.018, 6, 20),
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4, depthWrite: false })
+    new THREE.TorusGeometry(0.26, 0.028, 6, 22),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, depthWrite: false })
   )
   rim.rotation.x = Math.PI / 2
-  rim.position.y = -0.04
-  bell.add(shell, core, rim)
+  rim.position.y = -0.05
+  bell.add(shell, core, gonad, gonad2, rim)
   const arms: THREE.Group[] = []
   const armCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0.03, -0.1, 0.01),
-    new THREE.Vector3(-0.02, -0.2, 0.02),
-    new THREE.Vector3(0.02, -0.28, 0)
+    new THREE.Vector3(0.05, -0.12, 0.02),
+    new THREE.Vector3(-0.04, -0.24, 0.03),
+    new THREE.Vector3(0.03, -0.34, 0)
   ])
-  const armGeo = new THREE.TubeGeometry(armCurve, 8, 0.018, 5, false)
+  const armGeo = new THREE.TubeGeometry(armCurve, 8, 0.028, 6, false)
   for (let i = 0; i < 4; i++) {
     const arm = new THREE.Group()
     const mesh = new THREE.Mesh(armGeo, inner)
     const a = (i / 4) * Math.PI * 2
-    arm.position.set(Math.cos(a) * 0.04, -0.02, Math.sin(a) * 0.04)
+    arm.position.set(Math.cos(a) * 0.05, -0.02, Math.sin(a) * 0.05)
     arm.rotation.y = -a
     arm.add(mesh)
     group.add(arm)
@@ -1012,11 +1017,12 @@ export const makeJelly = (color: number): Tickable => {
   const tentacles: THREE.Group[] = []
   const tentCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0.04, -0.22, 0.02),
-    new THREE.Vector3(-0.03, -0.48, 0.03),
-    new THREE.Vector3(0.05, -0.78, 0)
+    new THREE.Vector3(0.08, -0.2, 0.03),
+    new THREE.Vector3(-0.1, -0.44, 0.04),
+    new THREE.Vector3(0.12, -0.7, 0.02),
+    new THREE.Vector3(-0.04, -0.95, 0)
   ])
-  const tentGeo = new THREE.TubeGeometry(tentCurve, 10, 0.007, 4, false)
+  const tentGeo = new THREE.TubeGeometry(tentCurve, 12, 0.012, 5, false)
   for (let i = 0; i < 8; i++) {
     const tent = new THREE.Group()
     const mesh = new THREE.Mesh(tentGeo, strandMat)

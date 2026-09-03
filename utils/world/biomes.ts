@@ -218,7 +218,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   }
   const balloons = [makeBalloon(0xc45a3a), makeBalloon(0x3a6aa8), makeBalloon(0xd4a24a)]
   balloons.forEach((item, i) => {
-    item.group.scale.setScalar([1.35, 0.85, 0.55][i])
+    item.group.scale.setScalar([1.55, 0.95, 0.62][i])
     sky.add(item.group)
   })
   const birds = Array.from({ length: mobile ? 5 : 7 }, () => makeBird(0x1a222b))
@@ -830,7 +830,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     return item
   })
   const jelly = [makeJelly(0x6fe3d8), makeJelly(0x7aa8ff), makeJelly(0x9ad4ff)]
-  jelly.forEach((item) => ocean.add(item.group))
+  jelly.forEach((item, i) => {
+    item.group.scale.setScalar(1.45 + i * 0.12)
+    ocean.add(item.group)
+  })
   const shark = makeShark()
   ocean.add(shark.group)
   tick.push((time, _progress, reduced) => {
