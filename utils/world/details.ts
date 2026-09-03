@@ -26,6 +26,7 @@ export const makeBird = (color: number): Tickable => {
   left.position.set(-0.12, 0.01, 0)
   right.position.set(0.12, 0.01, 0)
   group.add(body, left, right)
+  group.scale.setScalar(1.8)
   group.userData = { left, right, phase: Math.random() * Math.PI * 2 }
   return {
     group,
@@ -199,7 +200,8 @@ export const makeFirefly = (): Tickable => {
     new THREE.MeshBasicMaterial({ color: 0x9ae05a, transparent: true, opacity: 0.35, depthWrite: false })
   )
   tail.rotation.z = Math.PI / 2
-  tail.position.x = -0.12
+  tail.position.x = -0.18
+  tail.scale.set(1, 1.6, 1)
   group.add(core, halo, tail)
   group.userData = { core, halo, tail, phase: Math.random() * Math.PI * 2, speed: 0.35 + Math.random() * 0.45 }
   return {
@@ -356,8 +358,8 @@ export const makeLighthouse = () => {
   const group = new THREE.Group()
   const tower = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.24, 2.1, 12), matte(0xf0ece4))
   tower.position.y = 1.05
-  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.175, 0.21, 0.28, 12), matte(0xc4333d))
-  stripe.position.y = 1.15
+  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.185, 0.22, 0.38, 12), matte(0xc4333d))
+  stripe.position.y = 1.25
   const stripe2 = stripe.clone()
   stripe2.position.y = 0.55
   const lantern = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.28, 10), emit(0xfff1c4, 1.5))
@@ -441,12 +443,12 @@ export const makeFish = (color: number): Tickable => {
   const skin = basic(color)
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), skin)
   body.scale.set(1.7, 0.7, 0.48)
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 7), skin)
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 7), skin)
   nose.rotation.z = -Math.PI / 2
-  nose.position.x = 0.28
-  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.2, 5), skin)
-  tail.rotation.z = -Math.PI / 2
-  tail.position.x = -0.3
+  nose.position.x = 0.3
+  const tail = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.2), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }))
+  tail.position.x = -0.34
+  tail.rotation.y = Math.PI / 2
   const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 4), skin)
   fin.position.set(0.02, 0.12, 0)
   const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), basic(0xf2f6f8))
@@ -456,7 +458,7 @@ export const makeFish = (color: number): Tickable => {
   return {
     group,
     update: (time) => {
-      tail.rotation.y = Math.sin(time * 8) * 0.35
+      tail.rotation.y = Math.PI / 2 + Math.sin(time * 8) * 0.2
     }
   }
 }
@@ -471,11 +473,11 @@ export const makeJelly = (color: number): Tickable => {
   const tentacles: THREE.Mesh[] = []
   for (let i = 0; i < 6; i++) {
     const strand = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.008, 0.004, 0.55, 5),
+      new THREE.CylinderGeometry(0.01, 0.005, 0.72, 5),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.32, depthWrite: false })
     )
     const a = (i / 6) * Math.PI * 2
-    strand.position.set(Math.cos(a) * 0.1, -0.28, Math.sin(a) * 0.1)
+    strand.position.set(Math.cos(a) * 0.1, -0.36, Math.sin(a) * 0.1)
     group.add(strand)
     tentacles.push(strand)
   }
@@ -498,7 +500,7 @@ export const makeKelp = (random: () => number): Tickable => {
   const h = 1.6 + random() * 1.4
   const count = 7
   for (let i = 0; i < count; i++) {
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, h / count, 0.03), matte(0x1c5a3a, { roughness: 1 }))
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, h / count, 0.04), new THREE.MeshBasicMaterial({ color: 0x2a8a4a }))
     blade.position.y = (i + 0.5) * (h / count)
     group.add(blade)
     segs.push(blade)

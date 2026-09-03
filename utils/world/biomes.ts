@@ -255,7 +255,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const skier = makeSkier()
   mountains.add(skier.group)
   const yeti = makeYeti()
-  yeti.position.set(5.2, -1.15, -4.6)
+  yeti.position.set(4.4, -1.2, -3.6)
+  yeti.scale.setScalar(1.35)
   mountains.add(yeti)
   tick.push((time, progress, reduced) => {
     mountainMat.uniforms.uTime.value = time
@@ -264,10 +265,13 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     smoke.material.opacity = 0.1 + Math.sin(time * 0.9) * 0.05
     if (reduced) return
     const along = ((time * 0.34) % 13)
-    skier.group.position.set(-6.2 + along, -1.72 + Math.sin(time * 0.5) * 0.05, -2.15)
+    skier.group.scale.setScalar(1.85)
+    skier.group.position.set(-3.4 + along * 0.7, -1.55 + Math.sin(time * 0.5) * 0.05, -2)
     skier.update(time, reduced)
-    yeti.visible = pulse(progress, 0.22, 0.3, 0.4) > 0.05 || Math.sin(time * 0.18) > 0.35
-    yeti.rotation.y = Math.sin(time * 0.2) * 0.15
+    yeti.visible = true
+    yeti.scale.setScalar(1.35)
+    yeti.position.set(4.4, -1.2, -3.6)
+    yeti.rotation.y = -0.6 + Math.sin(time * 0.2) * 0.12
   })
   groups.push(mountains)
 
@@ -321,10 +325,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   }
   const camp = addSprite(forest, glow, 0xff8a3a, 0.28, new THREE.Vector3(1.6, -2.7, -3.1), new THREE.Vector2(0.9, 0.7), true)
   const bear = makeBear()
-  bear.scale.setScalar(1.35)
+  bear.scale.setScalar(1.9)
   forest.add(bear)
   const fox = makeFox()
-  fox.scale.setScalar(1.45)
+  fox.scale.setScalar(2)
   forest.add(fox)
   tick.push((time, _progress, reduced) => {
     forestFloor.uniforms.uTime.value = time
@@ -353,11 +357,6 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     cactus.scale.setScalar(0.85 + random() * 0.25)
     desert.add(cactus)
   }
-  const oasis = addWater(0x0a3a40, 0x3aa8ae, 0.04, 0.88, 1.35, 1.35, 28)
-  oasis.mesh.geometry.dispose()
-  oasis.mesh.geometry = new THREE.CircleGeometry(0.85, 32)
-  oasis.mesh.position.set(-1.2, -2.56, -5.4)
-  desert.add(oasis.mesh)
   const pyramid = new THREE.Mesh(new THREE.ConeGeometry(1.35, 1.6, 4), matte(0xb8864c, { roughness: 1 }))
   pyramid.position.set(6.6, -1.55, -8.2)
   pyramid.rotation.y = 0.62
@@ -372,11 +371,12 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   tick.push((time, _progress, reduced) => {
     desertSun.material.uniforms.uTime.value = time
     duneMat.uniforms.uTime.value = time
-    oasis.material.uniforms.uTime.value = time
     if (reduced) return
-    tumble.group.position.set(-7.4 + ((time * 0.42) % 16), -2.35 + Math.abs(Math.sin(time * 1.5)) * 0.28, -2.5)
+    tumble.group.scale.setScalar(1.7)
+    tumble.group.position.set(-4.8 + ((time * 0.42) % 12), -2.2 + Math.abs(Math.sin(time * 1.5)) * 0.28, -2.3)
     tumble.update(time, reduced)
-    snake.group.position.set(Math.sin(time * 0.16) * 3.8, -2.62, -3)
+    snake.group.scale.setScalar(2.1)
+    snake.group.position.set(Math.sin(time * 0.16) * 2.4, -2.45, -2.5)
     snake.update(time, reduced)
   })
   groups.push(desert)
@@ -412,15 +412,17 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const pads: THREE.Group[] = []
   for (let i = 0; i < (mobile ? 8 : 14); i++) {
     const pad = makeLilyPad(random)
-    pad.position.set((random() - 0.5) * 10, -2.84, -2.2 - random() * 6)
+    pad.scale.setScalar(1.8)
+    pad.position.set((random() - 0.5) * 8, -2.84, -1.8 - random() * 4)
     pad.rotation.y = random() * Math.PI
     swamp.add(pad)
     pads.push(pad)
   }
   const frogs = [makeFrog(), makeFrog(), makeFrog()]
   frogs.forEach((frog, i) => {
+    frog.scale.setScalar(2.2)
     frog.position.copy(pads[i].position)
-    frog.position.y += 0.05
+    frog.position.y += 0.08
     swamp.add(frog)
   })
   const boat = new THREE.Group()

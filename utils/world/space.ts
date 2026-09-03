@@ -251,7 +251,7 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     lights.push(lamp)
   }
   ufo.add(hull, rim, dome)
-  ufo.scale.setScalar(mobile ? 0.55 : 0.72)
+  ufo.scale.setScalar(mobile ? 0.95 : 1.35)
   group.add(ufo)
 
   const key = new THREE.DirectionalLight(0xffe7c4, 2.4)
@@ -291,7 +291,7 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     ice.mesh.rotation.y = time * 0.04
     satellite.position.set(5.4 - progress * 9, 1.15 + Math.sin(time * 0.22) * 0.18, -1.2)
     satellite.rotation.set(0.4, time * 0.08, 0.18 + Math.sin(time * 0.2) * 0.12)
-    ufo.position.set(Math.sin(time * 0.18) * 6.2, 1.7 + Math.sin(time * 0.9) * 0.22, -2.4)
+    ufo.position.set(Math.sin(time * 0.22) * 4.6, 1.85 + Math.sin(time * 0.9) * 0.28, -1.15)
     ufo.rotation.z = Math.sin(time * 0.7) * 0.06
     ufo.rotation.y = time * 0.15
     lights.forEach((lamp, i) => {
