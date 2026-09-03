@@ -53,16 +53,47 @@ export const makeBird = (color: number): Tickable => {
   }
 }
 
+// Three cloud families so the sky does not repeat one blob: flat stratus, towering cumulus, and thin wisps.
 export const makeCloud = (random: () => number) => {
   const group = new THREE.Group()
   const lit = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false })
   const shade = new THREE.MeshLambertMaterial({ color: 0xc5d0dc, transparent: true, opacity: 0.9, depthWrite: false })
-  const count = 4 + Math.floor(random() * 3)
-  for (let i = 0; i < count; i++) {
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.38 + random() * 0.28, 12, 8), i % 2 ? shade : lit)
-    ball.position.set((random() - 0.5) * 1.6, (random() - 0.4) * 0.32, (random() - 0.5) * 0.55)
-    ball.scale.set(1.35 + random() * 0.45, 0.48 + random() * 0.18, 0.95)
+  const kind = random()
+  const puff = (x: number, y: number, z: number, r: number, sx: number, sy: number, dark = false) => {
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), dark ? shade : lit)
+    ball.position.set(x, y, z)
+    ball.scale.set(sx, sy, 0.95)
     group.add(ball)
+  }
+  if (kind < 0.4) {
+    // Stratus: a long low bank with a flat, shaded underside.
+    const count = 5 + Math.floor(random() * 4)
+    const width = 2 + random() * 1.6
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1)
+      puff((t - 0.5) * width, (random() - 0.5) * 0.14, (random() - 0.5) * 0.4, 0.3 + random() * 0.18, 1.7 + random() * 0.6, 0.38 + random() * 0.12, random() > 0.6)
+    }
+    puff(0, -0.12, 0, 0.3, width * 0.9, 0.22, true)
+  } else if (kind < 0.8) {
+    // Cumulus: a wide base with a taller, brighter tower off center.
+    const base = 3 + Math.floor(random() * 3)
+    for (let i = 0; i < base; i++) {
+      puff((random() - 0.5) * 1.5, (random() - 0.6) * 0.18, (random() - 0.5) * 0.5, 0.36 + random() * 0.2, 1.25 + random() * 0.35, 0.5 + random() * 0.15, i % 2 === 1)
+    }
+    const towerX = (random() - 0.5) * 0.8
+    puff(towerX, 0.26, 0, 0.42 + random() * 0.14, 0.95, 0.9 + random() * 0.3)
+    puff(towerX + 0.36, 0.14, 0.1, 0.3, 0.9, 0.75)
+    puff(towerX - 0.3, 0.1, -0.08, 0.26, 0.85, 0.7)
+  } else {
+    // Wisps: two or three thin streaks, mostly translucent.
+    const count = 2 + Math.floor(random() * 2)
+    for (let i = 0; i < count; i++) {
+      const streak = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 6), new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.45 + random() * 0.2, depthWrite: false }))
+      streak.position.set((random() - 0.5) * 1.2, i * 0.14 - 0.1, (random() - 0.5) * 0.3)
+      streak.scale.set(3.4 + random() * 1.6, 0.18 + random() * 0.08, 0.6)
+      streak.rotation.z = (random() - 0.5) * 0.1
+      group.add(streak)
+    }
   }
   return group
 }
@@ -504,12 +535,89 @@ export const makeLilyPad = (random: () => number) => {
   const notch = new THREE.Mesh(new THREE.CircleGeometry(0.05, 8), matte(0x071c1c, { side: THREE.DoubleSide }))
   notch.rotation.x = -Math.PI / 2
   notch.position.set(0.14, 0.002, 0)
-  group.add(pad)
+  group.add(pad, notch)
   if (random() > 0.55) {
-    const bloom = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), matte(0xf2d6e4))
-    bloom.position.y = 0.03
+    // Water lily: two rings of pointed petals opening around a yellow center.
+    const bloom = new THREE.Group()
+    const petalGeo = finShape([[0, 0], [0.028, 0.045], [0, 0.11], [-0.028, 0.045]])
+    const outer = matte(0xf4dbe6, { side: THREE.DoubleSide, roughness: 0.6 })
+    const inner = matte(0xfbeef4, { side: THREE.DoubleSide, roughness: 0.6 })
+    for (let ring = 0; ring < 2; ring++) {
+      const count = ring === 0 ? 8 : 6
+      for (let i = 0; i < count; i++) {
+        const petal = new THREE.Mesh(petalGeo, ring === 0 ? outer : inner)
+        const a = (i / count) * Math.PI * 2 + ring * 0.4
+        petal.position.set(Math.cos(a) * 0.012, 0.015 + ring * 0.01, Math.sin(a) * 0.012)
+        petal.rotation.order = 'YXZ'
+        petal.rotation.y = -a + Math.PI / 2
+        petal.rotation.x = ring === 0 ? -0.95 : -0.55
+        petal.scale.setScalar(ring === 0 ? 1 : 0.72)
+        bloom.add(petal)
+      }
+    }
+    const center = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), emit(0xf2c14a, 0.5))
+    center.position.y = 0.035
+    center.scale.y = 0.6
+    bloom.add(center)
+    bloom.position.set((random() - 0.5) * 0.06, 0.006, (random() - 0.5) * 0.06)
+    bloom.rotation.y = random() * Math.PI
     group.add(bloom)
   }
+  return group
+}
+
+// Great blue heron at rest: S-curved neck, dagger bill, folded wings, one leg planted in the shallows.
+export const makeHeron = () => {
+  const group = new THREE.Group()
+  const plume = matte(0xb9c2c9, { roughness: 0.85 })
+  const dark = matte(0x3f4b56, { roughness: 0.85 })
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), plume)
+  body.scale.set(1.55, 0.85, 0.8)
+  body.position.y = 0.42
+  body.rotation.z = 0.18
+  const wing = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), dark)
+  wing.scale.set(1.5, 0.55, 0.35)
+  wing.position.set(-0.02, 0.47, 0.06)
+  wing.rotation.z = 0.2
+  const wing2 = wing.clone()
+  wing2.position.z = -0.06
+  const tailFeathers = new THREE.Mesh(new THREE.ConeGeometry(0.035, 0.2, 5), dark)
+  tailFeathers.rotation.z = Math.PI / 2 + 0.35
+  tailFeathers.position.set(-0.2, 0.4, 0)
+  const neckCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.12, 0.48, 0),
+    new THREE.Vector3(0.2, 0.62, 0),
+    new THREE.Vector3(0.17, 0.78, 0),
+    new THREE.Vector3(0.24, 0.9, 0)
+  ])
+  const neck = new THREE.Mesh(new THREE.TubeGeometry(neckCurve, 12, 0.03, 7, false), plume)
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), plume)
+  head.scale.set(1.35, 0.85, 0.8)
+  head.position.set(0.27, 0.91, 0)
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), dark)
+  cap.scale.set(1.6, 0.5, 0.7)
+  cap.position.set(0.25, 0.94, 0)
+  const crest = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.11, 5), dark)
+  crest.rotation.z = Math.PI / 2 + 0.25
+  crest.position.set(0.17, 0.95, 0)
+  const bill = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.22, 6), matte(0xd6a24a, { roughness: 0.5 }))
+  bill.rotation.z = -Math.PI / 2 - 0.08
+  bill.position.set(0.42, 0.9, 0)
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), matte(0xf2c14a))
+  eye.position.set(0.29, 0.92, 0.036)
+  const legMat = matte(0x5a5148, { roughness: 0.9 })
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.009, 0.44, 5), legMat)
+  leg.position.set(0.02, 0.2, 0.03)
+  const leg2 = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.009, 0.32, 5), legMat)
+  leg2.position.set(-0.04, 0.3, -0.03)
+  leg2.rotation.z = 0.5
+  const ripple = new THREE.Mesh(
+    new THREE.RingGeometry(0.05, 0.11, 14),
+    new THREE.MeshBasicMaterial({ color: 0x0a1f1c, transparent: true, opacity: 0.5, depthWrite: false })
+  )
+  ripple.rotation.x = -Math.PI / 2
+  ripple.position.set(0.02, 0.004, 0.03)
+  group.add(body, wing, wing2, tailFeathers, neck, head, cap, crest, bill, eye, leg, leg2, ripple)
   return group
 }
 

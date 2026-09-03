@@ -1,9 +1,9 @@
 <script setup lang="ts">
 const year = new Date().getFullYear()
+const activeChapter = ref(0)
 const chapters = [
   {
     id: 'top',
-    n: '01',
     biome: 'Orbit',
     kicker: 'Engineering · Leadership · AI',
     title: 'I’ve been building software for 15 years.\nIt’s somehow getting interesting again.',
@@ -11,7 +11,6 @@ const chapters = [
   },
   {
     id: 'sky',
-    n: '02',
     biome: 'Sky',
     kicker: 'Perspective',
     title: 'The code is the easy part.',
@@ -19,7 +18,6 @@ const chapters = [
   },
   {
     id: 'mountains',
-    n: '03',
     biome: 'Mountains',
     kicker: 'Architecture',
     title: 'Good architecture buys freedom.',
@@ -27,7 +25,6 @@ const chapters = [
   },
   {
     id: 'forest',
-    n: '04',
     biome: 'Forest',
     kicker: 'Leadership',
     title: 'Hire smart people.\nGive them context.\nGet out of the way.',
@@ -35,7 +32,6 @@ const chapters = [
   },
   {
     id: 'desert',
-    n: '05',
     biome: 'Desert',
     kicker: 'AI & Automation',
     title: 'AI changed the game.',
@@ -43,7 +39,6 @@ const chapters = [
   },
   {
     id: 'swamp',
-    n: '06',
     biome: 'Swamp',
     kicker: 'Product engineering',
     title: 'Complexity happens.',
@@ -51,7 +46,6 @@ const chapters = [
   },
   {
     id: 'beach',
-    n: '07',
     biome: 'Shoreline',
     kicker: 'Exploration',
     title: 'I still like building things.',
@@ -59,7 +53,6 @@ const chapters = [
   },
   {
     id: 'contact',
-    n: '08',
     biome: 'The Deep',
     kicker: 'Contact',
     title: 'Tell me the hard problem.',
@@ -73,6 +66,22 @@ useSeoMeta({
   ogTitle: 'Nathan Shumate, software engineer',
   ogDescription: 'I’ve been building software for 15 years. It’s somehow getting interesting again.'
 })
+
+const syncChapter = () => {
+  const max = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+  activeChapter.value = Math.min(chapters.length - 1, Math.max(0, Math.round((window.scrollY / max) * 7)))
+}
+
+onMounted(() => {
+  syncChapter()
+  window.addEventListener('scroll', syncChapter, { passive: true })
+  window.addEventListener('resize', syncChapter)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', syncChapter)
+  window.removeEventListener('resize', syncChapter)
+})
 </script>
 
 <template>
@@ -82,6 +91,21 @@ useSeoMeta({
     </ClientOnly>
     <div class="grain" aria-hidden="true" />
     <div class="edge-fade journey-fade" aria-hidden="true" />
+
+    <nav class="journey-nav" aria-label="Chapters">
+      <ol>
+        <li v-for="(chapter, index) in chapters" :key="chapter.id">
+          <a
+            :href="'#' + chapter.id"
+            :class="{ current: activeChapter === index }"
+            :aria-current="activeChapter === index ? 'location' : undefined"
+          >
+            <span class="journey-nav-name">{{ chapter.biome }}</span>
+            <span class="journey-nav-mark" aria-hidden="true" />
+          </a>
+        </li>
+      </ol>
+    </nav>
 
     <header class="floating-nav">
       <a class="identity" href="#top" aria-label="Nathan Shumate, back to top">
@@ -107,7 +131,6 @@ useSeoMeta({
       class="scene journey-scene"
       :class="[`biome-${chapter.id}`, { 'scene-hero': index === 0, 'scene-contact': index === chapters.length - 1 }]"
     >
-      <div class="chapter-index">{{ chapter.n }} / 08 · {{ chapter.biome }}</div>
       <div class="journey-copy" :class="{ 'journey-copy-right': index % 2 === 1 }">
         <p class="scene-kicker">{{ chapter.kicker }}</p>
         <h1 v-if="index === 0">
@@ -128,10 +151,6 @@ useSeoMeta({
           target="_blank"
           rel="noreferrer"
         >GitHub <span>↗</span></a>
-      </div>
-      <div class="biome-label" aria-hidden="true">
-        <span>{{ chapter.biome }}</span>
-        <i />
       </div>
       <a v-if="index === 0" class="scroll-cue" href="#sky"><span>Scroll</span><i>↓</i></a>
       <footer v-if="index === chapters.length - 1">
