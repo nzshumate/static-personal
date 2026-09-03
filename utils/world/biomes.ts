@@ -3,7 +3,6 @@ import {
   makeBalloon,
   makeBear,
   makeBird,
-  makeBottle,
   makeCabin,
   makeCactus,
   makeCloud,
@@ -201,35 +200,40 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   sky.add(skyFill)
   const skySun = addStar(sky, glow, new THREE.Vector3(-8.4, 3.4, -10), 0.42)
   const clouds: THREE.Group[] = []
-  for (let i = 0; i < (mobile ? 8 : 12); i++) {
+  for (let i = 0; i < (mobile ? 7 : 11); i++) {
     const cloud = makeCloud(random)
-    cloud.position.set((random() - 0.5) * 20, 0.9 + random() * 2.8, -5 - random() * 8)
-    cloud.scale.setScalar(1.15 + random() * 0.7)
+    const depth = random()
+    cloud.position.set(-11 + random() * 16 - depth * 3, -0.4 + random() * 3.6 + depth * 0.8, -4 - depth * 14)
+    cloud.scale.setScalar(0.9 + depth * 1.6)
     cloud.userData.homeX = cloud.position.x
     cloud.userData.drift = 0.12 + random() * 0.18
     sky.add(cloud)
     clouds.push(cloud)
   }
   const balloons = [makeBalloon(0xc45a3a), makeBalloon(0x3a6aa8), makeBalloon(0xd4a24a)]
-  balloons.forEach((item) => {
-    item.group.scale.setScalar(1.45)
+  balloons.forEach((item, i) => {
+    item.group.scale.setScalar([1.35, 0.85, 0.55][i])
     sky.add(item.group)
   })
-  const birds = Array.from({ length: mobile ? 10 : 16 }, () => makeBird(0x1a222b))
-  birds.forEach((item) => sky.add(item.group))
+  const birds = Array.from({ length: mobile ? 5 : 7 }, () => makeBird(0x1a222b))
+  birds.forEach((item) => {
+    item.group.scale.setScalar(2)
+    sky.add(item.group)
+  })
   tick.push((time, _progress, reduced) => {
     skySun.material.uniforms.uTime.value = time
     skySun.corona.scale.setScalar(1.7 + Math.sin(time * 0.6) * 0.06)
     if (reduced) return
-    balloons[0].group.position.set(2.4, 1.7 + Math.sin(time * 0.22) * 0.16, -4.2)
-    balloons[1].group.position.set(-3.6, 1.15 + Math.sin(time * 0.18 + 1) * 0.14, -5.4)
-    balloons[2].group.position.set(4.8, 2.05 + Math.sin(time * 0.16 + 2) * 0.12, -6.8)
+    balloons[0].group.position.set(-3.2, 1.2 + Math.sin(time * 0.22) * 0.16, -3.6)
+    balloons[1].group.position.set(-6.4, 2.3 + Math.sin(time * 0.18 + 1) * 0.12, -8.5)
+    balloons[2].group.position.set(1.6, 2.9 + Math.sin(time * 0.16 + 2) * 0.1, -13)
     balloons.forEach((item) => item.update(time, reduced))
     clouds.forEach((cloud, i) => {
       cloud.position.x = cloud.userData.homeX + Math.sin(time * 0.05 + i) * cloud.userData.drift
     })
     birds.forEach((item, i) => {
-      item.group.position.set(-7 + ((time * 0.18 + i * 0.7) % 16), 0.85 + (i % 4) * 0.28 + Math.sin(time * 0.7 + i) * 0.06, -2.1 - (i % 3) * 0.35)
+      const t = ((time * 0.12 + i * 0.09) % 1)
+      item.group.position.set(-9 + t * 12, -1.1 + i * 0.16 + Math.sin(t * Math.PI) * 0.9, -5.5 - (i % 3) * 0.5)
       item.update(time, reduced)
     })
   })
@@ -275,11 +279,11 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const skier = makeSkier()
   mountains.add(skier.group)
   const yeti = makeYeti()
-  const yetiX = 3.85
-  const yetiZ = 0.35
-  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.28, yetiZ)
-  yeti.scale.setScalar(1.85)
-  yeti.rotation.y = -1.05
+  const yetiX = 7.4
+  const yetiZ = -4.6
+  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.32, yetiZ)
+  yeti.scale.setScalar(1.25)
+  yeti.rotation.y = -1.25
   mountains.add(yeti)
   tick.push((time, _progress, reduced) => {
     mountainMat.uniforms.uTime.value = time
@@ -301,13 +305,13 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     smoke3.position.y = 2.5 + Math.sin(time * 0.6 + 1.7) * 0.18
     smoke3.material.opacity = 0.12 + Math.sin(time * 0.7 + 1.1) * 0.08
     if (reduced) return
-    const t = (time * 0.14) % 1
-    const sx = 1.7 + t * 2.1
-    const sz = 0.7 - t * 0.45
-    skier.group.scale.setScalar(2.05)
+    const t = (time * 0.09) % 1
+    const sx = 2.4 + t * 3.4
+    const sz = 0.2 - t * 2.6
+    skier.group.scale.setScalar(1.6)
     skier.group.position.set(sx, ridgeHeight(sx, sz) + 0.08, sz)
     skier.update(time, reduced)
-    yeti.rotation.y = -1.05 + Math.sin(time * 0.2) * 0.12
+    yeti.rotation.y = -1.25 + Math.sin(time * 0.2) * 0.1
   })
   groups.push(mountains)
 
@@ -424,17 +428,22 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const swampWater = addWater(0x071c1c, 0x2c5648, 0.05, 0.9, 34, 22, mobile ? 50 : 90)
   swampWater.mesh.position.y = -2.88
   swamp.add(swampWater.mesh)
-  const cypressCount = mobile ? 22 : 44
-  const cypress = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.22, 4.4, 7), matte(0x3d3228), cypressCount)
-  const moss = new THREE.InstancedMesh(new THREE.SphereGeometry(0.55, 10, 8), matte(0x1c3a28, { roughness: 1 }), cypressCount)
+  const cypressCount = mobile ? 16 : 30
+  const cypress = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.06, 0.26, 4.4, 7), matte(0x2e2620), cypressCount)
+  const moss = new THREE.InstancedMesh(new THREE.ConeGeometry(0.62, 2.6, 7), matte(0x16301f, { roughness: 1 }), cypressCount)
   for (let i = 0; i < cypressCount; i++) {
-    dummy.position.set((random() - 0.5) * 22, -1.05, -2 - random() * 12)
-    dummy.scale.set(0.8 + random() * 0.85, 0.85 + random() * 1.25, 0.8 + random() * 0.85)
-    dummy.rotation.z = (random() - 0.5) * 0.1
+    const depth = random()
+    const x = (random() - 0.5) * 24
+    const z = -3 - depth * 12
+    const s = 0.75 + random() * 0.6 + depth * 0.5
+    dummy.position.set(x, -1.05, z)
+    dummy.scale.set(s, s * 1.1, s)
+    dummy.rotation.z = (random() - 0.5) * 0.08
     dummy.updateMatrix()
     cypress.setMatrixAt(i, dummy.matrix)
-    dummy.position.y += 1.6 * dummy.scale.y
-    dummy.scale.set(dummy.scale.x * 1.6, dummy.scale.y * 0.55, dummy.scale.z * 1.4)
+    dummy.position.y = -1.05 + 2.2 * s * 1.1 + 0.6 * s
+    dummy.scale.set(s * 1.2, s * 1.35, s * 1.2)
+    dummy.rotation.z = 0
     dummy.updateMatrix()
     moss.setMatrixAt(i, dummy.matrix)
   }
@@ -527,28 +536,37 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   foam.position.set(0, -3.04, -10.4)
   beach.add(foam)
   const palms: THREE.Group[] = []
-  for (let i = 0; i < 4; i++) {
+  const palmSpots = [
+    [3.2, 1.9, 1.05],
+    [4.6, 1.2, 0.9],
+    [6.3, 2.3, 1.15]
+  ]
+  palmSpots.forEach(([x, z, s]) => {
     const palm = makePalm(random)
-    palm.position.set(-6.2 + i * 1.7, -3.12, 2.1 - (i % 2) * 0.55)
+    palm.position.set(x, -3.12, z)
+    palm.scale.setScalar(s)
     beach.add(palm)
     palms.push(palm)
-  }
+  })
   const lightHouse = makeLighthouse()
-  lightHouse.position.set(5.8, -3.12, -2.4)
+  lightHouse.position.set(-7.6, -3.12, -7.8)
+  lightHouse.scale.setScalar(1.1)
   beach.add(lightHouse)
-  const beam = addSprite(beach, glow, 0xfff1c4, 0.22, new THREE.Vector3(5.8, -0.9, -2.4), new THREE.Vector2(3.4, 0.4), true)
+  const beam = addSprite(beach, glow, 0xfff1c4, 0.2, new THREE.Vector3(-7.6, -0.45, -7.8), new THREE.Vector2(3.4, 0.4), true)
   const sail = makeSailboat()
-  sail.scale.setScalar(1.85)
+  sail.scale.setScalar(1.6)
   beach.add(sail)
   const umbrella = makeUmbrella()
-  umbrella.position.set(-2.2, -3.12, 1.7)
+  umbrella.position.set(2.1, -3.12, 0.6)
+  umbrella.rotation.y = -0.4
   beach.add(umbrella)
   const crab = makeCrab()
   beach.add(crab)
-  const bottle = makeBottle()
-  beach.add(bottle)
-  const gulls = Array.from({ length: 7 }, () => makeBird(0xf0f3f6))
-  gulls.forEach((item) => beach.add(item.group))
+  const gulls = Array.from({ length: 4 }, () => makeBird(0xf0f3f6))
+  gulls.forEach((item) => {
+    item.group.scale.setScalar(1.6)
+    beach.add(item.group)
+  })
   tick.push((time, _progress, reduced) => {
     beachSun.material.uniforms.uTime.value = time
     sandMat.uniforms.uTime.value = time
@@ -561,13 +579,13 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
       palm.rotation.z = Math.sin(time * 0.35 + i) * 0.025
     })
     if (reduced) return
-    sail.position.set(1.6 + Math.sin(time * 0.15) * 1.2, -2.88, -13.6)
+    sail.position.set(2.8 + Math.sin(time * 0.12) * 1.4, -2.9, -13.8)
     sail.rotation.z = Math.sin(time * 0.6) * 0.04
     if (sail.userData.flag) sail.userData.flag.rotation.y = Math.sin(time * 3.2) * 0.25
-    bottle.position.set(-1.4, -3.08, -6.8)
-    crab.position.set(0.4 + Math.sin(time * 0.25) * 0.9, -3.08, -6.2)
+    crab.position.set(1.4 + Math.sin(time * 0.25) * 0.7, -3.08, -4.8)
     gulls.forEach((item, i) => {
-      item.group.position.set(-6 + ((time * 0.2 + i) % 15), 1.3 + (i % 3) * 0.28, -4)
+      const t = ((time * 0.1 + i * 0.22) % 1)
+      item.group.position.set(-9 + t * 18, 0.9 + i * 0.22 + Math.sin(t * Math.PI * 2) * 0.25, -7 - (i % 2) * 1.2)
       item.update(time, reduced)
     })
   })
@@ -605,15 +623,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const marine = addPoints(ocean, renderer, mobile ? 360 : 980, 0xb7eef2, 0.6, () =>
     new THREE.Vector3((random() - 0.5) * 20, (random() - 0.5) * 12, -1 - random() * 14)
   )
-  const fishColors = [0x3aa8ae, 0x7ec8d4, 0xf2b24a, 0xe87850, 0x6f9ae0]
-  const fish = Array.from({ length: mobile ? 12 : 20 }, (_, i) => {
+  const fishColors = [0x3aa8ae, 0x7ec8d4, 0xf2b24a, 0x6f9ae0]
+  const fish = Array.from({ length: mobile ? 8 : 12 }, (_, i) => {
     const item = makeFish(fishColors[i % fishColors.length])
-    item.group.userData = { ...item.group.userData, dir: i % 2 ? 1 : -1, speed: 0.16 + random() * 0.22, y: -2.2 + random() * 4.2, z: -1.6 - random() * 6.5, phase: random() * 10 }
-    item.group.scale.setScalar(1.15 + random() * 0.35)
+    const depth = random()
+    item.group.userData = { ...item.group.userData, dir: i % 3 ? 1 : -1, speed: 0.1 + random() * 0.14, y: -2.4 + random() * 3.2 + depth, z: -2 - depth * 8, phase: random() * 10 }
+    item.group.scale.setScalar(0.85 + random() * 0.3)
     ocean.add(item.group)
     return item
   })
-  const jelly = [makeJelly(0x6fe3d8), makeJelly(0x7aa8ff), makeJelly(0x6fe3d8), makeJelly(0x9ad4ff)]
+  const jelly = [makeJelly(0x6fe3d8), makeJelly(0x7aa8ff), makeJelly(0x9ad4ff)]
   jelly.forEach((item) => ocean.add(item.group))
   const shark = makeShark()
   ocean.add(shark.group)
@@ -625,21 +644,6 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   fluke.position.x = -1.85
   whale.add(whaleBody, fluke)
   ocean.add(whale)
-  const turtle = new THREE.Group()
-  turtle.add(new THREE.Mesh(new THREE.SphereGeometry(0.22, 14, 10), new THREE.MeshBasicMaterial({ color: 0x4a8a62 })))
-  turtle.children[0].scale.set(1.3, 0.45, 1)
-  const flipper = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.02, 0.08), new THREE.MeshBasicMaterial({ color: 0x3a6a4a }))
-  flipper.position.set(0.12, 0, 0.16)
-  turtle.add(flipper, flipper.clone())
-  turtle.children[2].position.z = -0.16
-  ocean.add(turtle)
-  const angler = new THREE.Group()
-  angler.add(new THREE.Mesh(new THREE.SphereGeometry(0.18, 12, 10), matte(0x0c1820)))
-  angler.children[0].scale.set(1.4, 0.8, 0.7)
-  const lure = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), new THREE.MeshStandardMaterial({ color: 0xc8ff7a, emissive: 0xc8ff7a, emissiveIntensity: 1.6, fog: false }))
-  lure.position.set(0.22, 0.22, 0)
-  angler.add(lure)
-  ocean.add(angler)
   const wreck = new THREE.Group()
   wreck.add(new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.35, 0.55), matte(0x3a2a1c, { roughness: 1 })))
   wreck.add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.4), matte(0x2a2018)))
@@ -647,15 +651,6 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   wreck.position.set(-5.2, -3.1, -7)
   wreck.rotation.z = -0.18
   ocean.add(wreck)
-  const sub = new THREE.Group()
-  sub.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.74, 6, 10), new THREE.MeshStandardMaterial({ color: 0x6a7a82, metalness: 0.78, roughness: 0.28, fog: false })))
-  sub.children[0].rotation.z = Math.PI / 2
-  const tower = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.16, 0.18), new THREE.MeshStandardMaterial({ color: 0x5a686e, metalness: 0.78, roughness: 0.28, fog: false }))
-  tower.position.y = 0.2
-  const light = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffd27a, emissive: 0xffd27a, emissiveIntensity: 1.3, fog: false }))
-  light.position.set(0.42, 0, 0)
-  sub.add(tower, light)
-  ocean.add(sub)
   tick.push((time, progress, reduced) => {
     ;(veil.material as THREE.ShaderMaterial).uniforms.uTime.value = time
     marine.points.position.y = -((time * 0.08) % 1.2)
@@ -668,18 +663,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
       item.update(time, reduced)
     })
     jelly.forEach((item, i) => {
-      item.group.position.set(i % 2 ? 3.4 : -3.6, -0.3 + i * 0.5 + Math.sin(time * 0.3 + i) * 0.18, -4 - i * 0.7)
+      item.group.position.set([-4.6, -2.2, -6.2][i], 0.4 + i * 0.6 + Math.sin(time * 0.25 + i) * 0.16, -5 - i * 1.1)
       item.update(time, reduced)
     })
-    shark.group.position.set(-7 + ((time * 0.14) % 16), -0.85 + Math.sin(time * 0.55) * 0.16, -3.4)
-    shark.group.rotation.y = 0
+    // The shark patrols on a long cycle so it is seen, not expected.
+    const patrol = (time * 0.05) % 1
+    shark.group.visible = patrol < 0.42
+    shark.group.position.set(-9 + (patrol / 0.42) * 18, -0.6 + Math.sin(time * 0.4) * 0.14, -5.4)
     shark.update(time, reduced)
     whale.visible = pulse(progress, 0.88, 0.94, 1.02) > 0.12
-    whale.position.set(-10 + ((time * 0.12) % 18), -2.15, -7)
-    turtle.position.set(Math.sin(time * 0.14) * 4, -1.1 + Math.sin(time * 0.3) * 0.2, -4.6)
-    turtle.rotation.y = time * 0.12
-    angler.position.set(5.2, -2.6 + Math.sin(time * 0.25) * 0.15, -5.4)
-    sub.position.set(4 - Math.sin(time * 0.12) * 2.2, -1.75, -5)
+    whale.position.set(-10 + ((time * 0.1) % 18), -2.15, -8.5)
   })
   groups.push(ocean)
 

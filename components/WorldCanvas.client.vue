@@ -28,19 +28,6 @@ onBeforeUnmount(() => {
   height: 100vh;
   z-index: 0;
   pointer-events: none;
-  background: #02040a;
   opacity: 0;
-  animation: world-in 1.15s ease 0.08s forwards;
-}
-
-@keyframes world-in {
-  to { opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #world-canvas {
-    opacity: 1;
-    animation: none;
-  }
 }
 </style>
