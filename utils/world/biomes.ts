@@ -426,12 +426,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const duneMat = addTerrain(desert, dunes, 0x8a4a22, 0xc48a48, 0xf0d08a, 3.1)
   for (let i = 0; i < 5; i++) {
     const cactus = new THREE.Group()
-    cactus.add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 1.1 + random() * 0.5, 8), matte(0x2a4a28)))
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.38, 6), matte(0x2a4a28))
-    arm.position.set(0.16, 0.12, 0)
-    arm.rotation.z = 1.15
-    cactus.add(arm)
-    cactus.position.set(-7 + i * 3.2, -2.15, -4.4 - random() * 3)
+    const h = 1.35 + random() * 0.55
+    cactus.add(new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, h, 8), matte(0x2f5a30)))
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.42, 6), matte(0x2f5a30))
+    arm.position.set(0.22, 0.08, 0)
+    arm.rotation.z = 1.2
+    const arm2 = arm.clone()
+    arm2.position.set(-0.2, -0.06, 0)
+    arm2.rotation.z = -1.15
+    cactus.add(arm, arm2)
+    cactus.position.set(-7 + i * 3.2, -2.05, -4.4 - random() * 3)
     desert.add(cactus)
   }
   const oasis = addWater(0x0a3a40, 0x3aa8ae, 0.04, 0.88, 1.6, 1.6, 28)
