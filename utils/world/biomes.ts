@@ -438,8 +438,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     cactus.position.set(-7 + i * 3.2, -2.05, -4.4 - random() * 3)
     desert.add(cactus)
   }
-  const oasis = addWater(0x0a3a40, 0x3aa8ae, 0.04, 0.88, 1.6, 1.6, 28)
-  oasis.mesh.position.set(-1.2, -2.58, -5.4)
+  const oasis = addWater(0x0a3a40, 0x3aa8ae, 0.04, 0.88, 1.35, 1.35, 28)
+  oasis.mesh.geometry.dispose()
+  oasis.mesh.geometry = new THREE.CircleGeometry(0.85, 32)
+  oasis.mesh.position.set(-1.2, -2.56, -5.4)
   desert.add(oasis.mesh)
   const pyramid = new THREE.Mesh(new THREE.ConeGeometry(1.35, 1.6, 4), matte(0xb8864c, { roughness: 1 }))
   pyramid.position.set(6.6, -1.55, -8.2)
