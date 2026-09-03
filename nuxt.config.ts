@@ -12,7 +12,7 @@ export default defineNuxtConfig({
     { name: 'description', content: 'Software engineering, technical leadership, architecture, and the ways AI is changing how we build.' },
     { name: 'theme-color', content: '#02040a' },
     { property: 'og:title', content: 'Nathan Shumate, software engineer' },
-    { property: 'og:description', content: 'I’ve been building software for 15 years. It’s somehow getting interesting again.' },
+    { property: 'og:description', content: 'The way we build software is changing. Good.' },
     { property: 'og:type', content: 'website' }
   ] } },
   nitro: { preset: 'static' }

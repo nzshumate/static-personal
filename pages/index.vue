@@ -6,7 +6,7 @@ const chapters = [
     id: 'top',
     biome: 'Orbit',
     kicker: 'Engineering · Leadership · AI',
-    title: 'I’ve been building software for 15 years.\nIt’s somehow getting interesting again.',
+    title: 'The way we build software is changing.\nGood.',
     copy: 'I build products, lead frontend teams, obsess over architecture, and spend an unreasonable amount of time figuring out what AI means for all of the above.'
   },
   {
@@ -64,7 +64,7 @@ useSeoMeta({
   title: 'Nathan Shumate, software engineer',
   description: 'Software engineering, technical leadership, architecture, and the ways AI is changing how we build.',
   ogTitle: 'Nathan Shumate, software engineer',
-  ogDescription: 'I’ve been building software for 15 years. It’s somehow getting interesting again.'
+  ogDescription: 'The way we build software is changing. Good.'
 })
 
 const syncChapter = () => {
