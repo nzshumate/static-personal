@@ -349,49 +349,124 @@ export const makeCactus = (random: () => number) => {
   return group
 }
 
+export const setGroupOpacity = (group: THREE.Object3D, alpha: number) => {
+  group.traverse((object) => {
+    const mesh = object as THREE.Mesh
+    if (!mesh.isMesh) return
+    const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    list.forEach((material) => {
+      material.transparent = true
+      material.opacity = alpha
+    })
+  })
+}
+
+// Segments overlap so the body reads as one continuous, tapering form lying on the sand.
 export const makeSnake = (): Tickable => {
   const group = new THREE.Group()
+  const count = 28
+  const spacing = 0.042
   const parts: THREE.Mesh[] = []
-  for (let i = 0; i < 12; i++) {
-    const r = i === 0 ? 0.045 : 0.028 - i * 0.0012
-    const seg = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), matte(i % 2 ? 0x6a4a28 : 0x8a6230))
+  const radii: number[] = []
+  for (let i = 0; i < count; i++) {
+    const taper = Math.pow(1 - i / count, 0.75)
+    const r = i === 0 ? 0.05 : 0.012 + 0.036 * taper
+    const band = Math.floor(i / 3) % 2
+    const seg = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 7), matte(band ? 0x5c4326 : 0x8a6a36, { roughness: 0.75 }))
+    if (i === 0) seg.scale.set(1.35, 0.7, 1.15)
     group.add(seg)
     parts.push(seg)
+    radii.push(r)
   }
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), emit(0xc4e36a, 0.8))
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.007, 6, 6), matte(0x14110e))
   const eye2 = eye.clone()
   group.add(eye, eye2)
-  group.userData = { parts, eye, eye2 }
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(count * spacing * 1.05, 0.34),
+    new THREE.MeshBasicMaterial({ color: 0x2a1a0c, transparent: true, opacity: 0.28, depthWrite: false })
+  )
+  shadow.rotation.x = -Math.PI / 2
+  shadow.position.set(-count * spacing * 0.5, 0.004, 0)
+  group.add(shadow)
   return {
     group,
     update: (time) => {
+      const phase = time * 2.4
       parts.forEach((seg, i) => {
-        const t = time * 1.4 - i * 0.28
-        seg.position.set(i * 0.07, Math.sin(t) * 0.025, Math.cos(t * 0.7) * 0.02)
+        const amp = 0.1 * Math.min(1, 0.3 + i / 6)
+        seg.position.set(-i * spacing, radii[i] * (i === 0 ? 0.7 : 1), Math.sin(phase - i * 0.46) * amp)
       })
       const head = parts[0].position
-      eye.position.set(head.x + 0.03, head.y + 0.015, head.z + 0.018)
-      eye2.position.set(head.x + 0.03, head.y + 0.015, head.z - 0.018)
+      const next = parts[1].position
+      parts[0].rotation.y = Math.atan2(head.z - next.z, spacing) * 0.8
+      eye.position.set(head.x + 0.028, head.y + 0.012, head.z + 0.03)
+      eye2.position.set(head.x + 0.028, head.y + 0.012, head.z - 0.03)
     }
   }
 }
 
-export const makeTumbleweed = (): Tickable => {
+// A dry tangle: short twigs clustered on a loose spherical shell, never a solid ball.
+export const makeTumbleweed = (random: () => number): Tickable => {
   const group = new THREE.Group()
-  const twig = matte(0x7a5a38, { roughness: 1 })
-  for (let i = 0; i < 14; i++) {
-    const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.008, 0.55 + (i % 4) * 0.08, 5), twig)
-    stick.rotation.set((i * 0.7) % Math.PI, i * 0.9, i * 0.45)
-    group.add(stick)
+  const shell = 0.3
+  const dry = [matte(0x9a7a4a, { roughness: 1 }), matte(0x7c5f38, { roughness: 1 }), matte(0xb08f5c, { roughness: 1 })]
+  const dir = new THREE.Vector3()
+  for (let i = 0; i < 52; i++) {
+    dir.set(random() - 0.5, random() - 0.5, random() - 0.5).normalize()
+    const length = 0.16 + random() * 0.2
+    const twig = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.004, length, 4), dry[i % 3])
+    twig.position.copy(dir).multiplyScalar(shell * (0.62 + random() * 0.4))
+    twig.rotation.set(random() * Math.PI, random() * Math.PI, random() * Math.PI)
+    group.add(twig)
   }
-  const knot = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 0), twig)
-  group.add(knot)
+  for (let i = 0; i < 9; i++) {
+    dir.set(random() - 0.5, random() - 0.5, random() - 0.5).normalize()
+    const arc = new THREE.Mesh(new THREE.TorusGeometry(shell * 0.85, 0.005, 4, 10, Math.PI * (0.5 + random() * 0.6)), dry[i % 3])
+    arc.rotation.set(random() * Math.PI, random() * Math.PI, random() * Math.PI)
+    group.add(arc)
+  }
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(shell * 0.9, 12),
+    new THREE.MeshBasicMaterial({ color: 0x3a2410, transparent: true, opacity: 0.22, depthWrite: false })
+  )
+  shadow.rotation.x = -Math.PI / 2
+  group.userData = { shell, shadow }
+  const wrapper = new THREE.Group()
+  wrapper.add(group, shadow)
   return {
-    group,
+    group: wrapper,
     update: (time) => {
-      group.rotation.z = time * 1.8
-      group.rotation.x = time * 0.7
+      // Roll matches ground travel; hops are short and irregular.
+      const travel = time * 0.34
+      group.rotation.z = -travel / shell
+      group.rotation.x = Math.sin(time * 0.35) * 0.4
+      const hop = Math.max(0, Math.sin(time * 1.9) * 0.6 + Math.sin(time * 3.1) * 0.4) * 0.18
+      group.position.y = shell + hop
+      shadow.position.y = 0.004
+      shadow.scale.setScalar(1 - hop * 1.6)
+      ;(shadow.material as THREE.MeshBasicMaterial).opacity = 0.22 - hop * 0.5
     }
+  }
+}
+
+// Bald cypress parts for instancing: a flared, buttressed trunk with a ragged two-tier crown.
+export const cypressGeometry = () => {
+  const profile = [
+    new THREE.Vector2(0.5, 0),
+    new THREE.Vector2(0.34, 0.22),
+    new THREE.Vector2(0.2, 0.55),
+    new THREE.Vector2(0.13, 1.1),
+    new THREE.Vector2(0.1, 2.4),
+    new THREE.Vector2(0.075, 3.6),
+    new THREE.Vector2(0.05, 4.4)
+  ]
+  return {
+    trunk: new THREE.LatheGeometry(profile, 9),
+    crown: new THREE.ConeGeometry(1.05, 2.1, 7),
+    crownB: new THREE.ConeGeometry(0.62, 1.4, 6),
+    knee: new THREE.ConeGeometry(0.055, 0.3, 5),
+    moss: new THREE.CylinderGeometry(0.018, 0.006, 0.95, 4),
+    ring: new THREE.RingGeometry(0.44, 0.82, 14)
   }
 }
 
@@ -514,28 +589,50 @@ export const makeSailboat = () => {
   cabin.position.set(0.1, 0.2, 0)
   const hatch = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.02), emit(0x7ec8e8, 0.45))
   hatch.position.set(0.1, 0.22, 0.11)
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.022, 1.12, 6), matte(0xd8c4a0))
-  mast.position.set(0.02, 0.66, 0)
-  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.62, 5), matte(0xd8c4a0))
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.02, 1.16, 6), matte(0xd8c4a0))
+  mast.position.set(0.02, 0.68, 0)
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.64, 5), matte(0xd8c4a0))
   boom.rotation.z = Math.PI / 2
-  boom.position.set(0.26, 0.2, 0)
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.82), matte(0xf7f4ee, { side: THREE.DoubleSide }))
-  sail.position.set(0.26, 0.58, 0.012)
-  const jib = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.48), matte(0xf7f4ee, { side: THREE.DoubleSide }))
-  jib.position.set(-0.24, 0.5, 0.012)
-  const stay = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 1.05, 4), matte(0xd8c4a0))
-  stay.position.set(-0.22, 0.62, 0)
-  stay.rotation.z = 0.42
-  const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.08), matte(0xc4333d, { side: THREE.DoubleSide }))
-  flag.position.set(0.09, 1.18, 0)
+  boom.position.set(0.34, 0.22, 0)
+  const canvas = matte(0xf7f4ee, { side: THREE.DoubleSide, roughness: 0.85 })
+  // Mainsail: luff up the mast, foot along the boom, leech bellied by wind.
+  const mainShape = new THREE.Shape()
+  mainShape.moveTo(0, 0)
+  mainShape.lineTo(0, 0.98)
+  mainShape.quadraticCurveTo(0.3, 0.6, 0.62, 0.02)
+  mainShape.lineTo(0, 0)
+  const sail = new THREE.Mesh(new THREE.ShapeGeometry(mainShape, 6), canvas)
+  sail.position.set(0.035, 0.23, 0.012)
+  // Jib: forestay from bow to masthead, clew back toward the mast.
+  const jibShape = new THREE.Shape()
+  jibShape.moveTo(0, 0)
+  jibShape.lineTo(0.58, 0.9)
+  jibShape.quadraticCurveTo(0.42, 0.42, 0.5, 0.04)
+  jibShape.lineTo(0, 0)
+  const jib = new THREE.Mesh(new THREE.ShapeGeometry(jibShape, 6), canvas)
+  jib.position.set(-0.6, 0.14, -0.012)
+  const stay = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.08, 4), matte(0xd8c4a0))
+  stay.position.set(-0.29, 0.6, 0)
+  stay.rotation.z = 0.56
+  const flagShape = new THREE.Shape()
+  flagShape.moveTo(0, 0)
+  flagShape.lineTo(0.14, 0.03)
+  flagShape.lineTo(0, 0.07)
+  const flag = new THREE.Mesh(new THREE.ShapeGeometry(flagShape), matte(0xc4333d, { side: THREE.DoubleSide }))
+  flag.position.set(0.03, 1.2, 0)
   const rudder = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.18, 0.02), matte(0x6a4a28))
   rudder.position.set(-0.62, -0.04, 0)
   const tiller = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.22, 5), matte(0x6a4a28))
   tiller.rotation.z = Math.PI / 2
   tiller.position.set(-0.48, 0.14, 0)
-  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.01, 6, 10), matte(0xc4333d))
-  ring.position.set(0.28, 0.16, 0.12)
-  group.add(hull, stripe, keel, deck, cabin, hatch, mast, boom, sail, jib, stay, flag, rudder, tiller, ring)
+  const shadow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.78, 18),
+    new THREE.MeshBasicMaterial({ color: 0x062a34, transparent: true, opacity: 0.4, depthWrite: false })
+  )
+  shadow.rotation.x = -Math.PI / 2
+  shadow.scale.set(1, 0.32, 1)
+  shadow.position.y = -0.02
+  group.add(hull, stripe, keel, deck, cabin, hatch, mast, boom, sail, jib, stay, flag, rudder, tiller, shadow)
   group.userData = { sail, flag }
   return group
 }
@@ -580,51 +677,64 @@ export const makeCrab = () => {
   return group
 }
 
-export const makeFish = (color: number): Tickable => {
+const finShape = (points: Array<[number, number]>) => {
+  const shape = new THREE.Shape()
+  shape.moveTo(points[0][0], points[0][1])
+  points.slice(1).forEach(([x, y]) => shape.lineTo(x, y))
+  shape.lineTo(points[0][0], points[0][1])
+  return new THREE.ShapeGeometry(shape)
+}
+
+// Body is a revolved profile flattened side-to-side: pointed snout, deep mid-body, narrow caudal peduncle.
+export const makeFish = (color: number, variant = 0): Tickable => {
   const group = new THREE.Group()
-  const skin = matte(color, { roughness: 0.45 })
-  const fin = matte(color, { roughness: 0.5, side: THREE.DoubleSide })
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), skin)
-  body.scale.set(1.8, 0.78, 0.55)
-  const stripe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), matte(0xf2f6f8, { roughness: 0.4 }))
-  stripe.scale.set(1.15, 0.32, 0.2)
-  stripe.position.set(0.02, 0.02, 0.09)
-  const band = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 6, 12), matte(0xf2b24a))
-  band.rotation.y = Math.PI / 2
-  band.position.x = 0.04
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 7), skin)
-  nose.rotation.z = -Math.PI / 2
-  nose.position.x = 0.34
+  const skin = matte(color, { roughness: 0.34, metalness: 0.14 })
+  const fin = new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.04, side: THREE.DoubleSide, transparent: true, opacity: 0.86, fog: false })
+  const len = 0.62
+  const deep = variant === 1 ? 0.13 : variant === 2 ? 0.085 : 0.105
+  const profile: THREE.Vector2[] = []
+  const steps = 16
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const r = deep * Math.pow(Math.sin(Math.PI * Math.min(0.999, t)), 0.55) * (1 - 0.48 * t) + 0.005
+    profile.push(new THREE.Vector2(r, (0.5 - t) * len))
+  }
+  const body = new THREE.Mesh(new THREE.LatheGeometry(profile, 18), skin)
+  body.rotation.z = -Math.PI / 2
+  body.scale.set(1, 1, variant === 1 ? 0.42 : 0.52)
+  const belly = new THREE.Mesh(new THREE.LatheGeometry(profile.map((p) => new THREE.Vector2(p.x * 0.92, p.y)), 18), matte(0xe8f0f2, { roughness: 0.4 }))
+  belly.rotation.z = -Math.PI / 2
+  belly.scale.set(0.98, 0.9, body.scale.z * 0.9)
+  belly.position.y = -0.028
   const tail = new THREE.Group()
-  const fluke = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.16, 5), skin)
-  const fluke2 = fluke.clone()
-  fluke.position.set(-0.08, 0.07, 0)
-  fluke.rotation.z = 2.2
-  fluke2.position.set(-0.08, -0.07, 0)
-  fluke2.rotation.z = -2.2
-  tail.position.x = -0.3
-  tail.add(fluke, fluke2)
-  const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), skin)
-  dorsal.position.set(0.02, 0.16, 0)
-  const anal = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.1, 5), skin)
-  anal.position.set(-0.06, -0.12, 0)
-  anal.rotation.z = Math.PI
-  const pec = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.07), fin)
-  pec.position.set(0.06, -0.02, 0.11)
-  pec.rotation.x = 0.7
-  const pec2 = pec.clone()
-  pec2.position.z = -0.11
-  pec2.rotation.x = -0.7
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), matte(0xf2f6f8))
-  eye.position.set(0.2, 0.045, 0.085)
-  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), matte(0x14181c))
-  pupil.position.set(0.218, 0.045, 0.095)
-  group.add(body, stripe, band, nose, tail, dorsal, anal, pec, pec2, eye, pupil)
-  group.userData = { tail }
+  const caudal = new THREE.Mesh(finShape([[0, 0], [-0.17, 0.14], [-0.12, 0.02], [-0.12, -0.02], [-0.17, -0.14]]), fin)
+  tail.add(caudal)
+  tail.position.x = -len / 2 + 0.01
+  const dorsal = new THREE.Mesh(finShape([[0.1, 0], [-0.03, 0.12], [-0.13, 0.07], [-0.14, 0]]), fin)
+  dorsal.position.set(0.02, deep * 0.72, 0)
+  const anal = new THREE.Mesh(finShape([[0, 0], [-0.07, -0.07], [-0.1, 0]]), fin)
+  anal.position.set(-0.1, -deep * 0.62, 0)
+  const pecGeo = finShape([[0, 0], [-0.1, 0.03], [-0.09, -0.05]])
+  const pec = new THREE.Mesh(pecGeo, fin)
+  pec.position.set(0.1, -0.015, deep * 0.5)
+  pec.rotation.set(0.5, 0.45, 0)
+  const pec2 = new THREE.Mesh(pecGeo, fin)
+  pec2.position.set(0.1, -0.015, -deep * 0.5)
+  pec2.rotation.set(-0.5, -0.45, 0)
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.014, 7, 7), matte(0x0c1014))
+  eye.position.set(0.21, 0.02, deep * 0.46)
+  const eye2 = eye.clone()
+  eye2.position.z = -deep * 0.46
+  group.add(body, belly, tail, dorsal, anal, pec, pec2, eye, eye2)
+  group.userData = { tail, body }
   return {
     group,
     update: (time) => {
-      tail.rotation.y = Math.sin(time * 8) * 0.38
+      const beat = Math.sin(time * 5.5 + variant * 1.7)
+      tail.rotation.y = beat * 0.42
+      body.rotation.y = beat * 0.06
+      pec.rotation.x = 0.5 + Math.sin(time * 2.2) * 0.2
+      pec2.rotation.x = -0.5 - Math.sin(time * 2.2) * 0.2
     }
   }
 }

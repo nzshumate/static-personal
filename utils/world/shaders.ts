@@ -275,6 +275,7 @@ uniform vec3 uHigh;
 uniform vec3 uLightDir;
 uniform float uTime;
 uniform float uSeed;
+uniform float uRipple;
 varying vec3 vWorldPos;
 varying vec3 vNormalW;
 varying float vHeight;
@@ -319,6 +320,10 @@ void main() {
   vec3 color = mix(uLow, uMid, smoothstep(-3.4, -1.6, vHeight) + grain * 0.18);
   color = mix(color, uHigh, smoothstep(-0.7, 1.1, vHeight) * (1.0 - slope * 0.72));
   color = mix(color, uLow, slope * 0.32 + fine * 0.08);
+  // Wind ripples: fine, direction-biased ridges that soften with distance from the camera.
+  float ripple = sin(vWorldPos.x * 5.5 + vWorldPos.z * 2.2 + fbm(p * 3.0) * 4.5) * 0.5 + 0.5;
+  float near = 1.0 - smoothstep(6.0, 26.0, distance(cameraPosition, vWorldPos));
+  color *= 1.0 - uRipple * ripple * near;
   color *= 0.16 + light * 0.92;
   color += uHigh * rim * 0.14;
   gl_FragColor = vec4(color, 1.0);
