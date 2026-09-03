@@ -228,14 +228,30 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     new THREE.SphereGeometry(0.22, 24, 16),
     new THREE.MeshStandardMaterial({ color: 0x9aa6b4, metalness: 0.88, roughness: 0.18 })
   )
-  hull.scale.set(1.7, 0.38, 1.7)
-  const dome = new THREE.Mesh(
-    new THREE.SphereGeometry(0.14, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
-    new THREE.MeshPhysicalMaterial({ color: 0x7fe7e2, roughness: 0.12, metalness: 0.1, transparent: true, opacity: 0.7, emissive: 0x1c4d52, emissiveIntensity: 0.45 })
+  hull.scale.set(1.8, 0.36, 1.8)
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.34, 0.03, 8, 24),
+    new THREE.MeshStandardMaterial({ color: 0x6a747e, metalness: 0.9, roughness: 0.2 })
   )
-  dome.position.y = 0.05
-  ufo.add(hull, dome)
-  ufo.scale.setScalar(mobile ? 0.45 : 0.55)
+  rim.rotation.x = Math.PI / 2
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshPhysicalMaterial({ color: 0x7fe7e2, roughness: 0.12, metalness: 0.1, transparent: true, opacity: 0.7, emissive: 0x1c4d52, emissiveIntensity: 0.55 })
+  )
+  dome.position.y = 0.06
+  const lights: THREE.Mesh[] = []
+  for (let i = 0; i < 8; i++) {
+    const lamp = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 8, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffc878, emissive: 0xff9a40, emissiveIntensity: 1.4 })
+    )
+    const a = (i / 8) * Math.PI * 2
+    lamp.position.set(Math.cos(a) * 0.34, -0.02, Math.sin(a) * 0.34)
+    ufo.add(lamp)
+    lights.push(lamp)
+  }
+  ufo.add(hull, rim, dome)
+  ufo.scale.setScalar(mobile ? 0.55 : 0.72)
   group.add(ufo)
 
   const key = new THREE.DirectionalLight(0xffe7c4, 2.4)
@@ -258,8 +274,8 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     giant.atmo.visible = value > 0.22
     ice.mesh.visible = value > 0.22
     ice.atmo.visible = value > 0.22
-    satellite.visible = value > 0.35
-    ufo.visible = value > 0.28
+    satellite.visible = value > 0.2
+    ufo.visible = value > 0.18
   }
 
   const update = (time: number, progress: number, reduced: boolean) => {
@@ -275,13 +291,13 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
     ice.mesh.rotation.y = time * 0.04
     satellite.position.set(5.4 - progress * 9, 1.15 + Math.sin(time * 0.22) * 0.18, -1.2)
     satellite.rotation.set(0.4, time * 0.08, 0.18 + Math.sin(time * 0.2) * 0.12)
-    const ufoGate = progress > 0.06 && progress < 0.16
-    ufo.visible = ufoGate
-    if (ufoGate) {
-      const local = (progress - 0.06) / 0.1
-      ufo.position.set(-8 + local * 18, 2.1 + Math.sin(time * 1.4) * 0.16, -2.2)
-      ufo.rotation.z = Math.sin(time * 1.1) * 0.05
-    }
+    ufo.position.set(Math.sin(time * 0.18) * 6.2, 1.7 + Math.sin(time * 0.9) * 0.22, -2.4)
+    ufo.rotation.z = Math.sin(time * 0.7) * 0.06
+    ufo.rotation.y = time * 0.15
+    lights.forEach((lamp, i) => {
+      const mat = lamp.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.7 + Math.pow(Math.max(0, Math.sin(time * 6 + i)), 4) * 1.4
+    })
     stars.rotation.z = Math.sin(time * 0.02) * 0.01
   }
 
