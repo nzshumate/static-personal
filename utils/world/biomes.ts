@@ -255,8 +255,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const skier = makeSkier()
   mountains.add(skier.group)
   const yeti = makeYeti()
-  yeti.position.set(4.4, -1.2, -3.6)
-  yeti.scale.setScalar(1.35)
+  yeti.position.set(3.2, -1.85, -2.35)
+  yeti.scale.setScalar(1.7)
   mountains.add(yeti)
   tick.push((time, progress, reduced) => {
     mountainMat.uniforms.uTime.value = time
@@ -269,9 +269,9 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     skier.group.position.set(-3.4 + along * 0.7, -1.55 + Math.sin(time * 0.5) * 0.05, -2)
     skier.update(time, reduced)
     yeti.visible = true
-    yeti.scale.setScalar(1.35)
-    yeti.position.set(4.4, -1.2, -3.6)
-    yeti.rotation.y = -0.6 + Math.sin(time * 0.2) * 0.12
+    yeti.scale.setScalar(1.7)
+    yeti.position.set(3.2, -1.85, -2.35)
+    yeti.rotation.y = -0.8 + Math.sin(time * 0.2) * 0.12
   })
   groups.push(mountains)
 

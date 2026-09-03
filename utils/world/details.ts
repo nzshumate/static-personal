@@ -101,7 +101,7 @@ export const makeSkier = (): Tickable => {
 
 export const makeYeti = () => {
   const group = new THREE.Group()
-  const fur = matte(0xe8eef2, { roughness: 1 })
+  const fur = matte(0xb7c0c8, { roughness: 1 })
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), fur)
   body.scale.set(0.85, 1.25, 0.7)
   const belly = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), matte(0xf6f3ea))
