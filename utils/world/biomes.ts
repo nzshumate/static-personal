@@ -196,27 +196,33 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const sky = new THREE.Group()
   addDome(sky, 0x0b1c3a, 0x8fb4d2, 0xffc878, new THREE.Vector3(-10, 6, -8))
   sky.add(new THREE.HemisphereLight(0xb7d4f0, 0x243044, 0.62))
+  const skyFill = new THREE.DirectionalLight(0xe8f0f8, 0.9)
+  skyFill.position.set(-6, 8, 4)
+  sky.add(skyFill)
   const skySun = addStar(sky, glow, new THREE.Vector3(-8.4, 3.4, -10), 0.42)
-  for (let i = 0; i < (mobile ? 12 : 18); i++) {
+  for (let i = 0; i < (mobile ? 8 : 12); i++) {
     const cloud = makeCloud(random)
-    cloud.position.set((random() - 0.5) * 24, 0.15 + random() * 3.2, -3.4 - random() * 9)
-    cloud.scale.setScalar(1.85 + random() * 1.5)
+    cloud.position.set((random() - 0.5) * 20, 0.9 + random() * 2.8, -5 - random() * 8)
+    cloud.scale.setScalar(1.15 + random() * 0.7)
     sky.add(cloud)
   }
   const balloons = [makeBalloon(0xc45a3a), makeBalloon(0x3a6aa8), makeBalloon(0xd4a24a)]
-  balloons.forEach((item) => sky.add(item.group))
+  balloons.forEach((item) => {
+    item.group.scale.setScalar(1.45)
+    sky.add(item.group)
+  })
   const birds = Array.from({ length: mobile ? 10 : 16 }, () => makeBird(0x1a222b))
   birds.forEach((item) => sky.add(item.group))
   tick.push((time, _progress, reduced) => {
     skySun.material.uniforms.uTime.value = time
     skySun.corona.scale.setScalar(1.7 + Math.sin(time * 0.6) * 0.06)
     if (reduced) return
-    balloons[0].group.position.set(3.1, 2.6 + Math.sin(time * 0.32) * 0.22, -6)
-    balloons[1].group.position.set(-4.4, 1.8 + Math.sin(time * 0.28 + 1) * 0.18, -8)
-    balloons[2].group.position.set(6.2, 3.1 + Math.sin(time * 0.24 + 2) * 0.16, -10)
+    balloons[0].group.position.set(2.4, 1.7 + Math.sin(time * 0.32) * 0.22, -4.2)
+    balloons[1].group.position.set(-3.6, 1.15 + Math.sin(time * 0.28 + 1) * 0.18, -5.4)
+    balloons[2].group.position.set(4.8, 2.05 + Math.sin(time * 0.24 + 2) * 0.16, -6.8)
     balloons.forEach((item) => item.update(time, reduced))
     birds.forEach((item, i) => {
-      item.group.position.set(-8 + ((time * 0.24 + i * 0.7) % 18), 1.3 + (i % 4) * 0.32 + Math.sin(time + i) * 0.08, -3.2 - (i % 3))
+      item.group.position.set(-7 + ((time * 0.28 + i * 0.7) % 16), 0.85 + (i % 4) * 0.28 + Math.sin(time + i) * 0.08, -2.1 - (i % 3) * 0.35)
       item.update(time, reduced)
     })
   })
@@ -245,24 +251,27 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     new THREE.Vector3((random() - 0.5) * 22, (random() - 0.5) * 10, -1 - random() * 12)
   )
   const cabin = makeCabin()
-  const cabinX = -0.35
-  const cabinZ = 2.2
+  const cabinX = 0.05
+  const cabinZ = 0.85
   cabin.position.set(cabinX, ridgeHeight(cabinX, cabinZ), cabinZ)
-  cabin.scale.setScalar(1.35)
-  cabin.rotation.y = 0.18
+  cabin.scale.setScalar(1.55)
+  cabin.rotation.y = 0.22
   mountains.add(cabin)
   const fire = addSprite(cabin, glow, 0xff7a2a, 0.55, new THREE.Vector3(-0.22, 0.32, 0.42), new THREE.Vector2(0.32, 0.26), true)
   const chimneyFire = addSprite(cabin, glow, 0xff5520, 0.5, new THREE.Vector3(-0.28, 1.2, -0.1), new THREE.Vector2(0.22, 0.18), true)
   const smoke = addSprite(cabin, glow, 0xd8dee4, 0.38, new THREE.Vector3(-0.28, 1.55, -0.1), new THREE.Vector2(0.42, 0.85))
   const smoke2 = addSprite(cabin, glow, 0xc8d0d6, 0.22, new THREE.Vector3(-0.18, 1.95, -0.04), new THREE.Vector2(0.34, 0.7))
+  const hearth = new THREE.PointLight(0xff7a2a, 1.4, 4.5)
+  hearth.position.set(-0.2, 0.35, 0.4)
+  cabin.add(hearth)
   const skier = makeSkier()
   mountains.add(skier.group)
   const yeti = makeYeti()
-  const yetiX = 4.55
-  const yetiZ = 1.45
-  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.38, yetiZ)
-  yeti.scale.setScalar(1.7)
-  yeti.rotation.y = -1.15
+  const yetiX = 3.85
+  const yetiZ = 0.35
+  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.4, yetiZ)
+  yeti.scale.setScalar(1.85)
+  yeti.rotation.y = -1.05
   mountains.add(yeti)
   tick.push((time, _progress, reduced) => {
     mountainMat.uniforms.uTime.value = time
@@ -272,6 +281,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     const flicker = Math.abs(Math.sin(time * 9))
     ;(window.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.75 + flicker * 1.25
     ;(ember.material as THREE.MeshStandardMaterial).emissiveIntensity = 1.2 + flicker * 1.4
+    hearth.intensity = 1.1 + flicker * 0.9
     fire.material.opacity = 0.32 + flicker * 0.4
     fire.scale.set(0.28 + Math.sin(time * 11) * 0.05, 0.24 + Math.sin(time * 13) * 0.06, 1)
     chimneyFire.material.opacity = 0.28 + flicker * 0.38
@@ -281,13 +291,13 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     smoke2.position.y = 1.95 + Math.sin(time * 0.7 + 1) * 0.16
     smoke2.material.opacity = 0.12 + Math.sin(time * 0.8 + 0.6) * 0.08
     if (reduced) return
-    const t = (time * 0.16) % 1
-    const sx = 1.85 + t * 2.5
-    const sz = 2.15 - t * 1.35
-    skier.group.scale.setScalar(1.85)
-    skier.group.position.set(sx, ridgeHeight(sx, sz) + 0.2, sz)
+    const t = (time * 0.14) % 1
+    const sx = 1.7 + t * 2.1
+    const sz = 0.7 - t * 0.45
+    skier.group.scale.setScalar(2.05)
+    skier.group.position.set(sx, ridgeHeight(sx, sz) + 0.22, sz)
     skier.update(time, reduced)
-    yeti.rotation.y = -1.15 + Math.sin(time * 0.2) * 0.12
+    yeti.rotation.y = -1.05 + Math.sin(time * 0.2) * 0.12
   })
   groups.push(mountains)
 
@@ -551,6 +561,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const ocean = new THREE.Group()
   addDome(ocean, 0x01080e, 0x063040, 0x4aa8b4, new THREE.Vector3(0, 10, -6))
   ocean.add(new THREE.HemisphereLight(0x4aa8b4, 0x021018, 0.7))
+  ocean.add(new THREE.DirectionalLight(0x8fd4dc, 0.85))
   const veil = new THREE.Mesh(
     new THREE.PlaneGeometry(42, 26),
     new THREE.ShaderMaterial({

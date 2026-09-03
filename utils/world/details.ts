@@ -9,9 +9,6 @@ export const matte = (color: number, extra: THREE.MeshStandardMaterialParameters
 export const emit = (color: number, intensity = 0.55) =>
   new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: intensity, roughness: 0.4, metalness: 0.08, fog: false })
 
-const basic = (color: number, extra: THREE.MeshBasicMaterialParameters = {}) =>
-  new THREE.MeshBasicMaterial({ color, ...extra })
-
 export type Tickable = {
   group: THREE.Group
   update: (time: number, reduced: boolean) => void
@@ -44,7 +41,7 @@ export const makeBird = (color: number): Tickable => {
   leftPivot.add(left)
   rightPivot.add(right)
   group.add(body, head, beak, tail, leftPivot, rightPivot)
-  group.scale.setScalar(2.35)
+  group.scale.setScalar(3.1)
   group.userData = { leftPivot, rightPivot, phase: Math.random() * Math.PI * 2 }
   return {
     group,
@@ -58,12 +55,13 @@ export const makeBird = (color: number): Tickable => {
 
 export const makeCloud = (random: () => number) => {
   const group = new THREE.Group()
-  const puff = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.97, depthWrite: false })
-  const count = 6 + Math.floor(random() * 3)
+  const lit = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.92, depthWrite: false })
+  const shade = new THREE.MeshLambertMaterial({ color: 0xc5d0dc, transparent: true, opacity: 0.9, depthWrite: false })
+  const count = 4 + Math.floor(random() * 3)
   for (let i = 0; i < count; i++) {
-    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.58 + random() * 0.5, 14, 10), puff)
-    ball.position.set((random() - 0.5) * 2.4, (random() - 0.35) * 0.42, (random() - 0.5) * 0.85)
-    ball.scale.set(1.8 + random() * 0.8, 0.52 + random() * 0.22, 1.05)
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.38 + random() * 0.28, 12, 8), i % 2 ? shade : lit)
+    ball.position.set((random() - 0.5) * 1.6, (random() - 0.4) * 0.32, (random() - 0.5) * 0.55)
+    ball.scale.set(1.35 + random() * 0.45, 0.48 + random() * 0.18, 0.95)
     group.add(ball)
   }
   return group
@@ -438,14 +436,15 @@ export const makeLilyPad = (random: () => number) => {
 
 export const makePalm = (random: () => number) => {
   const group = new THREE.Group()
-  const lean = 0.08 + random() * 0.07
+  const lean = 0.04 + random() * 0.04
   const h = 2.35
   const trunk = new THREE.Group()
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.1, h, 8), matte(0x8a5a32))
+  const wood = matte(0x8a5a32)
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, h, 8), wood)
   shaft.position.y = h / 2
   trunk.add(shaft)
   for (let i = 0; i < 6; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.055 + i * 0.007, 0.012, 5, 8), matte(0x7a4a28))
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.075 + i * 0.006, 0.014, 5, 8), matte(0x7a4a28))
     ring.rotation.x = Math.PI / 2
     ring.position.y = 0.28 + i * 0.34
     trunk.add(ring)
@@ -454,17 +453,17 @@ export const makePalm = (random: () => number) => {
   crown.position.y = h
   const leaf = matte(0x1c5a2c)
   for (let k = 0; k < 9; k++) {
-    const frond = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.03, 0.16), leaf)
-    frond.geometry.translate(0.58, 0, 0)
+    const frond = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.04, 0.18), leaf)
+    frond.geometry.translate(0.52, 0, 0)
     frond.rotation.order = 'YZX'
     frond.rotation.y = (k / 9) * Math.PI * 2
-    frond.rotation.z = -0.72
+    frond.rotation.z = -0.62
     crown.add(frond)
   }
-  const nut = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 6), matte(0x5a3a1c))
+  const nut = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), matte(0x5a3a1c))
   const nut2 = nut.clone()
-  nut.position.set(0.05, -0.06, 0.04)
-  nut2.position.set(-0.04, -0.05, -0.03)
+  nut.position.set(0.04, -0.05, 0.03)
+  nut2.position.set(-0.03, -0.04, -0.03)
   crown.add(nut, nut2)
   trunk.add(crown)
   trunk.rotation.z = lean
@@ -596,14 +595,14 @@ export const makeBottle = () => {
 
 export const makeFish = (color: number): Tickable => {
   const group = new THREE.Group()
-  const skin = basic(color)
-  const fin = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
+  const skin = matte(color, { roughness: 0.45 })
+  const fin = matte(color, { roughness: 0.5, side: THREE.DoubleSide })
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 8), skin)
   body.scale.set(1.8, 0.78, 0.55)
-  const stripe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), basic(0xf2f6f8))
+  const stripe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), matte(0xf2f6f8, { roughness: 0.4 }))
   stripe.scale.set(1.15, 0.32, 0.2)
   stripe.position.set(0.02, 0.02, 0.09)
-  const band = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 6, 12), basic(0xf2b24a))
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.018, 6, 12), matte(0xf2b24a))
   band.rotation.y = Math.PI / 2
   band.position.x = 0.04
   const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 7), skin)
@@ -629,9 +628,9 @@ export const makeFish = (color: number): Tickable => {
   const pec2 = pec.clone()
   pec2.position.z = -0.11
   pec2.rotation.x = -0.7
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), basic(0xf2f6f8))
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.024, 6, 6), matte(0xf2f6f8))
   eye.position.set(0.2, 0.045, 0.085)
-  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), basic(0x14181c))
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.01, 6, 6), matte(0x14181c))
   pupil.position.set(0.218, 0.045, 0.095)
   group.add(body, stripe, band, nose, tail, dorsal, anal, pec, pec2, eye, pupil)
   group.userData = { tail }
@@ -645,8 +644,8 @@ export const makeFish = (color: number): Tickable => {
 
 export const makeShark = (): Tickable => {
   const group = new THREE.Group()
-  const skin = basic(0x4a5a66)
-  const belly = basic(0xc5d0d4)
+  const skin = matte(0x5a6a76, { roughness: 0.55 })
+  const belly = matte(0xd5dee2, { roughness: 0.5 })
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 10), skin)
   body.scale.set(2.55, 0.72, 0.78)
   const underside = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), belly)
@@ -655,9 +654,9 @@ export const makeShark = (): Tickable => {
   const nose = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.48, 8), skin)
   nose.rotation.z = -Math.PI / 2
   nose.position.x = 0.92
-  const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.12), basic(0xf2f0ea))
+  const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.12), matte(0xf2f0ea))
   jaw.position.set(0.78, -0.08, 0)
-  const gill = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.1, 0.08), basic(0x2a343c))
+  const gill = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.1, 0.08), matte(0x2a343c))
   const gill2 = gill.clone()
   const gill3 = gill.clone()
   gill.position.set(0.42, 0.02, 0.16)
@@ -681,12 +680,12 @@ export const makeShark = (): Tickable => {
   pec.rotation.z = -0.28
   const pec2 = pec.clone()
   pec2.position.z = -0.26
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.036, 6, 6), basic(0xf2f6f8))
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.036, 6, 6), matte(0xf2f6f8))
   eye.position.set(0.62, 0.07, 0.18)
-  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 6), basic(0x14181c))
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 6), matte(0x14181c))
   pupil.position.set(0.64, 0.07, 0.2)
   group.add(body, underside, nose, jaw, gill, gill2, gill3, tail, dorsal, rearFin, pec, pec2, eye, pupil)
-  group.scale.setScalar(1.35)
+  group.scale.setScalar(1.55)
   group.userData = { tail }
   return {
     group,
