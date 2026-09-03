@@ -200,11 +200,15 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   skyFill.position.set(-6, 8, 4)
   sky.add(skyFill)
   const skySun = addStar(sky, glow, new THREE.Vector3(-8.4, 3.4, -10), 0.42)
+  const clouds: THREE.Group[] = []
   for (let i = 0; i < (mobile ? 8 : 12); i++) {
     const cloud = makeCloud(random)
     cloud.position.set((random() - 0.5) * 20, 0.9 + random() * 2.8, -5 - random() * 8)
     cloud.scale.setScalar(1.15 + random() * 0.7)
+    cloud.userData.homeX = cloud.position.x
+    cloud.userData.drift = 0.12 + random() * 0.18
     sky.add(cloud)
+    clouds.push(cloud)
   }
   const balloons = [makeBalloon(0xc45a3a), makeBalloon(0x3a6aa8), makeBalloon(0xd4a24a)]
   balloons.forEach((item) => {
@@ -217,12 +221,15 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     skySun.material.uniforms.uTime.value = time
     skySun.corona.scale.setScalar(1.7 + Math.sin(time * 0.6) * 0.06)
     if (reduced) return
-    balloons[0].group.position.set(2.4, 1.7 + Math.sin(time * 0.32) * 0.22, -4.2)
-    balloons[1].group.position.set(-3.6, 1.15 + Math.sin(time * 0.28 + 1) * 0.18, -5.4)
-    balloons[2].group.position.set(4.8, 2.05 + Math.sin(time * 0.24 + 2) * 0.16, -6.8)
+    balloons[0].group.position.set(2.4, 1.7 + Math.sin(time * 0.22) * 0.16, -4.2)
+    balloons[1].group.position.set(-3.6, 1.15 + Math.sin(time * 0.18 + 1) * 0.14, -5.4)
+    balloons[2].group.position.set(4.8, 2.05 + Math.sin(time * 0.16 + 2) * 0.12, -6.8)
     balloons.forEach((item) => item.update(time, reduced))
+    clouds.forEach((cloud, i) => {
+      cloud.position.x = cloud.userData.homeX + Math.sin(time * 0.05 + i) * cloud.userData.drift
+    })
     birds.forEach((item, i) => {
-      item.group.position.set(-7 + ((time * 0.28 + i * 0.7) % 16), 0.85 + (i % 4) * 0.28 + Math.sin(time + i) * 0.08, -2.1 - (i % 3) * 0.35)
+      item.group.position.set(-7 + ((time * 0.18 + i * 0.7) % 16), 0.85 + (i % 4) * 0.28 + Math.sin(time * 0.7 + i) * 0.06, -2.1 - (i % 3) * 0.35)
       item.update(time, reduced)
     })
   })
@@ -519,10 +526,12 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   foam.rotation.x = -Math.PI / 2
   foam.position.set(0, -3.04, -10.4)
   beach.add(foam)
+  const palms: THREE.Group[] = []
   for (let i = 0; i < 4; i++) {
     const palm = makePalm(random)
     palm.position.set(-6.2 + i * 1.7, -3.12, 2.1 - (i % 2) * 0.55)
     beach.add(palm)
+    palms.push(palm)
   }
   const lightHouse = makeLighthouse()
   lightHouse.position.set(5.8, -3.12, -2.4)
@@ -548,6 +557,9 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     ;(foam.material as THREE.MeshBasicMaterial).opacity = 0.22 + Math.sin(time * 0.9) * 0.07
     beam.material.rotation = time * 0.35
     beam.scale.x = 2.6 + Math.sin(time * 0.8) * 0.4
+    palms.forEach((palm, i) => {
+      palm.rotation.z = Math.sin(time * 0.35 + i) * 0.025
+    })
     if (reduced) return
     sail.position.set(1.6 + Math.sin(time * 0.15) * 1.2, -2.88, -13.6)
     sail.rotation.z = Math.sin(time * 0.6) * 0.04

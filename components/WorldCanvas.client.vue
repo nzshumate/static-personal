@@ -17,7 +17,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <canvas id="world-canvas" aria-hidden="true" />
+  <canvas id="world-canvas" aria-hidden="true" role="presentation" />
 </template>
 
 <style scoped>
