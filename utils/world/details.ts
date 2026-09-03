@@ -152,13 +152,14 @@ export const makeSkier = (): Tickable => {
   const boot2 = boot.clone()
   boot.position.set(0.1, -0.22, 0.06)
   boot2.position.set(0.1, -0.22, -0.06)
-  const ski = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.018, 0.055), metal(0x1c2430))
+  const skiMat = matte(0xe0b040, { roughness: 0.5 })
+  const ski = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.024, 0.06), skiMat)
   const ski2 = ski.clone()
   ski.position.set(0.08, -0.25, 0.07)
   ski2.position.set(0.08, -0.25, -0.07)
-  const tip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.05), metal(0x1c2430))
-  tip.rotation.z = 0.7
-  tip.position.set(0.5, -0.2, 0.07)
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.024, 0.06), skiMat)
+  tip.rotation.z = 0.55
+  tip.position.set(0.55, -0.22, 0.07)
   const tip2 = tip.clone()
   tip2.position.z = -0.07
   const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.46, 5), metal(0xc5ced6))
@@ -171,12 +172,15 @@ export const makeSkier = (): Tickable => {
   const basket2 = basket.clone()
   basket.position.set(0.28, -0.12, 0.16)
   basket2.position.set(0.28, -0.12, -0.16)
-  group.add(jacket, scarf, head, helmet, goggles, nose, pack, hip, thigh, thigh2, boot, boot2, ski, ski2, tip, tip2, pole, pole2, basket, basket2)
-  group.rotation.y = Math.PI / 2
+  const figure = new THREE.Group()
+  figure.add(jacket, scarf, head, helmet, goggles, nose, pack, hip, thigh, thigh2, boot, boot2, ski, ski2, tip, tip2, pole, pole2, basket, basket2)
+  // Origin sits at the ski base so the group can be placed directly on the snow surface.
+  figure.position.y = 0.26
+  group.add(figure)
   return {
     group,
     update: (time) => {
-      group.rotation.z = -0.28 + Math.sin(time * 3.2) * 0.05
+      figure.rotation.z = -0.22 + Math.sin(time * 3.2) * 0.04
     }
   }
 }
@@ -739,55 +743,70 @@ export const makeFish = (color: number, variant = 0): Tickable => {
   }
 }
 
+// Revolved shark profile: blunt-pointed snout, deep chest, long taper to a narrow peduncle and a heterocercal tail.
 export const makeShark = (): Tickable => {
   const group = new THREE.Group()
-  const skin = matte(0x5a6a76, { roughness: 0.55 })
-  const belly = matte(0xd5dee2, { roughness: 0.5 })
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.36, 14, 10), skin)
-  body.scale.set(2.55, 0.72, 0.78)
-  const underside = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), belly)
-  underside.scale.set(2.3, 0.36, 0.52)
-  underside.position.y = -0.1
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.48, 8), skin)
-  nose.rotation.z = -Math.PI / 2
-  nose.position.x = 0.92
-  const jaw = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.03, 0.12), matte(0xf2f0ea))
-  jaw.position.set(0.78, -0.08, 0)
-  const gill = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.1, 0.08), matte(0x2a343c))
-  const gill2 = gill.clone()
-  const gill3 = gill.clone()
-  gill.position.set(0.42, 0.02, 0.16)
-  gill2.position.set(0.36, 0.02, 0.16)
-  gill3.position.set(0.3, 0.02, 0.16)
+  const skin = matte(0x56656f, { roughness: 0.42, metalness: 0.1 })
+  const fin = matte(0x4a5862, { roughness: 0.5, side: THREE.DoubleSide })
+  const len = 2.1
+  const deep = 0.27
+  const profile: THREE.Vector2[] = []
+  const steps = 20
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps
+    const bulge = Math.pow(Math.sin(Math.PI * Math.min(0.999, Math.pow(t, 0.8))), 0.6)
+    const r = deep * bulge * (1 - 0.55 * t) + 0.012
+    profile.push(new THREE.Vector2(r, (0.5 - t) * len))
+  }
+  const body = new THREE.Mesh(new THREE.LatheGeometry(profile, 20), skin)
+  body.rotation.z = -Math.PI / 2
+  body.scale.set(1, 1, 0.82)
+  const belly = new THREE.Mesh(new THREE.LatheGeometry(profile.map((p) => new THREE.Vector2(p.x * 0.9, p.y)), 20), matte(0xd9e2e6, { roughness: 0.45 }))
+  belly.rotation.z = -Math.PI / 2
+  belly.scale.set(0.97, 0.86, 0.76)
+  belly.position.y = -0.07
+  const dorsal = new THREE.Mesh(finShape([[0.16, 0], [-0.02, 0.46], [-0.14, 0.4], [-0.3, 0]]), fin)
+  dorsal.position.set(0.12, deep * 0.78, 0)
+  const dorsal2 = new THREE.Mesh(finShape([[0.06, 0], [-0.03, 0.14], [-0.12, 0]]), fin)
+  dorsal2.position.set(-0.62, deep * 0.36, 0)
+  const pelvic = new THREE.Mesh(finShape([[0.06, 0], [-0.04, -0.1], [-0.12, 0]]), fin)
+  pelvic.position.set(-0.5, -deep * 0.34, 0)
+  const pecGeo = finShape([[0.08, 0], [-0.28, -0.1], [-0.42, -0.02], [-0.14, 0.04]])
+  const pec = new THREE.Mesh(pecGeo, fin)
+  pec.position.set(0.32, -0.1, deep * 0.7)
+  pec.rotation.set(0.75, 0.5, -0.15)
+  const pec2 = new THREE.Mesh(pecGeo, fin)
+  pec2.position.set(0.32, -0.1, -deep * 0.7)
+  pec2.rotation.set(-0.75, -0.5, -0.15)
   const tail = new THREE.Group()
-  const upper = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.42, 5), skin)
-  upper.position.set(-0.12, 0.16, 0)
-  upper.rotation.z = 2.05
-  const lower = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.24, 5), skin)
-  lower.position.set(-0.1, -0.1, 0)
-  lower.rotation.z = -2.15
-  tail.position.x = -0.92
-  tail.add(upper, lower)
-  const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.38, 5), skin)
-  dorsal.position.set(0.08, 0.34, 0)
-  const rearFin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 5), skin)
-  rearFin.position.set(-0.45, 0.2, 0)
-  const pec = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.03, 0.14), skin)
-  pec.position.set(0.12, -0.08, 0.26)
-  pec.rotation.z = -0.28
-  const pec2 = pec.clone()
-  pec2.position.z = -0.26
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.036, 6, 6), matte(0xf2f6f8))
-  eye.position.set(0.62, 0.07, 0.18)
-  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.016, 6, 6), matte(0x14181c))
-  pupil.position.set(0.64, 0.07, 0.2)
-  group.add(body, underside, nose, jaw, gill, gill2, gill3, tail, dorsal, rearFin, pec, pec2, eye, pupil)
-  group.scale.setScalar(1.55)
-  group.userData = { tail }
+  const caudal = new THREE.Mesh(finShape([[0.02, 0], [-0.36, 0.5], [-0.26, 0.12], [-0.22, 0.02], [-0.26, -0.22], [0, -0.03]]), fin)
+  tail.add(caudal)
+  tail.position.x = -len / 2 + 0.03
+  const gills: THREE.Mesh[] = []
+  for (let i = 0; i < 4; i++) {
+    const slit = new THREE.Mesh(new THREE.PlaneGeometry(0.012, 0.13), matte(0x2a343c, { side: THREE.DoubleSide }))
+    slit.position.set(0.58 - i * 0.06, 0.02, deep * 0.8)
+    slit.rotation.set(0, 0.4, -0.18)
+    gills.push(slit)
+    const slit2 = slit.clone()
+    slit2.position.z = -deep * 0.8
+    slit2.rotation.set(0, -0.4, -0.18)
+    gills.push(slit2)
+  }
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.026, 7, 7), matte(0x0c1014))
+  eye.position.set(0.8, 0.05, deep * 0.62)
+  const eye2 = eye.clone()
+  eye2.position.z = -deep * 0.62
+  group.add(body, belly, dorsal, dorsal2, pelvic, pec, pec2, tail, ...gills, eye, eye2)
+  group.scale.setScalar(1.45)
+  group.userData = { tail, body }
   return {
     group,
     update: (time) => {
-      tail.rotation.y = Math.sin(time * 3.2) * 0.22
+      const beat = Math.sin(time * 2.1)
+      tail.rotation.y = beat * 0.3
+      body.rotation.y = beat * 0.04
+      belly.rotation.y = beat * 0.04
     }
   }
 }
