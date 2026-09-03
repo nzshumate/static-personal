@@ -150,19 +150,10 @@ export const makeBalloon = (envelope: number): Tickable => {
     new THREE.Vector2(0.065, -0.54)
   ]
   const bulb = new THREE.Mesh(new THREE.LatheGeometry(profile, 22), cloth)
-  const stripe = new THREE.Mesh(new THREE.TorusGeometry(0.485, 0.022, 6, 24), cream)
-  stripe.rotation.x = Math.PI / 2
-  stripe.position.y = 0.06
-  const stripe2 = new THREE.Mesh(new THREE.TorusGeometry(0.405, 0.02, 6, 22), cream)
-  stripe2.rotation.x = Math.PI / 2
-  stripe2.position.y = -0.2
   const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.08, 0.045, 10), cream)
   crown.position.y = 0.58
   const valve = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.04, 6), metal(0x8a9098))
   valve.position.y = 0.61
-  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.014, 6, 16), cream)
-  mouth.rotation.x = Math.PI / 2
-  mouth.position.y = -0.53
   const burner = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.048, 0.07, 8), metal(0x6a7078))
   burner.position.y = -0.58
   const flame = new THREE.Mesh(new THREE.ConeGeometry(0.028, 0.09, 6), emit(0xff7a30, 1.6))
@@ -191,7 +182,7 @@ export const makeBalloon = (envelope: number): Tickable => {
     line.quaternion.setFromUnitVectors(up, span.normalize())
     group.add(line)
   }
-  group.add(bulb, stripe, stripe2, crown, valve, mouth, burner, flame, basket)
+  group.add(bulb, crown, valve, burner, flame, basket)
   return {
     group,
     update: (time) => {
