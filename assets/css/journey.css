@@ -94,25 +94,6 @@
   background: radial-gradient(ellipse at 28% 42%, rgba(10, 14, 20, 0.72), rgba(10, 14, 20, 0.28) 52%, transparent 76%);
 }
 
-.journey-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 30px;
-}
-
-.journey-meta span {
-  padding: 8px 11px;
-  border: 1px solid rgba(220, 232, 255, 0.16);
-  border-radius: 99px;
-  background: rgba(2, 6, 12, 0.24);
-  font-size: 8px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #9aa7b8;
-  backdrop-filter: blur(8px);
-}
-
 .biome-label {
   position: absolute;
   right: var(--pad);
@@ -275,10 +256,6 @@
 
   .journey-body {
     font-size: 14px;
-  }
-
-  .journey-meta {
-    display: none;
   }
 
   .biome-label {
