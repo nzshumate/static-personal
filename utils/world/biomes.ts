@@ -253,14 +253,15 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const cabin = makeCabin()
   const cabinX = 0.05
   const cabinZ = 0.85
-  cabin.position.set(cabinX, ridgeHeight(cabinX, cabinZ), cabinZ)
+  cabin.position.set(cabinX, ridgeHeight(cabinX, cabinZ) - 0.04, cabinZ)
   cabin.scale.setScalar(1.55)
   cabin.rotation.y = 0.22
   mountains.add(cabin)
   const fire = addSprite(cabin, glow, 0xff7a2a, 0.55, new THREE.Vector3(-0.22, 0.32, 0.42), new THREE.Vector2(0.32, 0.26), true)
   const chimneyFire = addSprite(cabin, glow, 0xff5520, 0.5, new THREE.Vector3(-0.28, 1.2, -0.1), new THREE.Vector2(0.22, 0.18), true)
-  const smoke = addSprite(cabin, glow, 0xd8dee4, 0.38, new THREE.Vector3(-0.28, 1.55, -0.1), new THREE.Vector2(0.42, 0.85))
-  const smoke2 = addSprite(cabin, glow, 0xc8d0d6, 0.22, new THREE.Vector3(-0.18, 1.95, -0.04), new THREE.Vector2(0.34, 0.7))
+  const smoke = addSprite(cabin, glow, 0xb8c0c6, 0.55, new THREE.Vector3(-0.28, 1.55, -0.1), new THREE.Vector2(0.55, 1.15))
+  const smoke2 = addSprite(cabin, glow, 0xa8b0b6, 0.4, new THREE.Vector3(-0.18, 2.05, -0.04), new THREE.Vector2(0.48, 0.95))
+  const smoke3 = addSprite(cabin, glow, 0x9aa2a8, 0.28, new THREE.Vector3(-0.08, 2.5, 0.02), new THREE.Vector2(0.4, 0.8))
   const hearth = new THREE.PointLight(0xff7a2a, 1.4, 4.5)
   hearth.position.set(-0.2, 0.35, 0.4)
   cabin.add(hearth)
@@ -269,7 +270,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const yeti = makeYeti()
   const yetiX = 3.85
   const yetiZ = 0.35
-  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.4, yetiZ)
+  yeti.position.set(yetiX, ridgeHeight(yetiX, yetiZ) + 0.28, yetiZ)
   yeti.scale.setScalar(1.85)
   yeti.rotation.y = -1.05
   mountains.add(yeti)
@@ -287,15 +288,17 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     chimneyFire.material.opacity = 0.28 + flicker * 0.38
     chimneyFire.scale.set(0.18 + Math.sin(time * 12) * 0.04, 0.16 + Math.sin(time * 15) * 0.05, 1)
     smoke.position.y = 1.55 + Math.sin(time * 0.8) * 0.12
-    smoke.material.opacity = 0.22 + Math.sin(time * 0.9) * 0.1
-    smoke2.position.y = 1.95 + Math.sin(time * 0.7 + 1) * 0.16
-    smoke2.material.opacity = 0.12 + Math.sin(time * 0.8 + 0.6) * 0.08
+    smoke.material.opacity = 0.38 + Math.sin(time * 0.9) * 0.12
+    smoke2.position.y = 2.05 + Math.sin(time * 0.7 + 1) * 0.16
+    smoke2.material.opacity = 0.22 + Math.sin(time * 0.8 + 0.6) * 0.1
+    smoke3.position.y = 2.5 + Math.sin(time * 0.6 + 1.7) * 0.18
+    smoke3.material.opacity = 0.12 + Math.sin(time * 0.7 + 1.1) * 0.08
     if (reduced) return
     const t = (time * 0.14) % 1
     const sx = 1.7 + t * 2.1
     const sz = 0.7 - t * 0.45
     skier.group.scale.setScalar(2.05)
-    skier.group.position.set(sx, ridgeHeight(sx, sz) + 0.22, sz)
+    skier.group.position.set(sx, ridgeHeight(sx, sz) + 0.08, sz)
     skier.update(time, reduced)
     yeti.rotation.y = -1.05 + Math.sin(time * 0.2) * 0.12
   })
