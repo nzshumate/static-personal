@@ -1,5 +1,6 @@
 .journey-site {
   background: #02040a;
+  transition: background 0.4s linear;
 }
 
 .journey-fade {
@@ -31,7 +32,62 @@
 .journey-copy-right {
   margin-left: auto;
   text-align: right;
-  padding: 36px 0 36px 28px;
+  padding: 36px 5.25rem 36px 28px;
+}
+
+.journey-nav {
+  position: fixed;
+  z-index: 11;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+}
+
+.journey-nav ol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journey-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(228, 236, 245, 0.34);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  transition: color 0.25s ease;
+}
+
+.journey-nav a:hover,
+.journey-nav a:focus-visible {
+  color: rgba(244, 248, 252, 0.92);
+}
+
+.journey-nav a.current {
+  color: rgba(244, 248, 252, 0.88);
+}
+
+.journey-nav-mark {
+  display: block;
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 1px currentColor;
+  opacity: 0.7;
+}
+
+.journey-nav a.current .journey-nav-mark {
+  opacity: 1;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(180, 210, 255, 0.55);
 }
 
 .journey-copy-right::before {
@@ -94,26 +150,6 @@
   background: radial-gradient(ellipse at 28% 42%, rgba(10, 14, 20, 0.72), rgba(10, 14, 20, 0.28) 52%, transparent 76%);
 }
 
-.biome-label {
-  position: absolute;
-  right: var(--pad);
-  bottom: 8vh;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  color: rgba(228, 236, 245, 0.5);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-}
-
-.biome-label i {
-  display: block;
-  width: 64px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.4), transparent);
-}
-
 .journey-cta {
   display: inline-flex;
   align-items: center;
@@ -164,13 +200,6 @@
   font-size: 9px;
 }
 
-.journey-scene .chapter-index {
-  padding: 7px 10px;
-  border: 1px solid rgba(220, 230, 244, 0.1);
-  background: rgba(3, 8, 14, 0.28);
-  backdrop-filter: blur(8px);
-}
-
 .journey-site .scene-hero {
   grid-template-columns: 1fr;
   min-height: 100svh;
@@ -179,6 +208,7 @@
 
 .journey-cta:focus-visible,
 .floating-nav a:focus-visible,
+.journey-nav a:focus-visible,
 .scroll-cue:focus-visible,
 .biome-contact footer a:focus-visible {
   outline: 1px solid rgba(210, 229, 255, 0.62);
@@ -229,9 +259,22 @@
     font-size: clamp(36px, 10vw, 58px);
   }
 
-  .biome-label {
-    right: 22px;
-    bottom: 5vh;
+  .journey-nav {
+    right: 12px;
+  }
+
+  .journey-nav-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .journey-nav a {
+    position: relative;
+    padding: 4px;
   }
 
   .journey-site .floating-nav nav a:nth-child(3),
@@ -258,8 +301,8 @@
     font-size: 14px;
   }
 
-  .biome-label {
-    display: none;
+  .journey-nav {
+    right: 8px;
   }
 
   .journey-site .floating-nav nav a:nth-child(2) {
