@@ -11,6 +11,7 @@ import {
   makeFish,
   makeFox,
   makeFrog,
+  makeHeron,
   makeJelly,
   makeLighthouse,
   makeLilyPad,
@@ -653,17 +654,9 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   bench.position.y = 0.08
   boat.add(bench)
   swamp.add(boat)
-  const heron = new THREE.Group()
-  heron.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), matte(0xd5d8dc)))
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.18, 6), matte(0xc48a3a))
-  beak.rotation.z = Math.PI / 2
-  beak.position.x = 0.14
-  const neck = new THREE.Mesh(new THREE.CapsuleGeometry(0.02, 0.18, 3, 5), matte(0xd5d8dc))
-  neck.position.set(0.04, 0.1, 0)
-  neck.rotation.z = -0.4
-  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.42, 5), matte(0xd5d8dc))
-  leg.position.y = -0.28
-  heron.add(beak, neck, leg)
+  const heron = makeHeron()
+  heron.scale.setScalar(1.7)
+  heron.rotation.y = 0.5
   swamp.add(heron)
   const gator = new THREE.Group()
   const gatorBody = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), matte(0x2a4a28))
@@ -687,7 +680,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     })
     boat.position.set(-1.4 + Math.sin(time * 0.12) * 1.1, -2.72, -4.2)
     boat.rotation.z = Math.sin(time * 0.5) * 0.04
-    heron.position.set(-2.8, -2.12 + Math.sin(time * 0.4) * 0.03, -2.7)
+    heron.position.set(-3.1, waterY - 0.01, -2.9)
+    heron.rotation.y = 0.5 + Math.sin(time * 0.15) * 0.08
     gator.position.set(3.2 + Math.sin(time * 0.08) * 0.45, -2.9 + Math.sin(time * 0.3) * 0.02, -3.5)
   })
   groups.push(swamp)
