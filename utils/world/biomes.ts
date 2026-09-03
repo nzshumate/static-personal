@@ -317,7 +317,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     new THREE.MeshBasicMaterial({ color: 0x3a4652, transparent: true, opacity: 0.3, depthWrite: false })
   )
   skierShadow.rotation.x = -Math.PI / 2
-  skierShadow.scale.set(1.6, 1, 1)
+  skierShadow.scale.set(1.1, 0.55, 1)
   mountains.add(skierShadow)
   const yeti = makeYeti()
   const yetiX = 7.4
@@ -351,8 +351,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     const sx = 3 + t * 3.2
     const sz = 0.6 + t * 3.2 + Math.sin(t * Math.PI * 4) * 0.35
     const sy = ridgeHeight(sx, sz)
-    skier.group.scale.setScalar(1.45)
-    skier.group.position.set(sx, sy + 0.07, sz)
+    skier.group.scale.setScalar(0.82)
+    skier.group.position.set(sx, sy + 0.01, sz)
     skier.group.rotation.y = -Math.PI / 4 + Math.cos(t * Math.PI * 4) * 0.35
     const alpha = smoothstep(0, 0.08, t) * (1 - smoothstep(0.9, 1, t))
     setGroupOpacity(skier.group, alpha)
@@ -865,10 +865,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
       item.group.position.set([-4.6, -2.2, -6.2][i], 0.4 + i * 0.6 + Math.sin(time * 0.25 + i) * 0.16, -5 - i * 1.1)
       item.update(time, reduced)
     })
-    // The shark patrols on a long cycle so it is seen, not expected.
-    const patrol = (time * 0.05) % 1
-    shark.group.visible = patrol < 0.42
-    shark.group.position.set(-9 + (patrol / 0.42) * 18, -0.6 + Math.sin(time * 0.4) * 0.14, -5.4)
+    // The shark cruises a long lazy line that starts and ends off frame, steering into its own turns.
+    const sharkAt = (t: number) => {
+      const x = -19 + ((t * 0.55) % 46)
+      return new THREE.Vector3(x, -0.7 + Math.sin(t * 0.21) * 0.35, -5.6 + Math.sin(t * 0.13 + 1) * 1.6)
+    }
+    const sharkHere = sharkAt(time)
+    const sharkAhead = sharkAt(time + 0.6)
+    shark.group.position.copy(sharkHere)
+    shark.group.rotation.y = Math.atan2(sharkAhead.x - sharkHere.x, sharkAhead.z - sharkHere.z) - Math.PI / 2
+    shark.group.rotation.z = (sharkAhead.y - sharkHere.y) * 1.2
     shark.update(time, reduced)
   })
   groups.push(ocean)
