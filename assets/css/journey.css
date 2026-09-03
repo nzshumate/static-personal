@@ -85,9 +85,13 @@
 .journey-body {
   max-width: 34em;
   margin: 26px 0 0;
-  color: rgba(231, 237, 244, 0.74);
+  color: rgba(238, 243, 248, 0.88);
   font-size: clamp(15px, 1.28vw, 18px);
   line-height: 1.7;
+}
+
+.biome-mountains .journey-copy::before {
+  background: radial-gradient(ellipse at 28% 42%, rgba(10, 14, 20, 0.72), rgba(10, 14, 20, 0.28) 52%, transparent 76%);
 }
 
 .journey-meta {
@@ -261,7 +265,12 @@
   }
 
   .journey-copy h2 {
-    font-size: clamp(34px, 12vw, 48px);
+    font-size: clamp(32px, 9vw, 48px);
+  }
+
+  .biome-forest .journey-copy h2 {
+    font-size: clamp(30px, 8.4vw, 44px);
+    line-height: 1.08;
   }
 
   .journey-body {
