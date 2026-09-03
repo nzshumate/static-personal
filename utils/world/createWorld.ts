@@ -22,10 +22,22 @@ const backgrounds = [
   new THREE.Color(0x01080e)
 ]
 
-const mixColor = (value: number) => {
-  const scaled = value * (backgrounds.length - 1)
-  const index = Math.min(backgrounds.length - 2, Math.floor(scaled))
-  return backgrounds[index].clone().lerp(backgrounds[index + 1], scaled - index)
+// Average on-screen tone per station, used for the atmospheric dip between scenes.
+const veils = [
+  new THREE.Color(0x02040a),
+  new THREE.Color(0x5f7d9c),
+  new THREE.Color(0x7d8994),
+  new THREE.Color(0x0a1a12),
+  new THREE.Color(0xa8784a),
+  new THREE.Color(0x0c1c18),
+  new THREE.Color(0x8c7f6c),
+  new THREE.Color(0x03202c)
+]
+
+const mixColor = (palette: THREE.Color[], value: number) => {
+  const scaled = value * (palette.length - 1)
+  const index = Math.min(palette.length - 2, Math.floor(scaled))
+  return palette[index].clone().lerp(palette[index + 1], scaled - index)
 }
 
 export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandle> => {
@@ -72,6 +84,8 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
   let progress = 0
   let pointerX = 0
   let pointerY = 0
+  let intro = 0
+  const stage = canvas.closest('main') as HTMLElement | null
   const clock = new THREE.Clock()
 
   const onScroll = () => {
@@ -112,12 +126,19 @@ export const createWorld = async (canvas: HTMLCanvasElement): Promise<WorldHandl
 
     const stations = [space.group, ...biomes.groups]
     const scaled = progress * 7
+    const chapter = Math.min(stations.length - 1, Math.max(0, Math.round(scaled)))
     stations.forEach((group, index) => {
-      group.visible = Math.abs(scaled - index) < 0.72
+      group.visible = index === chapter
     })
 
-    const bg = mixColor(progress)
-    scene.background = bg
+    // Travel between scenes passes through a brief atmospheric haze rather than a hard cut.
+    const boundary = Math.abs(scaled - chapter)
+    const haze = chapter === 0 ? 0 : smoothstep(0.3, 0.5, boundary)
+    intro = reduced ? 1 : Math.min(1, intro + 0.014)
+    canvas.style.opacity = (intro * (1 - haze * 0.82)).toFixed(3)
+    if (stage) stage.style.background = `#${mixColor(veils, progress).getHexString()}`
+
+    scene.background = mixColor(backgrounds, progress)
     hemi.intensity = 0.42 - smoothstep(0.82, 1, progress) * 0.16
     key.intensity = 2.05 - smoothstep(0.5, 0.72, progress) * 0.35 - smoothstep(0.82, 1, progress) * 0.7
     key.color.set(progress < 0.5 ? 0xffe6c4 : progress < 0.72 ? 0xc8e0d4 : 0x7ec8d4)

@@ -580,19 +580,6 @@ export const makeCrab = () => {
   return group
 }
 
-export const makeBottle = () => {
-  const group = new THREE.Group()
-  const glass = new THREE.MeshStandardMaterial({ color: 0x7ec8b8, transparent: true, opacity: 0.5, roughness: 0.12, metalness: 0.08, fog: false })
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.14, 8), glass)
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.022, 0.06, 8), glass)
-  neck.position.y = 0.09
-  const cork = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.02, 8), matte(0x8a5a32))
-  cork.position.y = 0.13
-  group.add(body, neck, cork)
-  group.rotation.z = 1.15
-  return group
-}
-
 export const makeFish = (color: number): Tickable => {
   const group = new THREE.Group()
   const skin = matte(color, { roughness: 0.45 })

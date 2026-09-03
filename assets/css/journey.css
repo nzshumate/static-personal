@@ -1,5 +1,6 @@
 .journey-site {
   background: #02040a;
+  transition: background 0.4s linear;
 }
 
 .journey-fade {
