@@ -19,23 +19,66 @@ export type Tickable = {
 
 export const makeBird = (color: number): Tickable => {
   const group = new THREE.Group()
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), matte(color))
-  body.scale.set(1.6, 0.7, 0.7)
-  const left = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.018, 0.08), matte(color))
+  const skin = matte(color)
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), skin)
+  body.scale.set(1.5, 0.72, 0.7)
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.022, 6, 6), skin)
+  head.position.set(0.07, 0.012, 0)
+  const leftPivot = new THREE.Group()
+  const rightPivot = new THREE.Group()
+  leftPivot.position.set(-0.02, 0.012, 0)
+  rightPivot.position.set(0.02, 0.012, 0)
+  const left = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.016, 0.07), skin)
   const right = left.clone()
-  left.position.set(-0.12, 0.01, 0)
-  right.position.set(0.12, 0.01, 0)
-  group.add(body, left, right)
-  group.scale.setScalar(1.8)
-  group.userData = { left, right, phase: Math.random() * Math.PI * 2 }
+  left.position.set(-0.1, 0, 0)
+  right.position.set(0.1, 0, 0)
+  leftPivot.add(left)
+  rightPivot.add(right)
+  group.add(body, head, leftPivot, rightPivot)
+  group.scale.setScalar(2.1)
+  group.userData = { leftPivot, rightPivot, phase: Math.random() * Math.PI * 2 }
   return {
     group,
     update: (time) => {
-      const flap = Math.sin(time * 11 + group.userData.phase) * 0.7
-      left.rotation.z = flap
-      right.rotation.z = -flap
+      const flap = Math.sin(time * 12 + group.userData.phase) * 0.55
+      leftPivot.rotation.z = flap
+      rightPivot.rotation.z = -flap
     }
   }
+}
+
+export const makeCloud = (random: () => number) => {
+  const group = new THREE.Group()
+  const puff = new THREE.MeshBasicMaterial({ color: 0xf3f6fa, transparent: true, opacity: 0.88, depthWrite: false })
+  const count = 5 + Math.floor(random() * 3)
+  for (let i = 0; i < count; i++) {
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(0.42 + random() * 0.38, 14, 10), puff)
+    ball.position.set((random() - 0.5) * 1.8, (random() - 0.35) * 0.45, (random() - 0.5) * 0.7)
+    ball.scale.set(1.3 + random() * 0.6, 0.55 + random() * 0.25, 0.9)
+    group.add(ball)
+  }
+  return group
+}
+
+export const makeCabin = () => {
+  const group = new THREE.Group()
+  const wall = matte(0x5a3820)
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.52, 0.68), wall)
+  body.position.y = 0.26
+  const roof = new THREE.Mesh(new THREE.ConeGeometry(0.7, 0.38, 4), matte(0x3a2214))
+  roof.position.y = 0.7
+  roof.rotation.y = Math.PI / 4
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.26, 0.03), matte(0x2a1810))
+  door.position.set(0.18, 0.16, 0.35)
+  const window = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.14, 0.03), emit(0xff9a40, 1.1))
+  window.position.set(-0.2, 0.28, 0.35)
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.28, 0.12), matte(0x4a4038))
+  chimney.position.set(-0.22, 0.82, -0.08)
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.04, 0.16), matte(0x2a241c))
+  cap.position.set(-0.22, 0.96, -0.08)
+  group.add(body, roof, door, window, chimney, cap)
+  group.userData = { window, chimney }
+  return group
 }
 
 export const makeBalloon = (envelope: number): Tickable => {
@@ -63,71 +106,90 @@ export const makeBalloon = (envelope: number): Tickable => {
 
 export const makeSkier = (): Tickable => {
   const group = new THREE.Group()
-  const jacket = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.22, 5, 8), matte(0xc4333d))
-  jacket.position.y = 0.08
+  const jacket = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.2, 5, 8), matte(0xc4333d))
+  jacket.position.y = 0.12
+  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.014, 6, 10), matte(0xf2f0ea))
+  scarf.position.y = 0.24
+  scarf.rotation.x = Math.PI / 2
   const head = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), matte(0xe8c4a8))
-  head.position.y = 0.28
-  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8, 0, Math.PI * 2, 0, Math.PI / 1.7), matte(0x1a222b))
-  helmet.position.y = 0.3
-  const goggles = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.03), metal(0x7ec8e8, { roughness: 0.15 }))
-  goggles.position.set(0.04, 0.28, 0)
-  const hip = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), matte(0x1a222b))
-  hip.position.y = -0.08
-  const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.03, 0.12, 4, 6), matte(0x1a222b))
-  thigh.position.set(0.03, -0.16, 0)
-  thigh.rotation.z = 0.35
-  const boot = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.045), matte(0x14181c))
-  boot.position.set(0.08, -0.26, 0.06)
+  head.position.y = 0.32
+  const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.062, 10, 8, 0, Math.PI * 2, 0, Math.PI / 1.65), matte(0x1a222b))
+  helmet.position.y = 0.34
+  const goggles = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.022, 0.032), metal(0x7ec8e8, { roughness: 0.15 }))
+  goggles.position.set(0.04, 0.32, 0)
+  const pack = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.1, 0.12), matte(0x2a333d))
+  pack.position.set(-0.06, 0.14, 0)
+  const hip = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 8), matte(0x1a222b))
+  hip.position.y = -0.04
+  const thigh = new THREE.Mesh(new THREE.CapsuleGeometry(0.028, 0.11, 4, 6), matte(0x1a222b))
+  const thigh2 = thigh.clone()
+  thigh.position.set(0.04, -0.12, 0.05)
+  thigh.rotation.z = 0.4
+  thigh2.position.set(0.04, -0.12, -0.05)
+  thigh2.rotation.z = 0.4
+  const boot = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.04, 0.045), matte(0x14181c))
   const boot2 = boot.clone()
-  boot2.position.z = -0.06
-  const ski = new THREE.Mesh(new THREE.BoxGeometry(0.82, 0.018, 0.05), metal(0x14181c))
+  boot.position.set(0.1, -0.22, 0.06)
+  boot2.position.set(0.1, -0.22, -0.06)
+  const ski = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.018, 0.055), metal(0x1c2430))
   const ski2 = ski.clone()
-  ski.position.set(0.06, -0.29, 0.07)
-  ski2.position.set(0.06, -0.29, -0.07)
-  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.42, 5), metal(0xc5ced6))
-  pole.position.set(0.12, 0.02, 0.12)
-  pole.rotation.z = 0.45
+  ski.position.set(0.08, -0.25, 0.07)
+  ski2.position.set(0.08, -0.25, -0.07)
+  const tip = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.018, 0.05), metal(0x1c2430))
+  tip.rotation.z = 0.7
+  tip.position.set(0.5, -0.2, 0.07)
+  const tip2 = tip.clone()
+  tip2.position.z = -0.07
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.46, 5), metal(0xc5ced6))
   const pole2 = pole.clone()
-  pole2.position.z = -0.12
-  group.add(jacket, head, helmet, goggles, hip, thigh, boot, boot2, ski, ski2, pole, pole2)
+  pole.position.set(0.14, 0.06, 0.13)
+  pole.rotation.z = 0.5
+  pole2.position.set(0.14, 0.06, -0.13)
+  pole2.rotation.z = 0.5
+  group.add(jacket, scarf, head, helmet, goggles, pack, hip, thigh, thigh2, boot, boot2, ski, ski2, tip, tip2, pole, pole2)
   group.rotation.y = Math.PI / 2
   return {
     group,
     update: (time) => {
-      group.rotation.z = -0.2 + Math.sin(time * 3) * 0.04
+      group.rotation.z = -0.28 + Math.sin(time * 3.2) * 0.05
     }
   }
 }
 
 export const makeYeti = () => {
   const group = new THREE.Group()
-  const fur = matte(0xb7c0c8, { roughness: 1 })
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), fur)
-  body.scale.set(0.85, 1.25, 0.7)
-  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 10), matte(0xf6f3ea))
-  belly.position.set(0.08, -0.04, 0)
+  const fur = matte(0x9aa6b0, { roughness: 1 })
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 12), fur)
+  body.scale.set(0.9, 1.3, 0.75)
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(0.17, 12, 10), matte(0xe8e0d4))
+  belly.position.set(0.1, -0.02, 0)
   belly.scale.set(0.7, 1, 0.8)
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 12), fur)
-  head.position.y = 0.42
-  const brow = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.04, 0.06), fur)
-  brow.position.set(0.08, 0.46, 0)
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 8), matte(0x1a1814))
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 12), fur)
+  head.position.set(0.04, 0.46, 0)
+  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), fur)
+  hair.position.set(0.02, 0.6, 0)
+  hair.scale.set(1.1, 0.55, 0.9)
+  const brow = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.045, 0.07), fur)
+  brow.position.set(0.12, 0.5, 0)
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.024, 8, 8), matte(0x1a1814))
   const eye2 = eye.clone()
-  eye.position.set(0.12, 0.43, 0.05)
-  eye2.position.set(0.12, 0.43, -0.05)
-  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.22, 5, 8), fur)
+  eye.position.set(0.16, 0.46, 0.055)
+  eye2.position.set(0.16, 0.46, -0.055)
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.02, 0.04), matte(0x3a2a22))
+  mouth.position.set(0.18, 0.38, 0)
+  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.06, 0.26, 5, 8), fur)
   const arm2 = arm.clone()
-  arm.position.set(0.02, 0.12, 0.24)
-  arm.rotation.z = 0.4
-  arm2.position.set(0.02, 0.12, -0.24)
-  arm2.rotation.z = 0.4
-  const foot = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), fur)
+  arm.position.set(0.04, 0.14, 0.28)
+  arm.rotation.z = 0.55
+  arm2.position.set(0.04, 0.14, -0.28)
+  arm2.rotation.z = 0.55
+  const foot = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), fur)
   const foot2 = foot.clone()
-  foot.position.set(0.06, -0.32, 0.1)
-  foot.scale.set(1.3, 0.55, 0.8)
-  foot2.position.set(0.06, -0.32, -0.1)
+  foot.position.set(0.08, -0.36, 0.12)
+  foot.scale.set(1.4, 0.5, 0.85)
+  foot2.position.set(0.08, -0.36, -0.12)
   foot2.scale.copy(foot.scale)
-  group.add(body, belly, head, brow, eye, eye2, arm, arm2, foot, foot2)
+  group.add(body, belly, head, hair, brow, eye, eye2, mouth, arm, arm2, foot, foot2)
   return group
 }
 
@@ -332,24 +394,26 @@ export const makeLilyPad = (random: () => number) => {
 
 export const makePalm = (random: () => number) => {
   const group = new THREE.Group()
-  const lean = 0.12 + random() * 0.16
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.09, 2.35, 8), matte(0x8a5a32))
+  const lean = 0.1 + random() * 0.1
+  const h = 2.35
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.1, h, 8), matte(0x8a5a32))
+  trunk.geometry.translate(0, h / 2, 0)
   trunk.rotation.z = lean
-  trunk.position.set(Math.sin(lean) * 0.6, 0, 0)
   group.add(trunk)
-  const top = new THREE.Vector3(Math.sin(lean) * 1.15, 1.12, 0)
-  for (let k = 0; k < 7; k++) {
-    const frond = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 0.16), matte(0x1c5a2c))
-    const angle = (k / 7) * Math.PI * 2
+  const top = new THREE.Vector3(Math.sin(lean) * h, Math.cos(lean) * h, 0)
+  for (let k = 0; k < 8; k++) {
+    const frond = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.035, 0.18), matte(0x1c5a2c))
+    const angle = (k / 8) * Math.PI * 2
     frond.position.copy(top)
-    frond.rotation.z = -0.55
+    frond.rotation.order = 'YZX'
     frond.rotation.y = angle
-    frond.translateX(0.32)
+    frond.rotation.z = -0.85
+    frond.translateX(0.42)
     group.add(frond)
   }
-  const nut = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), matte(0x5a3a1c))
+  const nut = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), matte(0x5a3a1c))
   nut.position.copy(top)
-  nut.position.y -= 0.08
+  nut.position.y -= 0.06
   group.add(nut)
   return group
 }
@@ -377,18 +441,27 @@ export const makeLighthouse = () => {
 
 export const makeSailboat = () => {
   const group = new THREE.Group()
-  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.14, 0.9, 5, 10), matte(0xe8ebe8))
+  const hull = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 1.05, 5, 10), matte(0xf2f0ea))
   hull.rotation.z = Math.PI / 2
-  hull.scale.set(1, 0.7, 0.85)
-  const keel = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.08, 0.16), matte(0xc45a3a))
-  keel.position.y = -0.06
-  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.018, 0.7, 6), matte(0xd8c4a0))
-  mast.position.y = 0.38
-  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.38, 0.55), matte(0xf7f4ee, { side: THREE.DoubleSide }))
-  sail.position.set(0.16, 0.36, 0)
-  const jib = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.32), matte(0xf7f4ee, { side: THREE.DoubleSide }))
-  jib.position.set(-0.18, 0.28, 0)
-  group.add(hull, keel, mast, sail, jib)
+  hull.scale.set(1, 0.62, 0.82)
+  const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.05, 0.28), matte(0xc4333d))
+  stripe.position.y = 0.02
+  const deck = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.04, 0.22), matte(0xd8c4a0))
+  deck.position.y = 0.08
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 0.18), matte(0xe8e4dc))
+  cabin.position.set(0.08, 0.16, 0)
+  const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.02, 0.95, 6), matte(0xd8c4a0))
+  mast.position.set(0.02, 0.55, 0)
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.55, 5), matte(0xd8c4a0))
+  boom.rotation.z = Math.PI / 2
+  boom.position.set(0.22, 0.18, 0)
+  const sail = new THREE.Mesh(new THREE.PlaneGeometry(0.48, 0.72), matte(0xf7f4ee, { side: THREE.DoubleSide }))
+  sail.position.set(0.24, 0.5, 0.01)
+  const jib = new THREE.Mesh(new THREE.PlaneGeometry(0.26, 0.42), matte(0xf7f4ee, { side: THREE.DoubleSide }))
+  jib.position.set(-0.22, 0.42, 0.01)
+  const rudder = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.16, 0.02), matte(0x6a4a28))
+  rudder.position.set(-0.52, -0.04, 0)
+  group.add(hull, stripe, deck, cabin, mast, boom, sail, jib, rudder)
   return group
 }
 
@@ -441,24 +514,70 @@ export const makeBottle = () => {
 export const makeFish = (color: number): Tickable => {
   const group = new THREE.Group()
   const skin = basic(color)
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), skin)
-  body.scale.set(1.7, 0.7, 0.48)
-  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.14, 7), skin)
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8), skin)
+  body.scale.set(1.75, 0.72, 0.5)
+  const stripe = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 8), basic(0xf2f6f8))
+  stripe.scale.set(1.1, 0.35, 0.22)
+  stripe.position.set(0.02, 0.02, 0.08)
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.16, 7), skin)
   nose.rotation.z = -Math.PI / 2
-  nose.position.x = 0.3
-  const tail = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.2), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }))
-  tail.position.x = -0.34
-  tail.rotation.y = Math.PI / 2
-  const fin = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 4), skin)
-  fin.position.set(0.02, 0.12, 0)
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), basic(0xf2f6f8))
-  eye.position.set(0.16, 0.03, 0.08)
-  group.add(body, nose, tail, fin, eye)
+  nose.position.x = 0.32
+  const tail = new THREE.Group()
+  const fluke = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.22), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }))
+  fluke.rotation.y = Math.PI / 2
+  tail.position.x = -0.32
+  tail.add(fluke)
+  const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.14, 4), skin)
+  dorsal.position.set(0.02, 0.14, 0)
+  const pec = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.06), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }))
+  pec.position.set(0.04, -0.02, 0.1)
+  pec.rotation.x = 0.6
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), basic(0xf2f6f8))
+  eye.position.set(0.18, 0.04, 0.08)
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.008, 6, 6), basic(0x14181c))
+  pupil.position.set(0.195, 0.04, 0.09)
+  group.add(body, stripe, nose, tail, dorsal, pec, eye, pupil)
   group.userData = { tail }
   return {
     group,
     update: (time) => {
-      tail.rotation.y = Math.PI / 2 + Math.sin(time * 8) * 0.2
+      tail.rotation.y = Math.sin(time * 8) * 0.35
+    }
+  }
+}
+
+export const makeShark = (): Tickable => {
+  const group = new THREE.Group()
+  const skin = basic(0x4a5a66)
+  const belly = basic(0xc5d0d4)
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 10), skin)
+  body.scale.set(2.4, 0.7, 0.72)
+  const underside = new THREE.Mesh(new THREE.SphereGeometry(0.22, 10, 8), belly)
+  underside.scale.set(2.2, 0.35, 0.5)
+  underside.position.y = -0.08
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.42, 8), skin)
+  nose.rotation.z = -Math.PI / 2
+  nose.position.x = 0.82
+  const tail = new THREE.Group()
+  const fluke = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 5), skin)
+  fluke.rotation.z = -Math.PI / 2
+  tail.position.x = -0.82
+  tail.add(fluke)
+  const dorsal = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.32, 5), skin)
+  dorsal.position.set(0.05, 0.28, 0)
+  const pec = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.03, 0.12), skin)
+  pec.position.set(0.1, -0.06, 0.22)
+  pec.rotation.z = -0.3
+  const pec2 = pec.clone()
+  pec2.position.z = -0.22
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.03, 6, 6), basic(0x14181c))
+  eye.position.set(0.55, 0.06, 0.16)
+  group.add(body, underside, nose, tail, dorsal, pec, pec2, eye)
+  group.userData = { tail }
+  return {
+    group,
+    update: (time) => {
+      tail.rotation.y = Math.sin(time * 3.2) * 0.2
     }
   }
 }
