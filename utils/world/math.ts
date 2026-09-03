@@ -7,13 +7,6 @@ export const smoothstep = (edge0: number, edge1: number, value: number) => {
   return t * t * (3 - 2 * t)
 }
 
-export const pulse = (value: number, start: number, peak: number, end: number) => {
-  if (value <= start || value >= end) return 0
-  return value < peak
-    ? smoothstep(start, peak, value)
-    : 1 - smoothstep(peak, end, value)
-}
-
 export const makeRng = (seed: number) => {
   let state = seed
   return () => {
