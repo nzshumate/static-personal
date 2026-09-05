@@ -149,83 +149,6 @@ void main() {
 }
 `
 
-export const plateVertex = `
-varying vec2 vUv;
-void main() {
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}
-`
-
-export const plateFragment = `
-uniform sampler2D uMap;
-uniform float uOpacity;
-uniform float uExposure;
-uniform vec3 uTint;
-varying vec2 vUv;
-void main() {
-  vec3 color = texture2D(uMap, vUv).rgb * uExposure * uTint;
-  gl_FragColor = vec4(color, uOpacity);
-}
-`
-
-export const oceanVertex = `
-varying vec2 vUv;
-void main() {
-  vUv = uv;
-  gl_Position = vec4(position.xy, 0.0, 1.0);
-}
-`
-
-export const oceanFragment = `
-uniform float uTime;
-uniform float uDepth;
-uniform float uOpacity;
-uniform vec2 uResolution;
-uniform vec2 uPointer;
-
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-
-float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
-}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / uResolution;
-  float depth = clamp(uDepth, 0.0, 1.0);
-  vec3 shallow = vec3(0.03, 0.34, 0.42);
-  vec3 mid = vec3(0.012, 0.11, 0.2);
-  vec3 abyss = vec3(0.002, 0.016, 0.04);
-  float falloff = smoothstep(0.08, 0.92, 1.0 - uv.y + depth * 0.55);
-  vec3 color = mix(shallow, mid, smoothstep(0.05, 0.55, falloff));
-  color = mix(color, abyss, smoothstep(0.45, 1.0, falloff + depth * 0.35));
-
-  vec2 cUv = uv * vec2(uResolution.x / uResolution.y, 1.0);
-  float caustic = 0.0;
-  caustic += pow(max(sin((cUv.x + uTime * 0.07) * 18.0 + noise(cUv * 4.0 + uTime * 0.04) * 3.0), 0.0), 10.0);
-  caustic += pow(max(sin((cUv.y - uTime * 0.05) * 14.0 + noise(cUv * 3.2 - uTime * 0.03) * 2.4), 0.0), 12.0);
-  float nearSurface = (1.0 - depth) * smoothstep(0.55, 1.0, uv.y);
-  color += vec3(0.1, 0.4, 0.44) * caustic * 0.28 * nearSurface;
-
-  float ray = pow(max(1.0 - abs(uv.x - (0.58 + uPointer.x * 0.05)), 0.0), 5.2) * smoothstep(0.15, 0.95, uv.y);
-  float ray2 = pow(max(1.0 - abs(uv.x - (0.36 + uPointer.x * 0.03)), 0.0), 7.0) * smoothstep(0.3, 1.0, uv.y);
-  color += vec3(0.16, 0.46, 0.5) * (ray * 0.2 + ray2 * 0.1) * (1.0 - depth);
-
-  float grain = (hash(uv * uResolution * 0.25 + uTime * 8.0) - 0.5) * 0.02;
-  color += grain;
-
-  float vignette = smoothstep(1.15, 0.35, length((uv - 0.5) * vec2(1.15, 1.0)));
-  color *= 0.55 + vignette * 0.45;
-
-  gl_FragColor = vec4(color, uOpacity);
-}
-`
-
 export const domeVertex = `
 varying vec3 vDir;
 void main() {
@@ -275,6 +198,7 @@ uniform vec3 uHigh;
 uniform vec3 uLightDir;
 uniform float uTime;
 uniform float uSeed;
+uniform float uRipple;
 varying vec3 vWorldPos;
 varying vec3 vNormalW;
 varying float vHeight;
@@ -319,6 +243,10 @@ void main() {
   vec3 color = mix(uLow, uMid, smoothstep(-3.4, -1.6, vHeight) + grain * 0.18);
   color = mix(color, uHigh, smoothstep(-0.7, 1.1, vHeight) * (1.0 - slope * 0.72));
   color = mix(color, uLow, slope * 0.32 + fine * 0.08);
+  // Wind ripples: fine, direction-biased ridges that soften with distance from the camera.
+  float ripple = sin(vWorldPos.x * 5.5 + vWorldPos.z * 2.2 + fbm(p * 3.0) * 4.5) * 0.5 + 0.5;
+  float near = 1.0 - smoothstep(6.0, 26.0, distance(cameraPosition, vWorldPos));
+  color *= 1.0 - uRipple * ripple * near;
   color *= 0.16 + light * 0.92;
   color += uHigh * rim * 0.14;
   gl_FragColor = vec4(color, 1.0);
