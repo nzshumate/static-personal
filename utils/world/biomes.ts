@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import {
   makeBalloon,
   makeBear,
@@ -27,6 +28,8 @@ import {
   cypressGeometry,
   setGroupOpacity
 } from './details'
+import { makeMushroom, makeCampfire, makeBones, makeDragonfly } from './actors'
+import { contactPatch, textured, foamTexture } from './surfaces'
 import { lerp, makeRng, smoothstep } from './math'
 import { domeFragment, domeVertex, pointFragment, pointVertex, sunFragment, sunVertex, terrainFragment, terrainVertex, waterFragment, waterVertex } from './shaders'
 
@@ -199,7 +202,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const dummy = new THREE.Object3D()
 
   const sky = new THREE.Group()
-  addDome(sky, 0x10346a, 0x9cc6e6, 0xffc878, new THREE.Vector3(-10, 6, -8))
+  addDome(sky, 0x12457e, 0x97bed4, 0xffc878, new THREE.Vector3(-10, 9, -8))
   sky.add(new THREE.HemisphereLight(0xb7d4f0, 0x243044, 0.62))
   const skyFill = new THREE.DirectionalLight(0xe8f0f8, 0.9)
   skyFill.position.set(-6, 8, 4)
@@ -218,28 +221,29 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   }
   const balloons = [makeBalloon(0xc45a3a), makeBalloon(0x3a6aa8), makeBalloon(0xd4a24a)]
   balloons.forEach((item, i) => {
-    item.group.scale.setScalar([1.55, 0.95, 0.62][i])
+    item.group.scale.setScalar([1.55, 0.95, 0.62][i]!)
     sky.add(item.group)
   })
   const birds = Array.from({ length: mobile ? 5 : 7 }, () => makeBird(0x1a222b))
   birds.forEach((item) => {
-    item.group.scale.setScalar(2)
+    item.group.scale.setScalar(1.3)
     sky.add(item.group)
   })
   tick.push((time, _progress, reduced) => {
-    skySun.material.uniforms.uTime.value = time
+    skySun.material.uniforms.uTime!.value = time
     skySun.corona.scale.setScalar(1.7 + Math.sin(time * 0.6) * 0.06)
     if (reduced) return
-    balloons[0].group.position.set(-3.2, 1.2 + Math.sin(time * 0.22) * 0.16, -3.6)
-    balloons[1].group.position.set(-6.4, 2.3 + Math.sin(time * 0.18 + 1) * 0.12, -8.5)
-    balloons[2].group.position.set(1.6, 2.9 + Math.sin(time * 0.16 + 2) * 0.1, -13)
+    balloons[0]!.group.position.set(mobile ? -0.8 : -3.2, (mobile ? 2.8 : 1.2) + Math.sin(time * 0.22) * 0.16, -3.6)
+    balloons[1]!.group.position.set(mobile ? -2.6 : -6.4, 2.3 + Math.sin(time * 0.18 + 1) * 0.12, -8.5)
+    balloons[2]!.group.position.set(1.6, 2.9 + Math.sin(time * 0.16 + 2) * 0.1, -13)
     balloons.forEach((item) => item.update(time, reduced))
     clouds.forEach((cloud, i) => {
       cloud.position.x = cloud.userData.homeX + Math.sin(time * 0.05 + i) * cloud.userData.drift
     })
     birds.forEach((item, i) => {
-      const t = ((time * 0.055 + i * 0.05) % 1)
-      item.group.position.set(-15 + t * 30, -1.1 + i * 0.16 + Math.sin(t * Math.PI) * 1.4, -5.5 - (i % 3) * 0.5)
+      const t = ((time * 0.021) % 1)
+      const wing = Math.ceil(i / 2)
+      item.group.position.set(-17 + t * 34 - wing * 0.52, 0.5 + wing * (i % 2 ? 0.2 : -0.12) + Math.sin(t * Math.PI) * 0.5, -7 - wing * 0.7)
       item.update(time, reduced)
     })
   })
@@ -253,7 +257,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const slopeHeight = (x: number, z: number) => {
     const wave = Math.sin(x * 0.32) + Math.sin(x * 0.74 + 1.1) * 0.58 + Math.sin(x * 1.55 + z * 0.22) * 0.2
     const fall = Math.pow(Math.max(0, 1 - Math.abs(z) / 12), 1.12)
-    return -3.35 + Math.max(0, wave + 1.2) * 2.65 * fall
+    const crags = (Math.sin(x * 3.2 + z * 1.8) * 0.10 + Math.sin(x * 6.8 - z * 2.9) * 0.045) * fall
+    return -3.35 + Math.max(0, wave + 1.2) * 2.65 * fall + crags
   }
   // A bench is cut into the face so the cabin has level ground to stand on.
   const shelfY = slopeHeight(cabinX, cabinZ) - 0.28
@@ -262,10 +267,11 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     const d = Math.hypot((x - cabinX) * 0.8, (z - cabinZ) * 1.25)
     return lerp(natural, shelfY, 1 - smoothstep(1.15, 2.5, d))
   }
-  const ridge = new THREE.PlaneGeometry(38, 22, mobile ? 80 : 140, mobile ? 46 : 80)
+  const ridge = new THREE.PlaneGeometry(64, 48, mobile ? 100 : 200, mobile ? 70 : 140)
   ridge.rotateX(-Math.PI / 2)
   displace(ridge, ridgeHeight)
   const mountainMat = addTerrain(mountains, ridge, 0x4a5560, 0x8b95a1, 0xeef3f6, 1.2)
+  mountainMat.uniforms.uLightDir!.value.set(0.58, 0.7, 0.42).normalize()
   // Distant range, lighter and lower contrast, so the near ridge has something to sit against.
   const farRange = new THREE.PlaneGeometry(70, 18, mobile ? 50 : 90, 20)
   farRange.rotateX(-Math.PI / 2)
@@ -275,7 +281,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     return -2.3 + Math.max(0, wave + 1.05) * 2.2 * fall
   })
   const farMat = addTerrain(mountains, farRange, 0x8b97a3, 0xb7c2cc, 0xe4e9ee, 0.7, -20)
-  farMat.uniforms.uLightDir.value.set(-0.4, 0.75, 0.4).normalize()
+  farMat.uniforms.uLightDir!.value.set(0.4, 0.75, 0.4).normalize()
   for (let i = 0; i < 8; i++) {
     addSprite(mountains, glow, 0xdbe6ef, 0.07, new THREE.Vector3((random() - 0.5) * 16, -0.2 + random() * 3, -5 - random() * 8), new THREE.Vector2(5.4 + random() * 4, 1.5), true)
   }
@@ -289,7 +295,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   mountains.add(cabin)
   const cabinShadow = new THREE.Mesh(
     new THREE.CircleGeometry(1.05, 20),
-    new THREE.MeshBasicMaterial({ color: 0x3a4652, transparent: true, opacity: 0.34, depthWrite: false })
+    new THREE.MeshBasicMaterial({ map: glow, color: 0x263445, transparent: true, opacity: 0.5, depthWrite: false })
   )
   cabinShadow.rotation.x = -Math.PI / 2
   cabinShadow.scale.set(1.35, 1, 1)
@@ -313,6 +319,18 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   cabin.add(hearth)
   const skier = makeSkier()
   mountains.add(skier.group)
+  const sprayPositions=new Float32Array(36*3)
+  const sprayGeometry=new THREE.BufferGeometry()
+  sprayGeometry.setAttribute('position',new THREE.BufferAttribute(sprayPositions,3))
+  const skiSpray=new THREE.Points(sprayGeometry,new THREE.PointsMaterial({color:0xe5eef3,size:0.018,transparent:true,opacity:0.5,depthWrite:false}))
+  skiSpray.frustumCulled=false;mountains.add(skiSpray)
+  const trackPositions=new Float32Array(48*2*2*3),trackIndices:number[]=[]
+  for(let lane=0;lane<2;lane++) for(let i=0;i<47;i++) {
+    const a=lane*96+i*2;trackIndices.push(a,a+2,a+1,a+1,a+2,a+3)
+  }
+  const trackGeometry=new THREE.BufferGeometry();trackGeometry.setAttribute('position',new THREE.BufferAttribute(trackPositions,3));trackGeometry.setIndex(trackIndices)
+  const tracks=new THREE.Mesh(trackGeometry,new THREE.MeshBasicMaterial({color:0x506a7b,transparent:true,opacity:0.18,depthWrite:false,side:THREE.DoubleSide}))
+  tracks.frustumCulled=false;mountains.add(tracks)
   const skierShadow = new THREE.Mesh(
     new THREE.CircleGeometry(0.34, 12),
     new THREE.MeshBasicMaterial({ color: 0x3a4652, transparent: true, opacity: 0.3, depthWrite: false })
@@ -328,7 +346,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   yeti.rotation.y = -1.25
   mountains.add(yeti)
   tick.push((time, _progress, reduced) => {
-    mountainMat.uniforms.uTime.value = time
+    mountainMat.uniforms.uTime!.value = time
     snowField.points.position.y = -((time * 0.16) % 1.7)
     const window = cabin.userData.window as THREE.Mesh
     const ember = cabin.userData.ember as THREE.Mesh
@@ -348,18 +366,48 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     smoke3.material.opacity = 0.12 + Math.sin(time * 0.7 + 1.1) * 0.08
     if (reduced) return
     // Long diagonal run down the right face toward the camera; fades in and out at the loop ends.
-    const t = (time * 0.055) % 1
-    const sx = 3 + t * 3.2
-    const sz = 0.6 + t * 3.2 + Math.sin(t * Math.PI * 4) * 0.35
-    const sy = ridgeHeight(sx, sz)
-    skier.group.scale.setScalar(0.82)
-    skier.group.position.set(sx, sy + 0.01, sz)
-    skier.group.rotation.y = -Math.PI / 4 + Math.cos(t * Math.PI * 4) * 0.35
+    const t = (time * 0.045) % 1
+    const path = (u: number) => {
+      const x = 3.3 + u * 2.3
+      const z = 1.0 + u * 6.5 + Math.sin(u*Math.PI*4)*0.18
+      return new THREE.Vector3(x,ridgeHeight(x,z),z)
+    }
+    const here=path(t), ahead=path(t+0.002)
+    const direction=ahead.clone().sub(here).normalize()
+    const sx=here.x, sy=here.y, sz=here.z
+    const normal=new THREE.Vector3(-(ridgeHeight(sx+0.03,sz)-ridgeHeight(sx-0.03,sz))/0.06,1,-(ridgeHeight(sx,sz+0.03)-ridgeHeight(sx,sz-0.03))/0.06).normalize()
+    const lateral=new THREE.Vector3().crossVectors(direction,normal).normalize()
+    const surfaceUp=new THREE.Vector3().crossVectors(lateral,direction).normalize()
+    skier.group.scale.setScalar(0.88)
+    skier.group.position.copy(here).y+=0.018
+    skier.group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(direction,surfaceUp,lateral))
+    skier.group.userData.turn=Math.sin(t*Math.PI*4)
     const alpha = smoothstep(0, 0.08, t) * (1 - smoothstep(0.9, 1, t))
     setGroupOpacity(skier.group, alpha)
     skierShadow.position.set(sx, sy + 0.012, sz)
     ;(skierShadow.material as THREE.MeshBasicMaterial).opacity = 0.3 * alpha
-    skier.update(time, reduced)
+    skier.update(time)
+    ;(skiSpray.material as THREE.PointsMaterial).opacity=alpha*0.45
+    ;(tracks.material as THREE.MeshBasicMaterial).opacity=alpha*0.18
+    for(let i=0;i<36;i++) {
+      const age=(time*1.3+i/36)%1
+      const p=path(Math.max(0,t-age*0.025))
+      const offset=(i%2 ? 1:-1)*(0.05+age*0.16)
+      sprayPositions[i*3]=p.x+lateral.x*offset
+      sprayPositions[i*3+1]=p.y+0.025+Math.sin(age*Math.PI)*0.085
+      sprayPositions[i*3+2]=p.z+lateral.z*offset
+    }
+    sprayGeometry.attributes.position!.needsUpdate=true
+    for(let lane=0;lane<2;lane++) for(let i=0;i<48;i++) {
+      const at=Math.max(0,t-i*0.0025),p=path(at),q=path(at+0.001)
+      const side=new THREE.Vector3(-(q.z-p.z),0,q.x-p.x).normalize()
+      for(let edge=0;edge<2;edge++) {
+        const offset=(lane?1:-1)*0.071+(edge?1:-1)*0.007
+        const x=p.x+side.x*offset,z=p.z+side.z*offset,idx=(lane*96+i*2+edge)*3
+        trackPositions[idx]=x;trackPositions[idx+1]=ridgeHeight(x,z)+0.012;trackPositions[idx+2]=z
+      }
+    }
+    trackGeometry.attributes.position!.needsUpdate=true
     yeti.rotation.y = -1.25 + Math.sin(time * 0.2) * 0.1
   })
   groups.push(mountains)
@@ -371,14 +419,42 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   forestMoon.position.set(6.8, 5.2, 2)
   forest.add(forestMoon)
   addMoon(forest, glow, new THREE.Vector3(6.8, 3.6, -11), 0.26, 0xcfe6d8)
-  const floor = new THREE.PlaneGeometry(36, 22, mobile ? 40 : 70, mobile ? 24 : 40)
+  const floor = new THREE.PlaneGeometry(80, 60, mobile ? 60 : 100, mobile ? 40 : 70)
   floor.rotateX(-Math.PI / 2)
   displace(floor, (x, z) => -3.05 + Math.sin(x * 0.4) * 0.12 + Math.sin(z * 0.55) * 0.1)
-  const forestFloor = addTerrain(forest, floor, 0x0c1810, 0x17301c, 0x2a4a28, 2.4)
+  const forestFloor = addTerrain(forest, floor, 0x142019, 0x293d25, 0x4b5430, 2.4)
   const forestFloorY = (x: number, z: number) => -3.05 + Math.sin(x * 0.4) * 0.12 + Math.sin(z * 0.55) * 0.1
   const treeCount = mobile ? 44 : 84
-  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.14, 2.6, 6), matte(0x3a2c1c), treeCount)
-  const canopies = new THREE.InstancedMesh(new THREE.SphereGeometry(0.72, 14, 10), matte(0x1c4a28, { roughness: 0.86 }), treeCount * 3)
+  const trunks = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.14, 2.6, 6), textured(0x524331, 'wood'), treeCount)
+  const leafParts: THREE.BufferGeometry[] = []
+  for (let i = 0; i < (mobile ? 170 : 320); i++) {
+    const azimuth = random() * Math.PI * 2
+    const y = random() * 2 - 1
+    const radius = Math.sqrt(1 - y * y) * (0.65 + random() * 0.35)
+    const size = 0.045 + random() * 0.035
+    // Folded leaf blades catch light independently and leave a fine, irregular silhouette.
+    const leaf = new THREE.BufferGeometry()
+    const outline = [[-1,0], [-0.6,0.45], [0,0.6], [0.6,0.45], [1,0], [0.6,-0.45], [0,-0.6], [-0.6,-0.45]]
+    const blade: number[] = []
+    outline.forEach(([x,z], j) => {
+      const next = outline[(j + 1) % outline.length]
+      blade.push(0,0.13,0, x!,0,z!, next![0]!,0,next![1]!)
+    })
+    leaf.setAttribute('position', new THREE.Float32BufferAttribute(blade, 3))
+    leaf.scale(size * 1.25, size, size)
+    leaf.rotateZ((random() - 0.5) * 2.2)
+    leaf.rotateX((random() - 0.5) * 1.5)
+    leaf.rotateY(azimuth)
+    leaf.translate(Math.cos(azimuth) * radius * 0.65, y * 0.6, Math.sin(azimuth) * radius * 0.65)
+    leaf.computeVertexNormals()
+    const tone = 0.62 + random() * 0.38
+    leaf.setAttribute('color', new THREE.Float32BufferAttribute(Array.from({length:24}, () => [tone * 0.92, tone, tone * 0.83]).flat(), 3))
+    leafParts.push(leaf)
+  }
+  const canopyGeometry = mergeGeometries(leafParts)
+  leafParts.forEach(part => part.dispose())
+  const canopies = new THREE.InstancedMesh(canopyGeometry, matte(0x376347, { roughness: 0.96, side: THREE.DoubleSide, vertexColors: true }), treeCount * 3)
+  const branches = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.024, 0.065, 1, 7), textured(0x524331, 'wood'), treeCount * 3)
   let canopyIndex = 0
   for (let i = 0; i < treeCount; i++) {
     const x = (random() - 0.5) * 24
@@ -390,7 +466,22 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     dummy.scale.set(s * (0.85 + random() * 0.4), s, s * (0.85 + random() * 0.4))
     dummy.rotation.set(lean, random() * Math.PI, lean * 0.6)
     dummy.updateMatrix()
+    const shadow = contactPatch(glow, s * 1.5, 0.6)
+    shadow.position.set(x, floorY + 0.012, z)
+    forest.add(shadow)
     trunks.setMatrixAt(i, dummy.matrix)
+    trunks.setColorAt(i, new THREE.Color().setHSL(0.08, 0.22, 0.55 + random() * 0.2))
+    for (let branch = 0; branch < 3; branch++) {
+      const a = branch / 3 * Math.PI * 2 + i
+      const start = new THREE.Vector3(x, floorY + s * 1.7, z)
+      const end = new THREE.Vector3(x + Math.cos(a) * s * 0.5, floorY + s * 2.6, z + Math.sin(a) * s * 0.5)
+      const span = end.clone().sub(start)
+      dummy.position.copy(start).add(end).multiplyScalar(0.5)
+      dummy.scale.set(s, span.length(), s)
+      dummy.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), span.normalize())
+      dummy.updateMatrix()
+      branches.setMatrixAt(i * 3 + branch, dummy.matrix)
+    }
     const lobes = 2 + Math.round(random())
     for (let k = 0; k < 3; k++) {
       const spread = (random() - 0.5) * 0.5 * s
@@ -400,12 +491,28 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
       dummy.scale.set(lobeScale * (0.9 + random() * 0.3), lobeScale * (0.8 + random() * 0.3), lobeScale)
       dummy.rotation.set(0, random() * Math.PI, 0)
       dummy.updateMatrix()
+      canopies.setColorAt(canopyIndex, new THREE.Color().setHSL(0.23 + random() * 0.07, 0.25, 0.5 + random() * 0.3))
       canopies.setMatrixAt(canopyIndex++, dummy.matrix)
     }
   }
-  forest.add(trunks, canopies)
+  forest.add(trunks, canopies, branches)
   const fernCount = mobile ? 40 : 90
-  const ferns = new THREE.InstancedMesh(new THREE.ConeGeometry(0.34, 0.42, 5), matte(0x1e4a26, { roughness: 1 }), fernCount)
+  const fernVertices: number[] = []
+  for (let frond = 0; frond < 7; frond++) {
+    const angle = frond / 7 * Math.PI * 2
+    const point = (r: number, y: number, side: number) => [Math.cos(angle) * r - Math.sin(angle) * side, y, Math.sin(angle) * r + Math.cos(angle) * side]
+    for (let leaflet = 1; leaflet < 7; leaflet++) {
+      const t = leaflet / 7
+      const r = t * 0.38
+      const y = Math.sin(t * Math.PI * 0.85) * 0.3
+      const width = (1 - t) * 0.105
+      for (const side of [-1, 1]) fernVertices.push(...point(r - 0.045, y - 0.03, 0), ...point(r + 0.04, y, width * side), ...point(r + 0.025, y + 0.025, 0))
+    }
+  }
+  const fernGeometry = new THREE.BufferGeometry()
+  fernGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fernVertices, 3))
+  fernGeometry.computeVertexNormals()
+  const ferns = new THREE.InstancedMesh(fernGeometry, matte(0x376b3b, { roughness: 1, side: THREE.DoubleSide }), fernCount)
   for (let i = 0; i < fernCount; i++) {
     const x = (random() - 0.5) * 22
     const z = -1 - random() * 8
@@ -417,7 +524,35 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     ferns.setMatrixAt(i, dummy.matrix)
   }
   forest.add(ferns)
-  const rocks = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.22, 0), matte(0x3a4a3c, { roughness: 1 }), mobile ? 8 : 16)
+  // Low, scattered leaf litter connects the foreground props to the forest floor.
+  const litter = new THREE.InstancedMesh(new THREE.SphereGeometry(0.045, 5, 3), matte(0x807047, { roughness: 1 }), mobile ? 180 : 420)
+  for (let i = 0; i < litter.count; i++) {
+    const x = (random() - 0.5) * 18, z = 3.5 - random() * 11
+    dummy.position.set(x, forestFloorY(x,z) + 0.008, z)
+    dummy.scale.set(0.7 + random(), 0.07, 0.35 + random() * 0.5)
+    dummy.rotation.set(0, random() * Math.PI, 0)
+    dummy.updateMatrix(); litter.setMatrixAt(i,dummy.matrix)
+    litter.setColorAt(i,new THREE.Color().setHSL(0.09 + random() * 0.1,0.22,0.25 + random() * 0.25))
+  }
+  forest.add(litter)
+  const shafts = new THREE.Group()
+  const shaftMaterial = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+    fragmentShader: `varying vec2 vUv; uniform float uTime;
+      void main(){float edge=pow(max(0.0,1.0-abs(vUv.x-.5)*2.0),2.5);
+      float ends=smoothstep(0.0,.3,vUv.y)*(1.0-smoothstep(.85,1.0,vUv.y));
+      float dust=.8+.2*sin(vUv.y*18.0-uTime*.15);
+      gl_FragColor=vec4(.65,.78,.53,edge*ends*dust*.065);}`
+  })
+  for (let i=0;i<5;i++) {
+    const shaft=new THREE.Mesh(new THREE.PlaneGeometry(0.65+i*.16,8),shaftMaterial)
+    shaft.position.set(-4+i*2.1,.5,-5-i*.7); shaft.rotation.z=-.27
+    shafts.add(shaft)
+  }
+  forest.add(shafts)
+  const rocks = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.22, 0), textured(0x536056, 'stone'), mobile ? 8 : 16)
   for (let i = 0; i < rocks.count; i++) {
     const x = (random() - 0.5) * 20
     const z = -1.4 - random() * 6
@@ -434,30 +569,52 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   }
   const bugs = Array.from({ length: mobile ? 9 : 14 }, () => makeFirefly())
   bugs.forEach((item) => forest.add(item.group))
-  for (let i = 0; i < 7; i++) {
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({
-      color: i % 2 ? 0xff6a4a : 0xf2c14a,
-      emissive: i % 2 ? 0xff6a4a : 0xf2c14a,
-      emissiveIntensity: 0.8,
-      roughness: 0.4,
-      fog: false
-    }))
-    cap.position.set(-5 + i * 1.4, -2.82, -2.4 - (i % 3) * 0.6)
-    forest.add(cap)
+  for (let i = 0; i < 12; i++) {
+    const mushroom = makeMushroom(random)
+    const x = -5.5 + (i % 4) * 1.8 + random() * 0.3
+    const z = 1.8 - Math.floor(i / 4) * 0.75
+    mushroom.position.set(x, forestFloorY(x,z), z)
+    mushroom.scale.setScalar(0.7 + random() * 0.6)
+    forest.add(mushroom)
   }
-  const camp = addSprite(forest, glow, 0xff8a3a, 0.28, new THREE.Vector3(1.6, -2.7, -3.1), new THREE.Vector2(0.9, 0.7), true)
+  const camp = makeCampfire(random)
+  camp.group.position.set(-2.8,forestFloorY(-2.8,2.2),2.2)
+  camp.group.scale.setScalar(1.2)
+  forest.add(camp.group)
   const bear = makeBear()
   bear.scale.setScalar(1.9)
   forest.add(bear)
   const fox = makeFox()
   fox.scale.setScalar(2)
   forest.add(fox)
+  const bearContact = contactPatch(glow,0.65,0.38), foxContact = contactPatch(glow,0.55,0.3)
+  forest.add(bearContact,foxContact)
   tick.push((time, _progress, reduced) => {
-    forestFloor.uniforms.uTime.value = time
-    camp.material.opacity = 0.2 + Math.sin(time * 6) * 0.08
+    forestFloor.uniforms.uTime!.value = time
+    camp.update(time)
+    shaftMaterial.uniforms.uTime!.value = time
     if (reduced) return
-    bear.position.set(-3.6 + Math.sin(time * 0.1) * 1.1, -2.55, -3.1)
-    fox.position.set(2.6 + Math.sin(time * 0.22) * 1.2, -2.68, -2.6)
+    const walk = (animal: THREE.Group, center: number, depth: number, phase: number, radius: number, rate: number, scale: number) => {
+      const a = time * rate + phase
+      const x = center + Math.sin(a) * radius, z = depth + Math.cos(a) * radius * 0.38
+      const dx = Math.cos(a) * radius * rate, dz = -Math.sin(a) * radius * 0.38 * rate
+      animal.position.set(x,forestFloorY(x,z),z)
+      animal.rotation.y=-Math.atan2(dz,dx)
+      // Integrate distance around the ellipse numerically once per update; gait follows travel.
+      const last = animal.userData.lastTime ?? time
+      const dt = Math.max(0, Math.min(0.1,time-last))
+      animal.userData.distance = (animal.userData.distance ?? 0) + Math.hypot(dx,dz)*dt/scale
+      animal.userData.lastTime=time
+      animal.userData.groundAt=(localX:number,localZ:number)=>{
+        const foot=new THREE.Vector3(localX,0,localZ).applyQuaternion(animal.quaternion).multiplyScalar(scale).add(animal.position)
+        return (forestFloorY(foot.x,foot.z)-animal.position.y)/scale
+      }
+      animal.userData.animate(animal.userData.distance,time,Math.hypot(dx,dz))
+    }
+    walk(bear,mobile ? -1.2 : -4.4,0.5,0,0.9,0.12,1.9)
+    walk(fox,mobile ? 0.8 : -0.9,1.3,1.4,0.8,0.23,2)
+    bearContact.position.copy(bear.position).y += 0.016
+    foxContact.position.copy(fox.position).y += 0.016
     bugs.forEach((item, i) => {
       item.group.position.set(Math.sin(time * item.group.userData.speed + i) * 5.5, -1.6 + Math.sin(time * 0.8 + i) * 1.1, -2.2 - (i % 5) * 1.1)
       item.update(time, reduced)
@@ -470,11 +627,11 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   desert.add(new THREE.HemisphereLight(0xffd7a0, 0x4a2a10, 0.85))
   const desertSun = addStar(desert, glow, new THREE.Vector3(-8.6, 3.2, -9), 0.55)
   const duneHeight = (x: number, z: number) => -2.7 + Math.sin(x * 0.36 + z * 0.16) * 0.82 + Math.sin(x * 0.14 - z * 0.28) * 0.48
-  const dunes = new THREE.PlaneGeometry(38, 22, mobile ? 70 : 120, mobile ? 40 : 70)
+  const dunes = new THREE.PlaneGeometry(80, 60, mobile ? 100 : 180, mobile ? 80 : 140)
   dunes.rotateX(-Math.PI / 2)
   displace(dunes, duneHeight)
   const duneMat = addTerrain(desert, dunes, 0x8a4a22, 0xc48a48, 0xf0d08a, 3.1)
-  duneMat.uniforms.uRipple.value = 0.11
+  duneMat.uniforms.uRipple!.value = 0.11
   const cactusSpots = [
     [-7.4, -3.2, 1.05],
     [-5.9, -5.6, 0.8],
@@ -483,12 +640,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   ]
   cactusSpots.forEach(([x, z, s]) => {
     const cactus = makeCactus(random)
-    cactus.position.set(x, duneHeight(x, z) - 0.04, z)
-    cactus.scale.setScalar(s)
+    cactus.position.set(x!, duneHeight(x!, z!) - 0.04, z!)
+    cactus.scale.setScalar(s!)
     cactus.rotation.y = random() * Math.PI
     desert.add(cactus)
+    const shadow = contactPatch(glow, s! * 0.85, 0.48)
+    shadow.position.set(x! + 0.2, duneHeight(x!, z!) + 0.018, z!)
+    shadow.scale.y = 1.8
+    desert.add(shadow)
   })
-  const stones = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.09, 0), matte(0x7a5a3a, { roughness: 1 }), mobile ? 14 : 28)
+  const stones = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.09, 0), textured(0x927353, 'stone'), mobile ? 14 : 28)
   for (let i = 0; i < stones.count; i++) {
     const x = (random() - 0.5) * 20
     const z = -1.5 - random() * 6
@@ -504,6 +665,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   pyramid.position.set(6.6, duneHeight(6.6, -8.2) + 0.72, -8.2)
   pyramid.rotation.y = 0.62
   desert.add(pyramid)
+  const bones=makeBones()
+  bones.position.set(4.4,duneHeight(4.4,0.7)+0.01,0.7)
+  bones.scale.setScalar(1.45); bones.rotation.y=-0.4
+  desert.add(bones)
   const snake = makeSnake()
   snake.group.scale.setScalar(1.9)
   desert.add(snake.group)
@@ -516,10 +681,10 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   const dust = addPoints(desert, renderer, mobile ? 60 : 140, 0xf0d08a, 0.9, () =>
     new THREE.Vector3((random() - 0.5) * 24, -2.6 + random() * 1.4, -1 - random() * 9)
   )
-  dust.material.uniforms.uOpacity.value = 0.22
+  dust.material.uniforms.uOpacity!.value = 0.22
   tick.push((time, _progress, reduced) => {
-    desertSun.material.uniforms.uTime.value = time
-    duneMat.uniforms.uTime.value = time
+    desertSun.material.uniforms.uTime!.value = time
+    duneMat.uniforms.uTime!.value = time
     if (reduced) return
     dust.points.position.x = (time * 0.6) % 4
     // Tumbleweed enters and exits off frame; height follows the dune under it.
@@ -531,7 +696,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     snake.group.position.set(sx, duneHeight(sx, -2.6) + 0.01, -2.6)
     snake.group.rotation.x = -Math.atan2(duneHeight(sx, -2.3) - duneHeight(sx, -2.9), 0.6) * 0.6
     snake.group.rotation.z = Math.atan2(duneHeight(sx + 0.3, -2.6) - duneHeight(sx - 0.3, -2.6), 0.6)
-    snake.update(time, reduced)
+    snake.update(time)
   })
   groups.push(desert)
 
@@ -539,17 +704,19 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   addDome(swamp, 0x071412, 0x1c332c, 0x8fbf88, new THREE.Vector3(6, 7, -10))
   swamp.add(new THREE.HemisphereLight(0x8fbfa8, 0x081412, 0.48))
   addMoon(swamp, glow, new THREE.Vector3(-6.4, 3.4, -12), 0.24, 0xc5e0d4)
-  const swampWater = addWater(0x071c1c, 0x2c5648, 0.05, 0.9, 34, 22, mobile ? 50 : 90)
+  const swampWater = addWater(0x071c1c, 0x2c5648, 0.05, 0.96, 90, 70, mobile ? 70 : 120)
   swampWater.mesh.position.y = -2.88
   swamp.add(swampWater.mesh)
   const waterY = -2.88
   const cypressCount = mobile ? 16 : 30
   const parts = cypressGeometry()
-  const bark = matte(0x2e2620, { roughness: 0.95 })
-  const foliage = matte(0x18341f, { roughness: 1 })
+  const bark = textured(0x4a4236, 'wood')
+  parts.crown.dispose()
+  parts.crownB.dispose()
+  const foliage = matte(0x314c3d, { roughness: 1, side: THREE.DoubleSide, vertexColors: true })
   const cypress = new THREE.InstancedMesh(parts.trunk, bark, cypressCount)
-  const crowns = new THREE.InstancedMesh(parts.crown, foliage, cypressCount)
-  const crownsB = new THREE.InstancedMesh(parts.crownB, matte(0x1f3f25, { roughness: 1 }), cypressCount)
+  const crowns = new THREE.InstancedMesh(canopyGeometry.clone().scale(1.4, 1.8, 1.4), foliage, cypressCount)
+  const crownsB = new THREE.InstancedMesh(canopyGeometry.clone().scale(1.2, 1.1, 1.2), matte(0x3d5946, { roughness: 1, side: THREE.DoubleSide, vertexColors: true }), cypressCount)
   const knees = new THREE.InstancedMesh(parts.knee, bark, cypressCount * 3)
   const mossStrands = new THREE.InstancedMesh(parts.moss, matte(0x5f6f5a, { roughness: 1 }), cypressCount * 2)
   const rings = new THREE.InstancedMesh(
@@ -562,8 +729,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   for (let i = 0; i < cypressCount; i++) {
     const stand = stands[i % stands.length]
     const lone = random() > 0.8
-    const x = lone ? (random() - 0.5) * 22 : stand[0] + (random() - 0.5) * 5.5
-    const z = lone ? -3 - random() * 11 : stand[1] + (random() - 0.5) * 4.5
+    const x = lone ? (random() - 0.5) * 22 : stand![0]! + (random() - 0.5) * 5.5
+    const z = lone ? -3 - random() * 11 : stand![1]! + (random() - 0.5) * 4.5
     const depth = Math.min(1, Math.max(0, (-z - 3) / 12))
     const s = 0.7 + random() * 0.5 + depth * 0.45
     const baseY = waterY - 0.3 * s
@@ -613,7 +780,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   for (let i = 0; i < reedCount; i++) {
     const bed = reedBeds[i % reedBeds.length]
     const h = 0.55 + random() * 0.7
-    dummy.position.set(bed[0] + (random() - 0.5) * 1.6, waterY + h / 2 - 0.08, bed[1] + (random() - 0.5) * 1)
+    dummy.position.set(bed![0]! + (random() - 0.5) * 1.6, waterY + h / 2 - 0.08, bed![1]! + (random() - 0.5) * 1)
     dummy.scale.set(1, h, 1)
     dummy.rotation.set((random() - 0.5) * 0.2, 0, (random() - 0.5) * 0.2)
     dummy.updateMatrix()
@@ -624,7 +791,7 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     new THREE.Vector3((random() - 0.5) * 16, waterY + 0.01, -1.5 - random() * 7)
   )
   duckweed.material.blending = THREE.NormalBlending
-  duckweed.material.uniforms.uOpacity.value = 0.7
+  duckweed.material.uniforms.uOpacity!.value = 0.7
   for (let i = 0; i < (mobile ? 10 : 18); i++) {
     addSprite(swamp, glow, 0x8fa392, 0.08, new THREE.Vector3((random() - 0.5) * 12, -0.3 + random() * 2.4, -3 - random() * 8), new THREE.Vector2(1.15, 3.4))
   }
@@ -636,23 +803,39 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     const pad = makeLilyPad(random)
     pad.scale.setScalar(1.8)
     pad.position.set((random() - 0.5) * 8, -2.84, -1.8 - random() * 4)
+    if (i < 3) pad.position.set(-3.4 + i * 2.8, -2.84, 1.0 - i * 0.6)
     pad.rotation.y = random() * Math.PI
     swamp.add(pad)
     pads.push(pad)
   }
+  const dragonflies = [makeDragonfly(), makeDragonfly()]
+  dragonflies.forEach(item=>{item.group.scale.setScalar(1.7);swamp.add(item.group)})
+  for(let i=0;i<18;i++) {
+    const x=-6+(i%6)*2.3,z=-2-Math.floor(i/6)*1.5
+    const h=0.65+random()*0.4
+    const stalk=new THREE.Mesh(new THREE.CylinderGeometry(0.009,0.012,h,6),matte(0x737348))
+    stalk.position.set(x,waterY+h/2,z);swamp.add(stalk)
+    const catkin=new THREE.Mesh(new THREE.CapsuleGeometry(0.035,0.2,4,8),textured(0x5d3e28,'cloth'))
+    catkin.position.set(x,waterY+h,z);swamp.add(catkin)
+  }
   const frogs = [makeFrog(), makeFrog(), makeFrog()]
   frogs.forEach((frog, i) => {
     frog.scale.setScalar(2.2)
-    frog.position.copy(pads[i].position)
-    frog.position.y += 0.08
+    frog.position.copy(pads[i]!.position)
+    frog.position.y += 0.01
     swamp.add(frog)
   })
   const boat = new THREE.Group()
-  boat.add(new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.9, 4, 10), matte(0x4a3220)))
-  boat.children[0].rotation.z = Math.PI / 2
-  const bench = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.04, 0.16), matte(0x6a4a28))
-  bench.position.y = 0.08
-  boat.add(bench)
+  const hull = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), textured(0x765139, 'wood', { side: THREE.DoubleSide }))
+  hull.scale.set(0.7, 0.16, 0.2)
+  boat.add(hull)
+  const rimCurve = new THREE.CatmullRomCurve3(Array.from({length:32}, (_, i) => new THREE.Vector3(Math.cos(i / 32 * Math.PI * 2) * 0.7, 0, Math.sin(i / 32 * Math.PI * 2) * 0.2)), true)
+  boat.add(new THREE.Mesh(new THREE.TubeGeometry(rimCurve, 48, 0.018, 5, true), textured(0xa27c50, 'wood')))
+  for (const x of [-0.25, 0.25]) {
+    const bench = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.025, 0.32), textured(0x9a7348, 'wood'))
+    bench.position.set(x, -0.025, 0)
+    boat.add(bench)
+  }
   swamp.add(boat)
   const heron = makeHeron()
   heron.scale.setScalar(1.7)
@@ -668,14 +851,20 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   gator.add(gatorBody, eyeL, eyeR)
   swamp.add(gator)
   tick.push((time, _progress, reduced) => {
-    swampWater.material.uniforms.uTime.value = time
+    swampWater.material.uniforms.uTime!.value = time
     wisps.points.position.y = Math.sin(time * 0.25) * 0.12
     if (reduced) return
+    dragonflies.forEach((item,i)=>{
+      item.group.position.set(-2.4+i*4.5+Math.sin(time*0.65+i)*0.35,-1.4+Math.sin(time*1.1+i)*0.12,-2.3+Math.sin(time*0.4+i)*0.25)
+      item.group.rotation.y=Math.sin(time*0.3+i)*0.4
+      item.update(time)
+    })
     pads.forEach((pad, i) => {
       pad.position.y = -2.84 + Math.sin(time * 0.6 + i) * 0.012
     })
     frogs.forEach((frog, i) => {
-      frog.position.y = pads[i].position.y + 0.05
+      frog.position.y = pads[i]!.position.y + 0.01
+      frog.userData.animate(time,i*2.1)
       frog.rotation.y = Math.sin(time * 0.2 + i) * 0.4
     })
     boat.position.set(-1.4 + Math.sin(time * 0.12) * 1.1, -2.72, -4.2)
@@ -687,16 +876,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   groups.push(swamp)
 
   const beach = new THREE.Group()
-  addDome(beach, 0x16344c, 0xf0c090, 0xff8a40, new THREE.Vector3(-9, 3, -8))
+  addDome(beach, 0x315675, 0xe6c6a2, 0xff8a40, new THREE.Vector3(-9, 3, -8))
   beach.add(new THREE.HemisphereLight(0xd8eef2, 0x243038, 0.62))
   const beachSun = addStar(beach, glow, new THREE.Vector3(-8.2, 1.6, -11), 0.48)
-  const shore = new THREE.PlaneGeometry(36, 18, mobile ? 40 : 70, mobile ? 20 : 36)
+  const shore = new THREE.PlaneGeometry(100, 64, mobile ? 70 : 120, mobile ? 45 : 80)
   shore.rotateX(-Math.PI / 2)
-  displace(shore, (x, z) => -3.12 + Math.sin(x * 0.5) * 0.08 + Math.max(0, z + 2) * 0.04)
+  displace(shore, (x, z) => -3.12 + Math.sin(x * 0.5) * 0.08 + Math.max(0, z + 2) * 0.04 - Math.max(0, -z - 8) * 0.24)
   const sandMat = addTerrain(beach, shore, 0x8a6a3a, 0xc9ae7a, 0xe8d4a0, 4.2)
-  sandMat.uniforms.uRipple.value = 0.05
-  const sea = addWater(0x0a4a5c, 0x3aa8ae, 0.09, 0.92, 38, 10, mobile ? 70 : 120)
-  sea.mesh.position.set(0, -3.08, -16.8)
+  sandMat.uniforms.uRipple!.value = 0.05
+  const sea = addWater(0x123c49, 0x397d86, 0.055, 1, 100, 70, mobile ? 80 : 140)
+  sea.mesh.position.set(0, -3.08, -45)
   beach.add(sea.mesh)
   // Wet sand: a darker, slightly glossy band the swash keeps reaching.
   const wetSand = new THREE.Mesh(
@@ -707,8 +896,8 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   wetSand.position.set(0, -3.1, -10.3)
   beach.add(wetSand)
   const foam = new THREE.Mesh(
-    new THREE.PlaneGeometry(28, 0.5),
-    new THREE.MeshBasicMaterial({ color: 0xf4fbff, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending, depthWrite: false })
+    new THREE.PlaneGeometry(70, 1.3),
+    new THREE.MeshBasicMaterial({ map: foamTexture(), color: 0xf4fbff, transparent: true, opacity: 0.48, depthWrite: false })
   )
   foam.rotation.x = -Math.PI / 2
   foam.position.set(0, -3.04, -10.4)
@@ -718,16 +907,19 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   foam2.scale.set(0.7, 0.6, 1)
   beach.add(foam2)
   const palms: THREE.Group[] = []
-  const palmSpots = [
-    [3.2, 1.9, 1.05],
+  const palmSpots = mobile ? [[-1.4, -1, 0.8], [1.2, -2.5, 0.65], [2.3, -3, 0.75]] : [
+    [3.2, 1.9, 0.95],
     [4.6, 1.2, 0.9],
-    [6.3, 2.3, 1.15]
+    [5.8, 2.0, 0.98]
   ]
   palmSpots.forEach(([x, z, s]) => {
     const palm = makePalm(random)
-    palm.position.set(x, -3.12, z)
-    palm.scale.setScalar(s)
+    palm.position.set(x!, -3.12 + Math.sin(x! * 0.5) * 0.08 + Math.max(0, z! + 2) * 0.04, z!)
+    palm.scale.setScalar(s!)
     beach.add(palm)
+    const shadow = contactPatch(glow, 1.4 * s!, 0.48)
+    shadow.position.set(x! + 0.2, -3.12 + Math.sin(x! * 0.5) * 0.08 + Math.max(0, z! + 2) * 0.04 + 0.018, z!)
+    beach.add(shadow)
     palms.push(palm)
   })
   const lightHouse = makeLighthouse()
@@ -750,13 +942,13 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     beach.add(item.group)
   })
   tick.push((time, _progress, reduced) => {
-    beachSun.material.uniforms.uTime.value = time
-    sandMat.uniforms.uTime.value = time
-    sea.material.uniforms.uTime.value = time
+    beachSun.material.uniforms.uTime!.value = time
+    sandMat.uniforms.uTime!.value = time
+    sea.material.uniforms.uTime!.value = time
     // Swash: the foam line runs up the sand and drains back, the second line trailing it.
     const swash = Math.sin(time * 0.55)
     foam.position.z = -10.4 + swash * 0.55
-    ;(foam.material as THREE.MeshBasicMaterial).opacity = 0.14 + Math.max(0, swash) * 0.2
+    ;(foam.material as THREE.MeshBasicMaterial).opacity = 0.28 + Math.max(0, swash) * 0.3
     foam2.position.z = -10.9 + Math.sin(time * 0.55 - 0.9) * 0.4
     ;(foam2.material as THREE.MeshBasicMaterial).opacity = 0.08 + Math.max(0, Math.sin(time * 0.55 - 0.9)) * 0.1
     wetSand.position.z = -10.1 + swash * 0.3
@@ -779,41 +971,42 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
   groups.push(beach)
 
   const ocean = new THREE.Group()
-  addDome(ocean, 0x01080e, 0x063040, 0x4aa8b4, new THREE.Vector3(0, 10, -6))
-  ocean.add(new THREE.HemisphereLight(0x4aa8b4, 0x021018, 0.7))
-  ocean.add(new THREE.DirectionalLight(0x8fd4dc, 0.85))
-  const veil = new THREE.Mesh(
-    new THREE.PlaneGeometry(42, 26),
-    new THREE.ShaderMaterial({
-      uniforms: { uTime: { value: 0 } },
-      vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-      fragmentShader: `
-        uniform float uTime; varying vec2 vUv;
-        void main() {
-          float d = 1.0 - vUv.y;
-          vec3 top = vec3(0.04, 0.32, 0.38);
-          vec3 deep = vec3(0.008, 0.04, 0.08);
-          vec3 color = mix(top, deep, smoothstep(0.04, 1.0, d));
-          float c = sin((vUv.x + uTime * 0.02) * 42.0) * sin((vUv.y - uTime * 0.015) * 34.0);
-          color += vec3(0.05, 0.18, 0.2) * pow(max(c, 0.0), 10.0) * 0.24;
-          float ray = pow(max(1.0 - abs(vUv.x - 0.58), 0.0), 6.0) * smoothstep(0.2, 1.0, vUv.y);
-          color += vec3(0.12, 0.4, 0.44) * ray * 0.16;
-          gl_FragColor = vec4(color, 0.93);
-        }
-      `,
-      transparent: true,
-      depthWrite: false
-    })
-  )
-  veil.position.z = -11
-  ocean.add(veil)
-  const marine = addPoints(ocean, renderer, mobile ? 180 : 420, 0xb7eef2, 0.5, () =>
+  // An unbroken water column: darkness below, scattered surface light above.
+  const abyss = new THREE.ShaderMaterial({
+    vertexShader: domeVertex,
+    fragmentShader: `
+      varying vec3 vDir;
+      uniform float uTime;
+      void main() {
+        vec3 d = normalize(vDir);
+        float height = smoothstep(-0.55, 0.85, d.y);
+        vec3 color = mix(vec3(0.001, 0.005, 0.012), vec3(0.013, 0.065, 0.085), height);
+        float source = exp(-length((d.xy - vec2(-0.34, 0.8)) * vec2(2.8, 1.8)) * 2.4);
+        color += vec3(0.025, 0.095, 0.11) * source;
+        // Broad, irregular shafts, with no tiled caustic pattern behind the animals.
+        float x = d.x + d.y * 0.25;
+        float shafts = pow(max(0.0, sin(x * 18.0 + sin(x * 7.0) + uTime * 0.025)), 12.0);
+        shafts *= smoothstep(-0.35, 0.65, d.y) * (1.0 - smoothstep(0.7, 1.0, d.y));
+        color += vec3(0.014, 0.045, 0.052) * shafts * 0.4;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+    uniforms: { uTime: { value: 0 } },
+    side: THREE.BackSide,
+    depthWrite: false
+  })
+  ocean.add(new THREE.Mesh(new THREE.SphereGeometry(60, 48, 32), abyss))
+  ocean.add(new THREE.HemisphereLight(0x87b7c5, 0x02070c, 0.28))
+  const oceanKey = new THREE.DirectionalLight(0xa8ccd5, 1.4)
+  oceanKey.position.set(-5, 8, 4)
+  ocean.add(oceanKey)
+  const marine = addPoints(ocean, renderer, mobile ? 75 : 160, 0x7fadb6, 0.32, () =>
     new THREE.Vector3((random() - 0.5) * 20, (random() - 0.5) * 12, -1 - random() * 14)
   )
-  marine.material.uniforms.uOpacity.value = 0.38
-  const fishColors = [0x3aa8ae, 0x7ec8d4, 0xf2b24a, 0x6f9ae0]
+  marine.material.uniforms.uOpacity!.value = 0.18
+  const fishColors = [0x537a83, 0x829caa, 0x9a8766, 0x617b91]
   const fish = Array.from({ length: mobile ? 8 : 12 }, (_, i) => {
-    const item = makeFish(fishColors[i % fishColors.length], i % 3)
+    const item = makeFish(fishColors[i % fishColors.length]!, i % 3)
     const depth = random()
     item.group.userData = {
       ...item.group.userData,
@@ -829,15 +1022,15 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     ocean.add(item.group)
     return item
   })
-  const jelly = [makeJelly(0x6fe3d8), makeJelly(0x7aa8ff), makeJelly(0x9ad4ff)]
+  const jelly = [makeJelly(0xc5d9d6), makeJelly(0xa9c0c9), makeJelly(0xc3cdc5)]
   jelly.forEach((item, i) => {
-    item.group.scale.setScalar(1.45 + i * 0.12)
+    item.group.scale.setScalar([1.0, 0.68, 0.46][i]!)
     ocean.add(item.group)
   })
   const shark = makeShark()
   ocean.add(shark.group)
   tick.push((time, _progress, reduced) => {
-    ;(veil.material as THREE.ShaderMaterial).uniforms.uTime.value = time
+    abyss.uniforms.uTime!.value = time
     marine.points.position.y = -((time * 0.08) % 1.2)
     if (reduced) return
     fish.forEach((item, i) => {
@@ -859,19 +1052,16 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
       item.update(time, reduced)
     })
     jelly.forEach((item, i) => {
-      item.group.position.set([-4.6, -2.2, -6.2][i], 0.4 + i * 0.6 + Math.sin(time * 0.25 + i) * 0.16, -5 - i * 1.1)
+      item.group.position.set((mobile ? [-1.0, -2.2, 1.1] : [-3.6, -6.5, -0.8])[i]! + Math.sin(time * 0.07 + i) * 0.25, [0.7, 1.8, 2.5][i]! + Math.sin(time * 0.28 + i * 2) * 0.13, [-1.6, -5.5, -8][i]!)
+      item.group.rotation.z = Math.sin(time * 0.13 + i) * 0.07
       item.update(time, reduced)
     })
-    // The shark cruises a long lazy line that starts and ends off frame, steering into its own turns.
-    const sharkAt = (t: number) => {
-      const x = -19 + ((t * 0.55) % 46)
-      return new THREE.Vector3(x, -0.7 + Math.sin(t * 0.21) * 0.35, -5.6 + Math.sin(t * 0.13 + 1) * 1.6)
-    }
-    const sharkHere = sharkAt(time)
-    const sharkAhead = sharkAt(time + 0.6)
-    shark.group.position.copy(sharkHere)
-    shark.group.rotation.y = Math.atan2(sharkAhead.x - sharkHere.x, sharkAhead.z - sharkHere.z) - Math.PI / 2
-    shark.group.rotation.z = (sharkAhead.y - sharkHere.y) * 1.2
+    // A closed, continuous oval: heading follows the tangent, never a modulo reset.
+    const phase = time * 0.055 + 0.65
+    shark.group.position.set(Math.sin(phase) * 9.5, -1.0 + Math.sin(phase * 2) * 0.16, -8 + Math.cos(phase) * 4.2)
+    const dx = Math.cos(phase) * 9.5
+    const dz = -Math.sin(phase) * 4.2
+    shark.group.rotation.set(0, -Math.atan2(dz, dx), Math.sin(phase) * 0.025)
     shark.update(time, reduced)
   })
   groups.push(ocean)
@@ -880,10 +1070,14 @@ export const createBiomes = (renderer: THREE.WebGLRenderer, mobile: boolean): Bi
     group.position.z = -(index + 1) * Z_STEP
   })
 
+  // Compose every station once; animate only the station currently in view.
+  tick.forEach(fn => fn(12, 0, false))
   return {
     groups,
     update: (time, progress, reduced) => {
-      tick.forEach((fn) => fn(time, progress, reduced))
+      // Initialize every actor at a composed pose, including reduced-motion visits.
+      const index = Math.round(progress * 7) - 1
+      if (index >= 0) tick[index]?.(reduced ? 12 : time, progress, false)
     }
   }
 }

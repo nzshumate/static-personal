@@ -1,7 +1,9 @@
 export const planetVertex = `
 varying vec3 vNormalW;
 varying vec3 vWorldPos;
+varying vec3 vPlanetPos;
 void main() {
+  vPlanetPos = normalize(position);
   vNormalW = normalize(mat3(modelMatrix) * normal);
   vec4 world = modelMatrix * vec4(position, 1.0);
   vWorldPos = world.xyz;
@@ -20,6 +22,7 @@ uniform float uBands;
 uniform float uClouds;
 varying vec3 vNormalW;
 varying vec3 vWorldPos;
+varying vec3 vPlanetPos;
 
 float hash(vec3 p) {
   p = fract(p * 0.3183099 + 0.1);
@@ -55,17 +58,19 @@ void main() {
   float light = max(dot(n, normalize(uLightDir)), 0.0);
   float rim = pow(1.0 - max(dot(n, view), 0.0), 3.4);
   float lat = asin(clamp(n.y, -1.0, 1.0));
-  vec3 p = n * (3.2 + uSeed) + vec3(uTime * 0.012, 0.0, uTime * 0.007);
-  float terrain = fbm(p * 1.45);
+  vec3 p = normalize(vPlanetPos) * (2.0 + uSeed * 0.35);
+  float terrain = fbm(p * 1.2);
   float fine = fbm(p * 5.4);
   float bands = 0.5 + 0.5 * sin(lat * uBands + fbm(p * 2.1) * 4.2);
-  float land = smoothstep(0.46, 0.68, terrain + fine * 0.16);
+  float land = smoothstep(0.47, 0.55, terrain + fine * 0.07);
   vec3 surface = mix(uDeep, uMid, land);
-  surface = mix(surface, uHigh, pow(bands, 4.0) * 0.34 + smoothstep(0.78, 0.94, fine) * 0.18);
-  float cloud = smoothstep(0.62, 0.84, fbm(p * 2.8 + 12.0)) * uClouds;
-  surface = mix(surface, vec3(0.86, 0.9, 0.94), cloud * 0.55);
-  surface *= 0.1 + light * 0.9;
-  surface += uHigh * pow(rim, 2.0) * 0.22;
+  surface = mix(surface, uHigh, pow(bands, 4.0) * (1.0 - uClouds) * 0.38);
+  float cloud = smoothstep(0.52, 0.68, fbm(p * 3.8 + vec3(uTime * 0.003, 12.0, 2.0))) * uClouds;
+  surface = mix(surface, vec3(0.86, 0.9, 0.94), cloud * 0.88);
+  surface *= 0.035 + light * 1.05;
+  vec3 halfway = normalize(view + normalize(uLightDir));
+  surface += vec3(0.6, 0.75, 0.82) * pow(max(dot(n, halfway), 0.0), 70.0) * (1.0-land) * uClouds * 0.42;
+  surface += vec3(0.15, 0.36, 0.65) * rim * light * uClouds * 0.32;
   gl_FragColor = vec4(surface, 1.0);
 }
 `
@@ -89,7 +94,7 @@ varying vec3 vWorldPos;
 void main() {
   vec3 n = normalize(vNormalW);
   vec3 view = normalize(cameraPosition - vWorldPos);
-  float rim = pow(1.0 - max(dot(n, view), 0.0), 3.6);
+  float rim = pow(1.0 - abs(dot(n, view)), 3.6);
   float day = 0.22 + 0.78 * max(dot(n, normalize(uLightDir)), 0.0);
   float alpha = rim * day * 0.82;
   gl_FragColor = vec4(uColor * alpha, alpha);
@@ -121,7 +126,7 @@ void main() {
   vec3 color = mix(edge, core, limb);
   float gran = hash(floor(vNormal.xy * 48.0 + uTime * 0.15));
   color += (gran - 0.5) * 0.08 * limb;
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(color * 3.5, 1.0);
 }
 `
 
@@ -182,8 +187,10 @@ export const terrainVertex = `
 varying vec3 vWorldPos;
 varying vec3 vNormalW;
 varying float vHeight;
+varying vec3 vLocalPos;
 void main() {
   vHeight = position.y;
+  vLocalPos = position;
   vNormalW = normalize(mat3(modelMatrix) * normal);
   vec4 world = modelMatrix * vec4(position, 1.0);
   vWorldPos = world.xyz;
@@ -202,6 +209,7 @@ uniform float uRipple;
 varying vec3 vWorldPos;
 varying vec3 vNormalW;
 varying float vHeight;
+varying vec3 vLocalPos;
 
 float hash(vec3 p) {
   p = fract(p * 0.3183099 + 0.1);
@@ -237,18 +245,32 @@ void main() {
   float light = max(dot(n, normalize(uLightDir)), 0.0);
   float rim = pow(1.0 - max(dot(n, view), 0.0), 3.2);
   float slope = 1.0 - abs(n.y);
-  vec3 p = vWorldPos * (0.22 + uSeed * 0.04) + vec3(uTime * 0.01, 0.0, uTime * 0.006);
+  vec3 p = vLocalPos * (0.22 + uSeed * 0.04);
   float grain = fbm(p * 1.6);
   float fine = fbm(p * 5.2);
   vec3 color = mix(uLow, uMid, smoothstep(-3.4, -1.6, vHeight) + grain * 0.18);
   color = mix(color, uHigh, smoothstep(-0.7, 1.1, vHeight) * (1.0 - slope * 0.72));
   color = mix(color, uLow, slope * 0.32 + fine * 0.08);
   // Wind ripples: fine, direction-biased ridges that soften with distance from the camera.
-  float ripple = sin(vWorldPos.x * 5.5 + vWorldPos.z * 2.2 + fbm(p * 3.0) * 4.5) * 0.5 + 0.5;
+  float ripple = sin(vLocalPos.x * 5.5 + vLocalPos.z * 2.2 + fbm(p * 3.0) * 4.5) * 0.5 + 0.5;
   float near = 1.0 - smoothstep(6.0, 26.0, distance(cameraPosition, vWorldPos));
   color *= 1.0 - uRipple * ripple * near;
-  color *= 0.16 + light * 0.92;
-  color += uHigh * rim * 0.14;
+  float strata = sin(vLocalPos.y * 19.0 + grain * 8.0) * 0.5 + 0.5;
+  color *= 0.82 + fine * 0.28 - slope * strata * 0.15;
+  vec3 dpdx = dFdx(vWorldPos), dpdy = dFdy(vWorldPos);
+  vec3 r1 = cross(dpdy, n), r2 = cross(n, dpdx);
+  float det = dot(dpdx, r1);
+  float relief = fine * 0.065 + ripple * uRipple * 0.035;
+  vec3 bumpNormal = normalize(abs(det) * n - sign(det) * (dFdx(relief) * r1 + dFdy(relief) * r2));
+  light = max(dot(bumpNormal, normalize(uLightDir)), 0.0);
+  if (uSeed < 1.5) {
+    float snow = smoothstep(-0.8, 0.8, vHeight + fine * 0.6) * smoothstep(0.42, 0.85, n.y);
+    color = mix(color, uHigh * (0.92 + fine * 0.08), snow * 0.85);
+  }
+  color *= 0.26 + light * 0.78;
+  color += uHigh * rim * 0.06;
+  float aerial = 1.0 - exp(-distance(cameraPosition, vWorldPos) * 0.009);
+  color = mix(color, mix(uMid, uHigh, 0.45), aerial * 0.45);
   gl_FragColor = vec4(color, 1.0);
 }
 `
@@ -256,15 +278,22 @@ void main() {
 export const waterVertex = `
 uniform float uTime;
 uniform float uAmp;
-varying vec2 vUv;
+varying vec3 vWaterPos;
+varying vec3 vWaterNormal;
 varying float vWave;
 void main() {
-  vUv = uv;
   vec3 p = position;
-  float wave = sin(p.x * 0.55 + uTime * 0.8) * uAmp + sin(p.y * 0.9 - uTime * 0.65) * uAmp * 0.55;
-  p.z += wave;
-  vWave = wave;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  float a = p.x * 0.85 + p.y * 0.32 + uTime * 0.65;
+  float b = p.x * 0.38 - p.y * 1.3 - uTime * 0.48;
+  float c = p.x * 2.8 + p.y * 1.9 + uTime * 0.9;
+  vWave = (sin(a) + sin(b) * 0.45 + sin(c) * 0.12) * uAmp;
+  p.z += vWave;
+  float dx = (cos(a) * 0.85 + cos(b) * 0.171 + cos(c) * 0.336) * uAmp;
+  float dy = (cos(a) * 0.32 - cos(b) * 0.585 + cos(c) * 0.228) * uAmp;
+  vWaterNormal = normalize(mat3(modelMatrix) * vec3(-dx, -dy, 1.0));
+  vec4 world = modelMatrix * vec4(p, 1.0);
+  vWaterPos = world.xyz;
+  gl_Position = projectionMatrix * viewMatrix * world;
 }
 `
 
@@ -272,20 +301,19 @@ export const waterFragment = `
 uniform vec3 uDeep;
 uniform vec3 uShallow;
 uniform float uOpacity;
-varying vec2 vUv;
+varying vec3 vWaterPos;
+varying vec3 vWaterNormal;
 varying float vWave;
-
-float hash(vec2 p) {
-  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-
 void main() {
-  float spark = pow(max(sin((vUv.x * 38.0) + vWave * 18.0) * sin(vUv.y * 22.0), 0.0), 10.0);
-  vec3 color = mix(uDeep, uShallow, smoothstep(0.08, 0.86, vUv.y + vWave * 1.8));
-  color += vec3(0.22, 0.34, 0.36) * smoothstep(0.03, 0.11, vWave);
-  color += vec3(0.55, 0.78, 0.82) * spark * 0.18;
-  color += (hash(vUv * 80.0) - 0.5) * 0.03;
-  gl_FragColor = vec4(color, uOpacity);
+  vec3 n = normalize(vWaterNormal);
+  vec3 view = normalize(cameraPosition - vWaterPos);
+  float fresnel = 0.02 + 0.98 * pow(1.0 - max(dot(n, view), 0.0), 5.0);
+  vec3 halfDir = normalize(view + normalize(vec3(-0.58, 0.62, 0.52)));
+  float glint = pow(max(dot(n, halfDir), 0.0), 180.0);
+  vec3 color = mix(uDeep, uShallow, 0.28 + vWave * 0.55);
+  color = mix(color, uShallow * 1.35 + vec3(0.08, 0.11, 0.13), fresnel * 0.7);
+  color += vec3(1.0, 0.87, 0.68) * glint * 1.8;
+  gl_FragColor = vec4(color, mix(uOpacity, 1.0, fresnel));
 }
 `
 

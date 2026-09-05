@@ -1,16 +1,32 @@
 <script setup lang="ts">
 import { createWorld, type WorldHandle } from '~/utils/world/createWorld'
 
+const props = defineProps<{ paused: boolean; exploring: boolean }>()
+const emit = defineEmits<{ ready: []; unavailable: [] }>()
 let world: WorldHandle | null = null
+let disposed = false
+watch(() => props.paused, value => world?.setPaused(value))
+watch(() => props.exploring, value => world?.setExploring(value))
 
 onMounted(async () => {
   await nextTick()
   const canvas = document.getElementById('world-canvas') as HTMLCanvasElement | null
   if (!canvas) return
-  world = await createWorld(canvas)
+  try {
+    const handle = await createWorld(canvas)
+    if (disposed) { handle.dispose(); return }
+    world = handle
+    world.setPaused(props.paused)
+    world.setExploring(props.exploring)
+    emit('ready')
+  } catch (error) {
+    console.warn('The 3D journey could not initialize.', error)
+    emit('unavailable')
+  }
 })
 
 onBeforeUnmount(() => {
+  disposed = true
   world?.dispose()
   world = null
 })
