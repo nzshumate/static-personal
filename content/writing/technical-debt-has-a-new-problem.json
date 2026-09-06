@@ -1,0 +1,13 @@
+{
+  "title": "Technical Debt Has a New Problem",
+  "description": "Cheap implementation can create expensive ownership. Review capacity and maintenance obligations belong in the same conversation as generation speed.",
+  "date": "2025-10-16",
+  "tags": [
+    "ai",
+    "technical-debt",
+    "leadership",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

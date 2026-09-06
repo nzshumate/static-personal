@@ -1,0 +1,1821 @@
+{
+  "schemaVersion": 1,
+  "author": "Nathan",
+  "archiveStatus": "Integrated into site content; historical perspective dates retained with writtenOn provenance.",
+  "editorialRules": {
+    "originalWriting": true,
+    "emDashesAllowed": false,
+    "historicalPerspective": "Knowledge available on the narrative date only",
+    "biography": "Do not invent personal experiences or treat the proposed author arc as verified biography",
+    "structuralVariety": "No fixed word target or section template. Short and funny posts are welcome. Give technical detail space when it serves the subject; avoid a compulsory opening callback or concluding lesson."
+  },
+  "proposedVoiceArc": [
+    {
+      "era": "2017-2020",
+      "focus": "Hands-on frontend engineering, component boundaries, state, maintainability"
+    },
+    {
+      "era": "2021-2023",
+      "focus": "Architecture, tooling choices, team conventions"
+    },
+    {
+      "era": "2024-2025",
+      "focus": "Broader technical judgment, quality, developer experience"
+    },
+    {
+      "era": "2026",
+      "focus": "Technology leadership and organizational decisions"
+    }
+  ],
+  "posts": [
+    {
+      "title": "Maybe We Don't Need Another JavaScript Framework",
+      "file": "content/writing/maybe-we-dont-need-another-javascript-framework.md",
+      "slug": "maybe-we-dont-need-another-javascript-framework",
+      "date": "2017-09-18",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "historicalCutoff": "2017-09-18",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "framework selection",
+        "state ownership",
+        "rewrite evaluation",
+        "failure handling",
+        "incremental adoption"
+      ],
+      "technologies": [
+        "JavaScript",
+        "jQuery",
+        "React",
+        "Vue",
+        "Angular",
+        "Webpack",
+        "Babel"
+      ],
+      "position": "Choose tools against a concrete recurring maintenance problem; clarify ownership before proposing a rewrite.",
+      "opinionContinuity": {
+        "establishes": [
+          "Skeptical of novelty as a reason to migrate",
+          "Values components and useful conventions",
+          "Curious about incremental Vue adoption without claiming production experience",
+          "Counts configuration and edge cases in the cost of a tool"
+        ],
+        "couldEvolveWith": [
+          "Concrete evidence that Vue improves maintenance",
+          "Repeated friction that justifies different state or build tooling"
+        ],
+        "futureConstraint": "Later enthusiasm for a tool should explain the problem it solved. Do not recast this post as opposition to all frameworks."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vue and its surrounding ecosystem were available before the narrative date.",
+          "source": "https://v2.vuejs.org/2016/03/14/march-update/"
+        },
+        {
+          "claim": "Vue 2 development predates this post; the article makes no version-specific API claims.",
+          "source": "https://v2.vuejs.org/2016/04/27/announcing-2.0/"
+        },
+        {
+          "claim": "React 16 release is after the chosen cutoff, so no React 16 features are discussed.",
+          "source": "https://engineering.fb.com/2017/09/26/web/react-16-a-look-inside-an-api-compatible-rewrite-of-our-frontend-ui-library/"
+        }
+      ],
+      "anachronismGuardrails": [
+        "No React Hooks",
+        "No Vue 3 or Composition API",
+        "No Pinia",
+        "No Vite",
+        "No modern AI coding tools",
+        "No predictions presented as settled outcomes"
+      ],
+      "biographicalNotes": "Account settings example is hypothetical. First-person preferences are drafted editorial positions for Nathan to review, not verified historical statements.",
+      "reviewNotes": [
+        "Nathan approved this draft and its voice in this task.",
+        "Resolve public narrative-date presentation during site integration."
+      ],
+      "reviewStatus": "approved by Nathan",
+      "wordCount": 905,
+      "tags": [
+        "javascript",
+        "frontend",
+        "architecture",
+        "maintainability"
+      ],
+      "description": "Before we replace the frontend, I'd like to know who owns the value in the text box.",
+      "sourceFile": "content/blog/2017-09-maybe-we-dont-need-another-javascript-framework.mdx",
+      "metadataFile": "content/writing/maybe-we-dont-need-another-javascript-framework.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Why Vue Clicked for Me",
+      "file": "content/writing/why-vue-clicked-for-me.md",
+      "slug": "why-vue-clicked-for-me",
+      "date": "2018-02-15",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "historicalCutoff": "2018-02-15",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "readable templates",
+        "derived state",
+        "component organization",
+        "incremental adoption",
+        "reactivity caveats"
+      ],
+      "technologies": [
+        "JavaScript",
+        "Vue 2",
+        "single-file components"
+      ],
+      "position": "Vue earns interest by reducing manual interface coordination and making component code easy to follow.",
+      "opinionContinuity": {
+        "buildsOn": "maybe-we-dont-need-another-javascript-framework",
+        "establishes": [
+          "Enthusiasm for Vue grounded in concrete maintenance benefits",
+          "Prefers computed values over duplicated derived state",
+          "Values explicit props and events",
+          "Accepts build tooling when its benefits justify the cost"
+        ],
+        "couldEvolveWith": [
+          "Larger components exposing boundary problems",
+          "Shared state outgrowing local ownership",
+          "Build configuration becoming a recurring maintenance burden"
+        ],
+        "futureConstraint": "Later criticism of Vue patterns should preserve this early appreciation for readable templates and incremental adoption."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vue 2.5.13 was released on 2017-12-19, before this narrative date. No later APIs are used.",
+          "source": "https://github.com/vuejs/vue/blob/main/CHANGELOG.md"
+        },
+        {
+          "claim": "Computed properties derive values from reactive dependencies; watchers can trigger asynchronous work.",
+          "source": "https://v2.vuejs.org/v2/guide/computed.html"
+        },
+        {
+          "claim": "Vue 2 object property addition and direct array index assignment have observation caveats; Vue.set and splice are supported remedies.",
+          "source": "https://v2.vuejs.org/v2/guide/reactivity.html"
+        },
+        {
+          "claim": "Single-file components require build processing.",
+          "source": "https://v2.vuejs.org/v2/guide/single-file-components?redirect=true"
+        },
+        {
+          "claim": "Vue supports direct script inclusion for incremental use.",
+          "source": "https://v2.vuejs.org/v2/guide/installation.html"
+        },
+        {
+          "claim": "Props flow down; nested object mutation can affect parent state.",
+          "source": "https://v2.vuejs.org/v2/guide/components-props"
+        }
+      ],
+      "sourceScope": "Vue 2 documentation is maintained beyond the narrative date; only established Vue 2 features are used, not later additions. Sources support technical facts, not prose or structure.",
+      "anachronismGuardrails": [
+        "No Vue 3 or Composition API",
+        "No script setup",
+        "No Pinia or Vite",
+        "No Vue CLI 3 claims",
+        "No React Hooks",
+        "No hindsight about ecosystem outcomes"
+      ],
+      "biographicalNotes": "Employee filter is hypothetical. No production adoption, employer, project outcome, or specific career event is asserted.",
+      "reviewNotes": [
+        "Nathan approved this draft and its voice in this task.",
+        "Resolve public narrative-date presentation during site integration."
+      ],
+      "reviewStatus": "approved by Nathan",
+      "wordCount": 951,
+      "tags": [
+        "vue",
+        "javascript",
+        "frontend",
+        "components"
+      ],
+      "description": "Vue gives ordinary interface code a place to live, without making the whole application an entrance requirement.",
+      "sourceFile": "content/blog/2018-02-why-vue-clicked-for-me.mdx",
+      "metadataFile": "content/writing/why-vue-clicked-for-me.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Components Are Easy. Component Boundaries Aren't.",
+      "file": "content/writing/components-are-easy-component-boundaries-arent.md",
+      "slug": "components-are-easy-component-boundaries-arent",
+      "date": "2018-10-23",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "historicalCutoff": "2018-10-23",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "component boundaries",
+        "behavior versus visual similarity",
+        "draft state ownership",
+        "premature abstraction",
+        "cohesion"
+      ],
+      "technologies": [
+        "JavaScript",
+        "Vue 2",
+        "props",
+        "custom events"
+      ],
+      "position": "Choose component boundaries from behavior and ownership; share specific stable responsibilities rather than forcing similar-looking features into one component.",
+      "opinionContinuity": {
+        "buildsOn": "why-vue-clicked-for-me",
+        "establishes": [
+          "Vue simplifies mechanics but cannot choose boundaries",
+          "Local draft state is appropriate for independent editors",
+          "A parent may own pending values when sections submit together",
+          "Accepts limited duplication while shared behavior remains uncertain",
+          "Single-use components can be valuable"
+        ],
+        "couldEvolveWith": [
+          "Shared state coordination becoming complex enough to consider Vuex",
+          "Repeated controls justifying a design system"
+        ],
+        "futureConstraint": "Future state-management advice should preserve explicit ownership and avoid treating all state as global. Later reuse advice should distinguish stable shared behavior from visual similarity."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vue 2 props flow down, while mutation of nested object properties can affect parent state.",
+          "source": "https://v2.vuejs.org/v2/guide/components-props.html"
+        },
+        {
+          "claim": "Vue 2 supports custom events with payloads for child-to-parent communication.",
+          "source": "https://v2.vuejs.org/v2/guide/components-custom-events.html?redirect=true"
+        }
+      ],
+      "sourceScope": "Maintained Vue 2 documentation supports established APIs only. No later API additions or release-dependent claims appear. Architecture examples and prose are original.",
+      "anachronismGuardrails": [
+        "No Vue 3 or Composition API",
+        "No script setup or defineEmits",
+        "No Pinia or Vite",
+        "No React Hooks",
+        "No hindsight about ecosystem outcomes"
+      ],
+      "biographicalNotes": "Shipping and billing examples are hypothetical. No employer, production incident, or career outcome is asserted.",
+      "reviewNotes": [
+        "Nathan approved this draft and its voice in this task.",
+        "Resolve public narrative-date presentation during site integration."
+      ],
+      "reviewStatus": "approved by Nathan",
+      "wordCount": 935,
+      "tags": [
+        "vue",
+        "frontend",
+        "components",
+        "architecture"
+      ],
+      "description": "Two panels can look identical and still have very little business sharing a component.",
+      "sourceFile": "content/blog/2018-10-components-are-easy-component-boundaries-arent.mdx",
+      "metadataFile": "content/writing/components-are-easy-component-boundaries-arent.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Vuex Isn't Your Database",
+      "description": "A shared store can keep a team sane. It can also preserve a surprising amount of state nobody meant to keep.",
+      "date": "2019-05-16",
+      "slug": "vuex-isnt-your-database",
+      "file": "content/writing/vuex-isnt-your-database.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2019-05-16",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "vue",
+        "vuex",
+        "state-management",
+        "frontend"
+      ],
+      "technologies": [
+        "Vue 2",
+        "Vuex 3",
+        "JavaScript"
+      ],
+      "position": "Shared state needs an explicit lifetime, authority and owner; Vuex mutation discipline is worth its cost for coordinated workflows.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Builds on the 2018 draft-ownership distinction. Establishes a defense of mutations that the 2022 Pinia post explicitly revises.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vuex 3 uses synchronous mutations for state changes. Use Vuex 3 conventions with Vue 2, not the Vuex 4 createStore API.",
+          "source": "https://v3.vuex.vuejs.org/guide/mutations.html"
+        },
+        {
+          "claim": "Vuex 3 separates asynchronous operations from synchronous state mutations.",
+          "source": "https://v3.vuex.vuejs.org/guide/structure.html"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No released Vue 3 claims; August 2020 may discuss prerelease only.",
+        "No available Vue 3 migration build.",
+        "No Vite 2 adoption.",
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 593,
+      "tags": [
+        "vue",
+        "vuex",
+        "state-management",
+        "frontend"
+      ],
+      "editorialForm": "technical case study with a state-lifetime table",
+      "revision": 2,
+      "sourceFile": "content/blog/2019-05-vuex-isnt-your-database.mdx",
+      "metadataFile": "content/writing/vuex-isnt-your-database.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "The Frontend Build Is Getting Out of Hand",
+      "description": "A one-word correction takes an imaginary tour through the frontend build.",
+      "date": "2019-11-21",
+      "slug": "the-frontend-build-is-getting-out-of-hand",
+      "file": "content/writing/the-frontend-build-is-getting-out-of-hand.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2019-11-21",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "webpack",
+        "babel",
+        "frontend",
+        "tooling"
+      ],
+      "technologies": [
+        "Webpack 4",
+        "Babel",
+        "Vue",
+        "JavaScript"
+      ],
+      "position": "Treat the build as maintained software and justify each customization against an actual requirement.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Develops the 2017 concern about total tooling cost; gives the 2021 Vite preference a concrete reason.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Webpack 4 loaders transform resources; this archived documentation establishes the historical tool family.",
+          "source": "https://v4.webpack.js.org/loaders/"
+        },
+        {
+          "claim": "Webpack 4 plugins customize the build process.",
+          "source": "https://v4.webpack.js.org/configuration/plugins/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No released Vue 3 claims; August 2020 may discuss prerelease only.",
+        "No available Vue 3 migration build.",
+        "No Vite 2 adoption.",
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 277,
+      "tags": [
+        "webpack",
+        "babel",
+        "frontend",
+        "tooling"
+      ],
+      "editorialForm": "short comic complaint followed by a practical demand",
+      "revision": 2,
+      "sourceFile": "content/blog/2019-11-the-frontend-build-is-getting-out-of-hand.mdx",
+      "metadataFile": "content/writing/the-frontend-build-is-getting-out-of-hand.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "What I Actually Want From a Design System",
+      "description": "Start with the form people struggle to complete. The color palette can wait its turn.",
+      "date": "2020-04-14",
+      "slug": "what-i-actually-want-from-a-design-system",
+      "file": "content/writing/what-i-actually-want-from-a-design-system.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2020-04-14",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "design-systems",
+        "frontend",
+        "accessibility",
+        "components"
+      ],
+      "technologies": [
+        "UI components",
+        "forms",
+        "accessibility"
+      ],
+      "position": "A design system should reduce repeated behavioral decisions in real forms and have a maintained adoption path.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Extends component-boundary thinking to shared controls. The 2023 design-system article adds organizational ownership.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No released Vue 3 claims; August 2020 may discuss prerelease only.",
+        "No available Vue 3 migration build.",
+        "No Vite 2 adoption.",
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 435,
+      "tags": [
+        "design-systems",
+        "frontend",
+        "accessibility",
+        "components"
+      ],
+      "editorialForm": "acceptance brief for one real control",
+      "revision": 2,
+      "sourceFile": "content/blog/2020-04-what-i-actually-want-from-a-design-system.mdx",
+      "metadataFile": "content/writing/what-i-actually-want-from-a-design-system.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Composition API Changed My Mind About Vue 3",
+      "description": "The familiar Vue options still make sense. A component with several overlapping jobs makes the new API easier to appreciate.",
+      "date": "2020-08-20",
+      "slug": "composition-api-changed-my-mind-about-vue-3",
+      "file": "content/writing/composition-api-changed-my-mind-about-vue-3.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2020-08-20",
+      "era": "2017-2020: hands-on frontend engineer",
+      "topics": [
+        "vue",
+        "vue-3",
+        "composition-api",
+        "architecture"
+      ],
+      "technologies": [
+        "Vue 3 prerelease",
+        "Composition API",
+        "Options API",
+        "JavaScript"
+      ],
+      "position": "Composition API earns interest by keeping one stateful concern together; Options API remains useful.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Revises attachment to option-based organization expressed in 2018 without inventing a prior public anti-Vue-3 position.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Composition API RFC began in 2019; setup, refs, and logical organization are appropriate to the 2020 prerelease discussion.",
+          "source": "https://github.com/vuejs/rfcs/blob/master/active-rfcs/0013-composition-api.md"
+        },
+        {
+          "claim": "Vue 3.0 was released September 18, 2020. The August article describes prerelease evaluation; January 2021 describes released Vue 3.",
+          "source": "https://news.vuejs.org/issues/186"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No released Vue 3 claims; August 2020 may discuss prerelease only.",
+        "No available Vue 3 migration build.",
+        "No Vite 2 adoption.",
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 445,
+      "tags": [
+        "vue",
+        "vue-3",
+        "composition-api",
+        "architecture"
+      ],
+      "editorialForm": "bounded reconsideration centered on one nonvisual concern",
+      "revision": 2,
+      "sourceFile": "content/blog/2020-08-composition-api-changed-my-mind-about-vue-3.mdx",
+      "metadataFile": "content/writing/composition-api-changed-my-mind-about-vue-3.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Migrating From Vue 2 to Vue 3 Without Losing Your Mind",
+      "description": "A migration starts with the dependency you cannot replace and the behavior you cannot afford to lose.",
+      "date": "2021-01-21",
+      "slug": "migrating-from-vue-2-to-vue-3-without-losing-your-mind",
+      "file": "content/writing/migrating-from-vue-2-to-vue-3-without-losing-your-mind.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2021-01-21",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "vue",
+        "vue-3",
+        "migration",
+        "frontend"
+      ],
+      "technologies": [
+        "Vue 2",
+        "Vue 3.0",
+        "v-model"
+      ],
+      "position": "Migration should preserve workflows, inventory blockers and separate runtime changes from reorganization.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Uses the 2020 interest in Composition API without making it mandatory. No completed personal migration is claimed.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vue 3.0 was released September 18, 2020. The August article describes prerelease evaluation; January 2021 describes released Vue 3.",
+          "source": "https://news.vuejs.org/issues/186"
+        },
+        {
+          "claim": "Vue 3 changed custom component v-model conventions.",
+          "source": "https://v3-migration.vuejs.org/breaking-changes/v-model.html"
+        },
+        {
+          "claim": "Filters were removed in Vue 3.0.",
+          "source": "https://v3-migration.vuejs.org/breaking-changes/filters.html"
+        },
+        {
+          "claim": "Vue 3 introduced app-scoped initialization with createApp.",
+          "source": "https://v3-migration.vuejs.org/breaking-changes/global-api.html"
+        },
+        {
+          "claim": "Migration build belongs to Vue 3.1 in June 2021. January 2021 article must not recommend it as available.",
+          "source": "https://github.com/vuejs/core/blob/main/changelogs/CHANGELOG-3.1.md"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No available Vue 3 migration build.",
+        "No Vite 2 adoption.",
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 869,
+      "tags": [
+        "vue",
+        "vue-3",
+        "migration",
+        "frontend"
+      ],
+      "editorialForm": "sequential migration field guide with explicit stopping conditions",
+      "revision": 2,
+      "sourceFile": "content/blog/2021-01-migrating-from-vue-2-to-vue-3-without-losing-your-mind.mdx",
+      "metadataFile": "content/writing/migrating-from-vue-2-to-vue-3-without-losing-your-mind.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "I Think I'm Done Writing Webpack Configs",
+      "description": "Vite makes a convincing case for spending less of the working day maintaining the route from source code to browser.",
+      "date": "2021-06-24",
+      "slug": "i-think-im-done-writing-webpack-configs",
+      "file": "content/writing/i-think-im-done-writing-webpack-configs.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2021-06-24",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "vite",
+        "webpack",
+        "tooling",
+        "developer-experience"
+      ],
+      "technologies": [
+        "Vite 2",
+        "Webpack",
+        "Rollup",
+        "esbuild",
+        "ES modules"
+      ],
+      "position": "Vite earns a default trial for ordinary frontends by reducing build maintenance and feedback delay.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Revises the 2019 acceptance of build maintenance based on a new available alternative; keeps exceptions explicit.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Vite 2 was released February 16, 2021. Its development design uses native ES modules and esbuild dependency pre-bundling; production uses Rollup.",
+          "source": "https://vite.dev/blog/announcing-vite2"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 188,
+      "tags": [
+        "vite",
+        "webpack",
+        "tooling",
+        "developer-experience"
+      ],
+      "editorialForm": "brief opinion with one technical explanation",
+      "revision": 2,
+      "sourceFile": "content/blog/2021-06-i-think-im-done-writing-webpack-configs.mdx",
+      "metadataFile": "content/writing/i-think-im-done-writing-webpack-configs.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Frontend Architecture Is Mostly About Boundaries",
+      "description": "A folder diagram tells you where the files are. Follow one product change to find out how the application is organized.",
+      "date": "2021-11-09",
+      "slug": "frontend-architecture-is-mostly-about-boundaries",
+      "file": "content/writing/frontend-architecture-is-mostly-about-boundaries.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2021-11-09",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "architecture",
+        "frontend",
+        "teams",
+        "maintainability"
+      ],
+      "technologies": [
+        "APIs",
+        "frontend components"
+      ],
+      "position": "Architecture should localize changes and clarify feature, API and team responsibilities.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Scales 2018 component boundaries into service and team boundaries; prepares 2026 product architecture.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 642,
+      "tags": [
+        "architecture",
+        "frontend",
+        "teams",
+        "maintainability"
+      ],
+      "editorialForm": "continuous change-tracing essay",
+      "revision": 2,
+      "sourceFile": "content/blog/2021-11-frontend-architecture-is-mostly-about-boundaries.mdx",
+      "metadataFile": "content/writing/frontend-architecture-is-mostly-about-boundaries.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Pinia Is What I Wanted Vuex to Be",
+      "description": "I defended explicit mutations. Pinia makes me separate the useful discipline from the machinery I had attached to it.",
+      "date": "2022-03-17",
+      "slug": "pinia-is-what-i-wanted-vuex-to-be",
+      "file": "content/writing/pinia-is-what-i-wanted-vuex-to-be.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2022-03-17",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "vue",
+        "pinia",
+        "vuex",
+        "state-management"
+      ],
+      "technologies": [
+        "Pinia 2",
+        "Vuex",
+        "Vue",
+        "TypeScript"
+      ],
+      "position": "Pinia preserves useful shared-state discipline while removing unnecessary mutation ceremony.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Explicitly revises the 2019 defense of mutations while preserving the warning against globalizing local state.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Pinia offers state, getters and actions without a separate mutation layer; use only the API available in Pinia 2 for the 2022 draft.",
+          "source": "https://pinia.vuejs.org/introduction.html"
+        },
+        {
+          "claim": "January 2022 announcement establishes the contemporary Vue ecosystem transition. Do not import later Pinia support changes into the March 2022 article.",
+          "source": "https://blog.vuejs.org/posts/vue-3-as-the-new-default"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 258,
+      "tags": [
+        "vue",
+        "pinia",
+        "vuex",
+        "state-management"
+      ],
+      "editorialForm": "short explicit retraction with a code example",
+      "revision": 2,
+      "sourceFile": "content/blog/2022-03-pinia-is-what-i-wanted-vuex-to-be.mdx",
+      "metadataFile": "content/writing/pinia-is-what-i-wanted-vuex-to-be.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "TypeScript Is Worth the Annoyance",
+      "description": "The compiler can be irritating. So can discovering that loading, failure, and success were all represented by the same empty object.",
+      "date": "2022-08-18",
+      "slug": "typescript-is-worth-the-annoyance",
+      "file": "content/writing/typescript-is-worth-the-annoyance.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2022-08-18",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "typescript",
+        "frontend",
+        "architecture",
+        "maintainability"
+      ],
+      "technologies": [
+        "TypeScript",
+        "discriminated unions"
+      ],
+      "position": "Types should expose intended states and make refactoring safer; external data still needs runtime validation.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Adds enforceable contracts to the 2021 boundary argument; does not claim types replace behavior checks.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Discriminated unions and narrowing are established TypeScript features before August 2022. No satisfies or later syntax is used.",
+          "source": "https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No ChatGPT adoption.",
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 600,
+      "tags": [
+        "typescript",
+        "frontend",
+        "architecture",
+        "maintainability"
+      ],
+      "editorialForm": "worked type-model comparison",
+      "revision": 2,
+      "sourceFile": "content/blog/2022-08-typescript-is-worth-the-annoyance.mdx",
+      "metadataFile": "content/writing/typescript-is-worth-the-annoyance.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Your Component Library Is Not a Design System",
+      "description": "The package can be healthy while the product drifts. Someone still has to own how shared decisions reach actual screens.",
+      "date": "2023-01-19",
+      "slug": "your-component-library-is-not-a-design-system",
+      "file": "content/writing/your-component-library-is-not-a-design-system.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2023-01-19",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "design-systems",
+        "frontend",
+        "design",
+        "architecture"
+      ],
+      "technologies": [
+        "component libraries",
+        "design files",
+        "accessibility"
+      ],
+      "position": "A component package needs ownership, adoption and a path for exceptions to function as a design system.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Extends the 2020 forms focus to cross-team decision maintenance.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 502,
+      "tags": [
+        "design-systems",
+        "frontend",
+        "design",
+        "architecture"
+      ],
+      "editorialForm": "organizational failure analysis tracing a release through its consumers",
+      "revision": 2,
+      "sourceFile": "content/blog/2023-01-your-component-library-is-not-a-design-system.mdx",
+      "metadataFile": "content/writing/your-component-library-is-not-a-design-system.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "So, About This AI Coding Thing",
+      "description": "Useful code can come from an unreliable source. That leaves a fairly important job for the person accepting it.",
+      "date": "2023-04-20",
+      "slug": "so-about-this-ai-coding-thing",
+      "file": "content/writing/so-about-this-ai-coding-thing.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2023-04-20",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "ai",
+        "software-engineering",
+        "developer-tools",
+        "testing"
+      ],
+      "technologies": [
+        "ChatGPT",
+        "GitHub Copilot"
+      ],
+      "position": "AI assistance is useful for bounded checkable tasks; ambiguous repository ownership remains untrusted.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Establishes a deliberately conservative expectation that 2024 and 2026 explicitly revise.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "ChatGPT launched November 30, 2022, before the April 2023 article. No later tool-execution capabilities are attributed to that release.",
+          "source": "https://openai.com/index/chatgpt/"
+        },
+        {
+          "claim": "GitHub Copilot was generally available to individual developers June 21, 2022.",
+          "source": "https://github.blog/changelog/2022-06-21-github-copilot-is-now-available-to-individual-developers/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 298,
+      "tags": [
+        "ai",
+        "software-engineering",
+        "developer-tools",
+        "testing"
+      ],
+      "editorialForm": "short skeptical first reaction",
+      "revision": 2,
+      "sourceFile": "content/blog/2023-04-so-about-this-ai-coding-thing.mdx",
+      "metadataFile": "content/writing/so-about-this-ai-coding-thing.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "The Cost of a Frontend Shortcut",
+      "description": "A temporary exception becomes expensive when the next feature mistakes it for the normal way to work.",
+      "date": "2023-09-14",
+      "slug": "the-cost-of-a-frontend-shortcut",
+      "file": "content/writing/the-cost-of-a-frontend-shortcut.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2023-09-14",
+      "era": "2021-2023: architectural thinking",
+      "topics": [
+        "technical-debt",
+        "architecture",
+        "frontend",
+        "teams"
+      ],
+      "technologies": [
+        "frontend permissions",
+        "APIs"
+      ],
+      "position": "A shortcut becomes costly when it spreads as a pattern; contain and assign removal to an owner.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Applies the earlier boundary principles to deadlines and team incentives; prepares the AI debt argument.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 405,
+      "tags": [
+        "technical-debt",
+        "architecture",
+        "frontend",
+        "teams"
+      ],
+      "editorialForm": "hypothetical timeline of a workaround becoming policy",
+      "revision": 2,
+      "sourceFile": "content/blog/2023-09-the-cost-of-a-frontend-shortcut.mdx",
+      "metadataFile": "content/writing/the-cost-of-a-frontend-shortcut.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Stop Testing Implementation Details",
+      "description": "A test that breaks when the behavior stays the same is charging rent without doing much security work.",
+      "date": "2024-02-22",
+      "slug": "stop-testing-implementation-details",
+      "file": "content/writing/stop-testing-implementation-details.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2024-02-22",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "testing",
+        "frontend",
+        "quality",
+        "architecture"
+      ],
+      "technologies": [
+        "Testing Library",
+        "component tests"
+      ],
+      "position": "Tests should protect meaningful public behavior and allow harmless refactoring.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Develops evidence quality without declaring all mocks or unit tests wrong.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Testing Library encourages tests through the rendered interface. Article examples and argument are original.",
+          "source": "https://testing-library.com/docs/guiding-principles/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 452,
+      "tags": [
+        "testing",
+        "frontend",
+        "quality",
+        "architecture"
+      ],
+      "editorialForm": "three-check comparison anchored in a single defect",
+      "revision": 2,
+      "sourceFile": "content/blog/2024-02-stop-testing-implementation-details.mdx",
+      "metadataFile": "content/writing/stop-testing-implementation-details.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "AI Is Getting Harder to Dismiss",
+      "description": "My early assessment put too much weight on the small tasks. The more consequential question is how much context these tools can use.",
+      "date": "2024-06-27",
+      "slug": "ai-is-getting-harder-to-dismiss",
+      "file": "content/writing/ai-is-getting-harder-to-dismiss.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2024-06-27",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "ai",
+        "engineering",
+        "developer-experience",
+        "leadership"
+      ],
+      "technologies": [
+        "Claude 3.5 Sonnet",
+        "AI coding tools"
+      ],
+      "position": "Larger bounded AI proposals deserve evaluation; usefulness can grow despite continuing unreliability.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Explicitly revises 2023 small-task expectations but stops short of autonomous ambiguous ownership.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Claude 3.5 Sonnet and an artifact preview were announced in June 2024, before the June 27 narrative date. Vendor capabilities motivate evaluation; no benchmark is asserted as independent evidence.",
+          "source": "https://www.anthropic.com/news/claude-3-5-sonnet"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 234,
+      "tags": [
+        "ai",
+        "engineering",
+        "developer-experience",
+        "leadership"
+      ],
+      "editorialForm": "short dated reassessment with an unresolved next question",
+      "revision": 2,
+      "sourceFile": "content/blog/2024-06-ai-is-getting-harder-to-dismiss.mdx",
+      "metadataFile": "content/writing/ai-is-getting-harder-to-dismiss.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Frontend Performance Problems Usually Aren't Where You Think",
+      "description": "Follow the wait from the user’s action to the useful result before deciding which code deserves an optimization.",
+      "date": "2024-10-17",
+      "slug": "frontend-performance-problems-usually-arent-where-you-think",
+      "file": "content/writing/frontend-performance-problems-usually-arent-where-you-think.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2024-10-17",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "performance",
+        "frontend",
+        "web",
+        "architecture"
+      ],
+      "technologies": [
+        "browser profiling",
+        "network requests",
+        "INP"
+      ],
+      "position": "Diagnose the user-visible wait before optimizing a favored suspect; remove unnecessary work first.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Connects architectural boundaries to network, rendering and product requirements.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "INP replaced FID as a Core Web Vital on March 12, 2024.",
+          "source": "https://web.dev/blog/inp-cwv-march-12"
+        },
+        {
+          "claim": "Main-thread work can contribute to interaction delay. Only longstanding diagnostic concepts are used from this maintained page.",
+          "source": "https://web.dev/articles/optimize-inp"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 822,
+      "tags": [
+        "performance",
+        "frontend",
+        "web",
+        "architecture"
+      ],
+      "editorialForm": "extended diagnostic walkthrough from symptom to verification",
+      "revision": 2,
+      "sourceFile": "content/blog/2024-10-frontend-performance-problems-usually-arent-where-you-think.mdx",
+      "metadataFile": "content/writing/frontend-performance-problems-usually-arent-where-you-think.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "I Want My Tests to Be Boring",
+      "description": "A useful browser test should begin from known conditions and leave enough evidence that a failure can be investigated without folklore.",
+      "date": "2025-01-23",
+      "slug": "i-want-my-tests-to-be-boring",
+      "file": "content/writing/i-want-my-tests-to-be-boring.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2025-01-23",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "testing",
+        "playwright",
+        "ci",
+        "quality"
+      ],
+      "technologies": [
+        "Playwright",
+        "browser contexts",
+        "CI"
+      ],
+      "position": "Independent setup and meaningful waits make browser failures actionable.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Moves from 2024 behavior assertions to operational suite reliability; prepares 2026 pipeline and flake posts.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Playwright provides isolation and actionability waiting. Backend record isolation remains a separate test-design responsibility.",
+          "source": "https://playwright.dev/docs/best-practices"
+        },
+        {
+          "claim": "Role/name locators and explicit test identifiers are established options; no newly introduced locator APIs are used.",
+          "source": "https://playwright.dev/docs/locators"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 185,
+      "tags": [
+        "testing",
+        "playwright",
+        "ci",
+        "quality"
+      ],
+      "editorialForm": "brief deadpan statement of testing preferences",
+      "revision": 2,
+      "sourceFile": "content/blog/2025-01-i-want-my-tests-to-be-boring.mdx",
+      "metadataFile": "content/writing/i-want-my-tests-to-be-boring.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "The Senior Engineer's Job Isn't More Code",
+      "description": "Experience should make the team’s decisions easier and its risks more visible. A larger personal queue of tickets can get in the way.",
+      "date": "2025-04-17",
+      "slug": "the-senior-engineers-job-isnt-more-code",
+      "file": "content/writing/the-senior-engineers-job-isnt-more-code.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2025-04-17",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "leadership",
+        "engineering",
+        "teams",
+        "architecture"
+      ],
+      "technologies": [
+        "engineering review",
+        "architecture"
+      ],
+      "position": "Senior engineers should distribute judgment and remove bottlenecks while retaining technical contact.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Expands team coordination into explicit leadership responsibility; avoids a no-code management persona.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No May 2025 repository-agent capabilities projected backward.",
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 650,
+      "tags": [
+        "leadership",
+        "engineering",
+        "teams",
+        "architecture"
+      ],
+      "editorialForm": "reflective leadership essay without section headings",
+      "revision": 2,
+      "sourceFile": "content/blog/2025-04-the-senior-engineers-job-isnt-more-code.mdx",
+      "metadataFile": "content/writing/the-senior-engineers-job-isnt-more-code.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "We're Starting to Describe Software Instead of Writing It",
+      "description": "As coding tools take on larger changes, the quality of the request becomes part of the engineering system.",
+      "date": "2025-07-24",
+      "slug": "were-starting-to-describe-software-instead-of-writing-it",
+      "file": "content/writing/were-starting-to-describe-software-instead-of-writing-it.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2025-07-24",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "ai",
+        "engineering",
+        "architecture",
+        "product"
+      ],
+      "technologies": [
+        "Codex",
+        "coding agents",
+        "repository checks"
+      ],
+      "position": "Delegated implementation makes clear contracts and repository context central to delivery.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Builds on 2024 bounded changes with 2025 repository-agent capability.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 443,
+      "tags": [
+        "ai",
+        "engineering",
+        "architecture",
+        "product"
+      ],
+      "editorialForm": "worked comparison of two task briefs",
+      "revision": 2,
+      "sourceFile": "content/blog/2025-07-were-starting-to-describe-software-instead-of-writing-it.mdx",
+      "metadataFile": "content/writing/were-starting-to-describe-software-instead-of-writing-it.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Technical Debt Has a New Problem",
+      "description": "Cheap implementation can create expensive ownership. Review capacity and maintenance obligations belong in the same conversation as generation speed.",
+      "date": "2025-10-16",
+      "slug": "technical-debt-has-a-new-problem",
+      "file": "content/writing/technical-debt-has-a-new-problem.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2025-10-16",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "ai",
+        "technical-debt",
+        "leadership",
+        "architecture"
+      ],
+      "technologies": [
+        "coding agents",
+        "review workflows"
+      ],
+      "position": "Creation speed can exceed review and maintenance capacity; evaluate obligations and limit work in progress.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Extends 2023 shortcuts into faster pattern replication; prepares 2026 reduction as a deliberate goal.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 245,
+      "tags": [
+        "ai",
+        "technical-debt",
+        "leadership",
+        "architecture"
+      ],
+      "editorialForm": "compact argument about the disappearance of an informal scope brake",
+      "revision": 2,
+      "sourceFile": "content/blog/2025-10-technical-debt-has-a-new-problem.mdx",
+      "metadataFile": "content/writing/technical-debt-has-a-new-problem.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Agents Are Going to Change Engineering Teams",
+      "description": "Delegating repository work introduces decisions about scope, evidence, and integration that the org chart may not yet reflect.",
+      "date": "2025-12-11",
+      "slug": "agents-are-going-to-change-engineering-teams",
+      "file": "content/writing/agents-are-going-to-change-engineering-teams.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2025-12-11",
+      "era": "2024-2025: staff and lead perspective",
+      "topics": [
+        "ai",
+        "agents",
+        "leadership",
+        "engineering-teams"
+      ],
+      "technologies": [
+        "coding agents",
+        "isolated environments"
+      ],
+      "position": "Agent adoption requires designed assignments, integration ownership and team learning.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Expands 2025 intent and review arguments into an operating model; avoids agent-to-employee replacement ratios.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 620,
+      "tags": [
+        "ai",
+        "agents",
+        "leadership",
+        "engineering-teams"
+      ],
+      "editorialForm": "delegation exercise distinguishing independent work from dependency",
+      "revision": 2,
+      "sourceFile": "content/blog/2025-12-agents-are-going-to-change-engineering-teams.mdx",
+      "metadataFile": "content/writing/agents-are-going-to-change-engineering-teams.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "I Don't Want AI to Write More Code",
+      "description": "Use cheaper implementation to test smaller designs, retire workarounds, and reduce the amount of software the organization has to carry.",
+      "date": "2026-02-19",
+      "slug": "i-dont-want-ai-to-write-more-code",
+      "file": "content/writing/i-dont-want-ai-to-write-more-code.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-02-19",
+      "era": "2026: technology leadership",
+      "topics": [
+        "ai",
+        "leadership",
+        "architecture",
+        "technical-debt"
+      ],
+      "technologies": [
+        "coding agents",
+        "technical debt"
+      ],
+      "position": "Use cheaper implementation to compare smaller designs and retire unnecessary obligations.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Responds to 2025 AI debt with a practical reduction strategy; does not equate fewer lines with correctness.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 215,
+      "tags": [
+        "ai",
+        "leadership",
+        "architecture",
+        "technical-debt"
+      ],
+      "editorialForm": "short editorial arguing for deletion",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-02-i-dont-want-ai-to-write-more-code.mdx",
+      "metadataFile": "content/writing/i-dont-want-ai-to-write-more-code.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "The Frontend Is a Product Architecture Problem",
+      "description": "The interface is where product rules, service boundaries, and operational failures become one experience. Frontend leadership belongs in those decisions early.",
+      "date": "2026-04-16",
+      "slug": "the-frontend-is-a-product-architecture-problem",
+      "file": "content/writing/the-frontend-is-a-product-architecture-problem.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-04-16",
+      "era": "2026: technology leadership",
+      "topics": [
+        "frontend",
+        "leadership",
+        "product",
+        "architecture"
+      ],
+      "technologies": [
+        "frontend",
+        "APIs",
+        "permissions",
+        "AI-assisted implementation"
+      ],
+      "position": "Frontend leadership must participate in defining end-to-end product operations and service contracts.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Scales 2021 boundaries and 2023 design-system ownership into product architecture.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 772,
+      "tags": [
+        "frontend",
+        "leadership",
+        "product",
+        "architecture"
+      ],
+      "editorialForm": "product operation analysis organized around a partial-failure matrix",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-04-the-frontend-is-a-product-architecture-problem.mdx",
+      "metadataFile": "content/writing/the-frontend-is-a-product-architecture-problem.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Thirty Seconds Is Better Than Sixteen Minutes",
+      "description": "The difference in pipeline run time matters because it changes when feedback reaches the person who can act on it.",
+      "date": "2026-06-18",
+      "slug": "thirty-seconds-is-better-than-sixteen-minutes",
+      "file": "content/writing/thirty-seconds-is-better-than-sixteen-minutes.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-06-18",
+      "era": "2026: technology leadership",
+      "topics": [
+        "playwright",
+        "cypress",
+        "ci",
+        "developer-experience"
+      ],
+      "technologies": [
+        "Playwright",
+        "Cypress",
+        "CI"
+      ],
+      "position": "Faster reliable pipeline feedback changes team working conditions and verification capacity.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Connects 2021 development-loop concerns and 2025 reliable tests to a user-confirmed pipeline comparison.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Playwright provides isolation and actionability waiting. Backend record isolation remains a separate test-design responsibility.",
+          "source": "https://playwright.dev/docs/best-practices"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "Uses user-confirmed pipeline run times. Does not claim a controlled benchmark, universal runner speed, equal workloads, or unconfirmed causal changes.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "evidenceRefs": [
+        "pipeline-times"
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 253,
+      "tags": [
+        "playwright",
+        "cypress",
+        "ci",
+        "developer-experience"
+      ],
+      "editorialForm": "short reflection on a confirmed personal measurement",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-06-thirty-seconds-is-better-than-sixteen-minutes.mdx",
+      "metadataFile": "content/writing/thirty-seconds-is-better-than-sixteen-minutes.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "Flaky Tests Aren't Tests",
+      "description": "An intermittent failure is evidence to investigate. It cannot quietly become a passing release signal because a rerun worked.",
+      "date": "2026-07-16",
+      "slug": "flaky-tests-arent-tests",
+      "file": "content/writing/flaky-tests-arent-tests.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-07-16",
+      "era": "2026: technology leadership",
+      "topics": [
+        "testing",
+        "playwright",
+        "ci",
+        "quality"
+      ],
+      "technologies": [
+        "Playwright",
+        "retries",
+        "burn-in testing",
+        "CI"
+      ],
+      "position": "Preserve first failures; distinguish useful polling from rerunning a failed test to obtain green.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Strengthens January 2025 reliability into release policy without claiming repeated passes prove zero defects.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "Full-test retries are configurable and differ from assertion polling. Zero automatic full-test retries is an editorial preference, not a universal framework requirement.",
+          "source": "https://playwright.dev/docs/test-retries"
+        },
+        {
+          "claim": "Playwright provides isolation and actionability waiting. Backend record isolation remains a separate test-design responsibility.",
+          "source": "https://playwright.dev/docs/best-practices"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 524,
+      "tags": [
+        "testing",
+        "playwright",
+        "ci",
+        "quality"
+      ],
+      "editorialForm": "release-signal policy with a causal investigation sequence",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-07-flaky-tests-arent-tests.mdx",
+      "metadataFile": "content/writing/flaky-tests-arent-tests.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "The Engineer After the Coding Era",
+      "description": "When implementation becomes easier to delegate, engineering judgment has to become more explicit, teachable, and accountable.",
+      "date": "2026-08-20",
+      "slug": "the-engineer-after-the-coding-era",
+      "file": "content/writing/the-engineer-after-the-coding-era.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-08-20",
+      "era": "2026: technology leadership",
+      "topics": [
+        "engineering",
+        "ai",
+        "leadership",
+        "careers"
+      ],
+      "technologies": [
+        "coding agents",
+        "engineering evaluation"
+      ],
+      "position": "Engineering value increasingly includes explicit judgment, evaluation and accountable ownership.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Extends April 2025 senior contribution and December 2025 team-learning concerns; code literacy remains essential.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 777,
+      "tags": [
+        "engineering",
+        "ai",
+        "leadership",
+        "careers"
+      ],
+      "editorialForm": "long reflective essay on judgment and how it is learned",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-08-the-engineer-after-the-coding-era.mdx",
+      "metadataFile": "content/writing/the-engineer-after-the-coding-era.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    },
+    {
+      "title": "This Isn't Autocomplete Anymore",
+      "description": "Engineering leaders need to redesign the path from intent to accepted change, because faster implementation alone leaves the rest of the organization waiting.",
+      "date": "2026-09-03",
+      "slug": "this-isnt-autocomplete-anymore",
+      "file": "content/writing/this-isnt-autocomplete-anymore.md",
+      "dateKind": "assigned narrative date; original publication unverified",
+      "createdOn": "2026-09-05",
+      "status": "draft",
+      "reviewStatus": "awaiting Nathan review",
+      "historicalCutoff": "2026-09-03",
+      "era": "2026: technology leadership",
+      "topics": [
+        "ai",
+        "leadership",
+        "engineering-strategy",
+        "agents"
+      ],
+      "technologies": [
+        "coding agents",
+        "verification",
+        "delivery workflows"
+      ],
+      "position": "Redesign delivery around clear intent, appropriate acceptance and the actual limiting queue.",
+      "opinionContinuity": {
+        "relationshipToEarlierPosts": "Explicitly revises April 2023 narrow AI expectations and integrates the archive leadership arc.",
+        "futureConstraint": "Preserve this dated position. Later revisions must have an explicit reason rather than silently rewriting the earlier perspective."
+      },
+      "historicalChecks": [
+        {
+          "claim": "May 16, 2025 launch establishes agents reading/editing repository files and running checks in isolated environments. Later posts discuss implications without unverified model or performance claims.",
+          "source": "https://openai.com/index/introducing-codex/"
+        }
+      ],
+      "sourceScope": "Specific technical claims checked against primary sources. The remaining discussion is editorial judgment and explicitly illustrative scenarios, not measured outcomes.",
+      "biographicalNotes": "No invented employer, incident, deployment history, customer story or productivity statistic. First-person judgments are drafted positions for Nathan.",
+      "reviewNotes": [
+        "Substantially rewritten for structural variety after Nathan welcomed short and funny posts.",
+        "Ready for review; historical narrative dates remain assigned."
+      ],
+      "anachronismGuardrails": [
+        "No later APIs, model names, future outcomes or unverified personal metrics."
+      ],
+      "wordCount": 829,
+      "tags": [
+        "ai",
+        "leadership",
+        "engineering-strategy",
+        "agents"
+      ],
+      "editorialForm": "leadership investment argument with an explicit choice among bottlenecks",
+      "revision": 2,
+      "sourceFile": "content/blog/2026-09-this-isnt-autocomplete-anymore.mdx",
+      "metadataFile": "content/writing/this-isnt-autocomplete-anymore.json",
+      "integrationStatus": "included in site with Nathan authorization"
+    }
+  ],
+  "lastUpdatedOn": "2026-09-05",
+  "datePolicy": "All article dates are assigned narrative dates, not verified historical publication dates. Actual drafting occurred in September 2026.",
+  "sourcePolicy": "Primary sources support specific technology facts only. Maintained documentation can contain later features; cutoff notes constrain use. Product announcements establish availability, not independently measured effectiveness. Essays, arguments, examples and organization are newly written; no external article was used as a prose template.",
+  "biographicalEvidence": [
+    {
+      "id": "pipeline-times",
+      "origin": "Nathan in this task, 2026-09-05",
+      "confirmed": "The thirty-second and sixteen-minute comparison measures time to run in the pipeline. The conversation context identifies Playwright versus Cypress.",
+      "unconfirmed": "Exact job scope, test count, hardware, parallelism, setup changes, logs and causal attribution are not established. Article does not assert them."
+    }
+  ],
+  "totalPosts": 29,
+  "totalWords": 15324,
+  "editorialRevision": {
+    "revision": 2,
+    "completedOn": "2026-09-05",
+    "scope": "Rewrote the remaining 26 posts. Preserved the first three approved articles byte-for-byte.",
+    "reason": "Nathan requested natural structural variety and welcomed short or funny posts.",
+    "approach": "Forms follow the subject: short comic pieces, notes, worked examples, technical walkthroughs, a hypothetical timeline and longer leadership essays.",
+    "verifiedLimits": "Historical fact sources and narrative cutoffs retained. No external plagiarism scan or site integration performed.",
+    "newDraftWordRange": [
+      185,
+      869
+    ]
+  }
+}

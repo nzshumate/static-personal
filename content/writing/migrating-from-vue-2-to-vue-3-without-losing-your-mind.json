@@ -1,0 +1,13 @@
+{
+  "title": "Migrating From Vue 2 to Vue 3 Without Losing Your Mind",
+  "description": "A migration starts with the dependency you cannot replace and the behavior you cannot afford to lose.",
+  "date": "2021-01-21",
+  "tags": [
+    "vue",
+    "vue-3",
+    "migration",
+    "frontend"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

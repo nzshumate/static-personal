@@ -1,0 +1,13 @@
+{
+  "title": "I Think I'm Done Writing Webpack Configs",
+  "description": "Vite makes a convincing case for spending less of the working day maintaining the route from source code to browser.",
+  "date": "2021-06-24",
+  "tags": [
+    "vite",
+    "webpack",
+    "tooling",
+    "developer-experience"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

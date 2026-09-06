@@ -1,0 +1,13 @@
+{
+  "title": "Vuex Isn't Your Database",
+  "description": "A shared store can keep a team sane. It can also preserve a surprising amount of state nobody meant to keep.",
+  "date": "2019-05-16",
+  "tags": [
+    "vue",
+    "vuex",
+    "state-management",
+    "frontend"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

@@ -1,0 +1,13 @@
+{
+  "title": "I Want My Tests to Be Boring",
+  "description": "A useful browser test should begin from known conditions and leave enough evidence that a failure can be investigated without folklore.",
+  "date": "2025-01-23",
+  "tags": [
+    "testing",
+    "playwright",
+    "ci",
+    "quality"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

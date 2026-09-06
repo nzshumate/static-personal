@@ -1,0 +1,13 @@
+{
+  "title": "Your Component Library Is Not a Design System",
+  "description": "The package can be healthy while the product drifts. Someone still has to own how shared decisions reach actual screens.",
+  "date": "2023-01-19",
+  "tags": [
+    "design-systems",
+    "frontend",
+    "design",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

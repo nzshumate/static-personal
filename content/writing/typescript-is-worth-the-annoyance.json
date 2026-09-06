@@ -1,0 +1,13 @@
+{
+  "title": "TypeScript Is Worth the Annoyance",
+  "description": "The compiler can be irritating. So can discovering that loading, failure, and success were all represented by the same empty object.",
+  "date": "2022-08-18",
+  "tags": [
+    "typescript",
+    "frontend",
+    "architecture",
+    "maintainability"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

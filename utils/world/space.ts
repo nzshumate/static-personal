@@ -1,0 +1,451 @@
+import * as THREE from 'three'
+import { atmosphereFragment, atmosphereVertex, planetFragment, planetVertex, pointFragment, pointVertex, sunFragment, sunVertex } from './shaders'
+import { makeRng } from './math'
+
+export type SpaceSystem = {
+  group: THREE.Group
+  update: (time: number, progress: number, reduced: boolean) => void
+  setOpacity: (value: number) => void
+}
+
+const SUN_LIGHT = new THREE.Vector3(-0.62, 0.38, 0.68).normalize()
+
+const addPlanet = (
+  group: THREE.Group,
+  options: {
+    radius: number
+    position: THREE.Vector3
+    deep: number
+    mid: number
+    high: number
+    bands: number
+    clouds: number
+    seed: number
+    atmosphere: number
+  }
+) => {
+  const geo = new THREE.SphereGeometry(options.radius, 96, 96)
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uDeep: { value: new THREE.Color(options.deep) },
+      uMid: { value: new THREE.Color(options.mid) },
+      uHigh: { value: new THREE.Color(options.high) },
+      uLightDir: { value: SUN_LIGHT.clone() },
+      uTime: { value: 0 },
+      uSeed: { value: options.seed },
+      uBands: { value: options.bands },
+      uClouds: { value: options.clouds }
+    },
+    vertexShader: planetVertex,
+    fragmentShader: planetFragment
+  })
+  const mesh = new THREE.Mesh(geo, mat)
+  mesh.position.copy(options.position)
+  group.add(mesh)
+
+  const atmoGeo = new THREE.SphereGeometry(options.radius * 1.034, 64, 64)
+  const atmoMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: new THREE.Color(options.atmosphere) },
+      uLightDir: { value: SUN_LIGHT.clone() }
+    },
+    vertexShader: atmosphereVertex,
+    fragmentShader: atmosphereFragment,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide
+  })
+  const atmo = new THREE.Mesh(atmoGeo, atmoMat)
+  atmo.position.copy(options.position)
+  group.add(atmo)
+  return { mesh, mat, atmo, geo, atmoGeo, atmoMat }
+}
+
+export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): SpaceSystem => {
+  const group = new THREE.Group()
+  const random = makeRng(42071)
+  const count = mobile ? 2200 : 5600
+  const positions = new Float32Array(count * 3)
+  const sizes = new Float32Array(count)
+  const colors = new Float32Array(count * 3)
+  const starColors = [
+    new THREE.Color(0xc6d4ee),
+    new THREE.Color(0xfff1d2),
+    new THREE.Color(0x8ea6ff),
+    new THREE.Color(0xf0d0b4)
+  ]
+
+  for (let i = 0; i < count; i++) {
+    const band = random() < 0.62
+    let x: number, y: number, z: number
+    if (band) {
+      const along = (random() - 0.5) * 46
+      const spread = Math.pow(random(), 1.65) * 4.8
+      const angle = random() * Math.PI * 2
+      x = along
+      y = Math.cos(angle) * spread * 0.38 - along * 0.18
+      z = Math.sin(angle) * spread - 8 - random() * 28
+    } else {
+      x = (random() - 0.5) * 52
+      y = (random() - 0.5) * 28
+      z = -random() * 42
+    }
+    positions.set([x, y, z], i * 3)
+    const bright = random()
+    sizes[i] = bright > 0.987 ? 2.6 + random() * 3.2 : 0.45 + random() * 1.35
+    const color = starColors[Math.floor(random() * starColors.length)]
+    colors.set([color!.r, color!.g, color!.b], i * 3)
+  }
+
+  const starGeo = new THREE.BufferGeometry()
+  starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+  starGeo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1))
+  starGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+  const starMat = new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: new THREE.Color(0xd5def0) },
+      uOpacity: { value: 0.92 },
+      uPixelRatio: { value: renderer.getPixelRatio() },
+      uSize: { value: 1.35 }
+    },
+    vertexShader: pointVertex,
+    fragmentShader: pointFragment,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  })
+  const stars = new THREE.Points(starGeo, starMat)
+  group.add(stars)
+
+  const dustCanvas = document.createElement('canvas')
+  dustCanvas.width = 256
+  dustCanvas.height = 256
+  const ctx = dustCanvas.getContext('2d')!
+  const gradient = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
+  gradient.addColorStop(0, 'rgba(255,255,255,0.55)')
+  gradient.addColorStop(0.35, 'rgba(255,255,255,0.12)')
+  gradient.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, 256, 256)
+  const dustTex = new THREE.CanvasTexture(dustCanvas)
+  dustTex.colorSpace = THREE.SRGBColorSpace
+
+  const milkyWay = new THREE.Group()
+  for (let i = 0; i < (mobile ? 6 : 10); i++) {
+    const material = new THREE.SpriteMaterial({
+      map: dustTex,
+      color: i % 3 === 0 ? 0xb7c4e4 : 0x7f8eb8,
+      transparent: true,
+      opacity: 0.045 + random() * 0.03,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
+    })
+    const sprite = new THREE.Sprite(material)
+    sprite.position.set((random() - 0.5) * 18, (random() - 0.5) * 3.2 - 0.8, -12 - random() * 16)
+    sprite.scale.set(8 + random() * 10, 1.6 + random() * 1.4, 1)
+    milkyWay.add(sprite)
+  }
+  milkyWay.rotation.z = -0.32
+  group.add(milkyWay)
+
+  const sunGeo = new THREE.SphereGeometry(1.18, 64, 64)
+  const sunMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 } },
+    vertexShader: sunVertex,
+    fragmentShader: sunFragment.replace('color * 3.5', 'color * 0.85').replace('vec3(1.0, 0.93, 0.62)', 'vec3(1.0, 0.65, 0.25)').replace('color += (gran - 0.5) * 0.08 * limb;', `
+      float cells=sin(vNormal.x*64.0+sin(vNormal.y*41.0))*sin(vNormal.y*53.0+uTime*.04);
+      float spots=smoothstep(.94,.99,sin(vNormal.x*12.0+1.4)*sin(vNormal.y*17.0-.7));
+      color *= .78+gran*.18+cells*.06;
+      color *= 1.0-spots*.6;
+    `)
+  })
+  const sun = new THREE.Mesh(sunGeo, sunMat)
+  sun.position.set(-6.2, 2.15, -6)
+  group.add(sun)
+
+  const coronaMat = new THREE.SpriteMaterial({
+    map: dustTex,
+    color: 0xff9a4a,
+    transparent: true,
+    opacity: 0.32,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  })
+  const corona = new THREE.Sprite(coronaMat)
+  corona.position.copy(sun.position)
+  corona.scale.set(4.8, 4.8, 1)
+  group.add(corona)
+
+  const earth = addPlanet(group, {
+    radius: mobile ? 1.7 : 2.35,
+    position: new THREE.Vector3(4.8, 0.05, -6.4),
+    deep: 0x082239,
+    mid: 0x4b6258,
+    high: 0xc5d4e4,
+    bands: 2.2,
+    clouds: 0.82,
+    seed: 1.4,
+    atmosphere: 0x7aa7ff
+  })
+
+  const giant = addPlanet(group, {
+    radius: mobile ? 0.58 : 0.72,
+    position: new THREE.Vector3(-3.4, -1.9, -18),
+    deep: 0x5b554b,
+    mid: 0xa99b80,
+    high: 0xe4d6b8,
+    bands: 9,
+    clouds: 0.1,
+    seed: 5.8,
+    atmosphere: 0xc4b798
+  })
+
+  const ice = addPlanet(group, {
+    radius: 0.38,
+    position: new THREE.Vector3(6.6, 2.4, -13),
+    deep: 0x263e50,
+    mid: 0x628b9b,
+    high: 0xb5d2d7,
+    bands: 7,
+    clouds: 0.05,
+    seed: 3.1,
+    atmosphere: 0xa8c4e0
+  })
+
+  // Fine dusty rings and a cratered moon enrich the distant planetary system.
+  const rings=new THREE.Group();rings.position.copy(giant.mesh.position);rings.quaternion.setFromEuler(new THREE.Euler(.48,0,-.28));rings.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),Math.PI/2));rings.scale.setScalar(mobile ? .58/.72 : 1)
+  const giantTilt=new THREE.Quaternion().setFromEuler(new THREE.Euler(.48,0,-.28)), giantSpin=new THREE.Quaternion(), spinAxis=new THREE.Vector3(0,1,0)
+  const ringMaterial=new THREE.MeshStandardMaterial({color:0xcab796,roughness:.94,transparent:true,opacity:.86,side:THREE.DoubleSide,depthWrite:false})
+  ringMaterial.onBeforeCompile=shader=>{
+    shader.uniforms.uRingCenter={value:giant.mesh.position.clone()}
+    shader.uniforms.uRingLight={value:SUN_LIGHT.clone()}
+    shader.uniforms.uRingPlanetRadius={value:mobile?.58:.72}
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\n varying vec3 vRingLocal; varying vec3 vRingWorld;').replace('#include <begin_vertex>','#include <begin_vertex>\n vRingLocal=position; vRingWorld=(modelMatrix*vec4(position,1.0)).xyz;')
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
+      varying vec3 vRingLocal; varying vec3 vRingWorld;
+      uniform vec3 uRingCenter; uniform vec3 uRingLight; uniform float uRingPlanetRadius;`)
+      .replace('#include <color_fragment>',`#include <color_fragment>
+      float r=length(vRingLocal.xy);
+      float fine=.5+.5*sin(r*820.0+sin(r*217.0)*1.8);
+      float bands=.5+.5*sin(r*75.0+sin(r*31.0));
+      float gap=1.0-smoothstep(1.205,1.216,r)*(1.0-smoothstep(1.252,1.263,r));
+      float edge=smoothstep(.83,.89,r)*(1.0-smoothstep(1.49,1.59,r));
+      diffuseColor.a*=edge*gap*(.26+.38*bands+.36*fine);
+      diffuseColor.rgb*=mix(vec3(.55,.47,.38),vec3(1.05,1.02,.93),.35+bands*.4+fine*.25);
+      vec3 rel=vRingWorld-uRingCenter; float along=dot(rel,uRingLight);
+      float perpendicular=length(rel-uRingLight*along);
+      float shadow=(1.0-smoothstep(uRingPlanetRadius*.95,uRingPlanetRadius*1.05,perpendicular))*(1.0-step(0.0,along));
+      diffuseColor.rgb*=1.0-shadow*.89;`)
+  }
+  ringMaterial.customProgramCacheKey=()=> 'resolved-planet-rings-v2'
+  rings.add(new THREE.Mesh(new THREE.RingGeometry(.83,1.59,256,2),ringMaterial))
+  group.add(rings)
+  const moonGeo=new THREE.SphereGeometry(.27,40,32),moonPos=moonGeo.getAttribute('position')
+  for(let i=0;i<moonPos.count;i++) {
+    const x=moonPos.getX(i),y=moonPos.getY(i),z=moonPos.getZ(i),bump=1+(Math.sin(x*91+y*38)*Math.sin(z*85-x*17))*.023
+    moonPos.setXYZ(i,x*bump,y*bump,z*bump)
+  }
+  moonGeo.computeVertexNormals()
+  const moon=new THREE.Mesh(moonGeo,new THREE.MeshStandardMaterial({color:0x827c73,roughness:1}))
+  const moonMaterial=moon.material
+  moonMaterial.onBeforeCompile=shader=>{
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\n varying vec3 vRock;').replace('#include <begin_vertex>','#include <begin_vertex>\n vRock=position;')
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n varying vec3 vRock;').replace('#include <color_fragment>',`#include <color_fragment>
+      float crater=sin(vRock.x*83.0)*sin(vRock.y*71.0)*sin(vRock.z*93.0);
+      diffuseColor.rgb*=.72+smoothstep(-.5,.6,crater)*.4;
+    `)
+  }
+  moonMaterial.customProgramCacheKey=()=> 'crater-moon'
+  moon.position.set(7.4,-1.8,-8.4);group.add(moon)
+  const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.045,1),new THREE.MeshStandardMaterial({color:0x7d7366,roughness:1}),mobile?16:32)
+  const rockTransform=new THREE.Object3D()
+  for(let i=0;i<rocks.count;i++) {
+    const angle=(i/rocks.count+random()*.012)*Math.PI*2, radius=4+random()*3.2
+    rockTransform.position.set(Math.cos(angle)*radius,-2.8+Math.sin(angle)*1.2+(random()-.5)*1.4,-17+Math.sin(angle)*4+(random()-.5)*4)
+    rockTransform.scale.set(.4+random()*1.2,.3+random()*.9,.5+random()*1.1);rockTransform.rotation.set(random()*3,random()*3,0);rockTransform.updateMatrix();rocks.setMatrixAt(i,rockTransform.matrix)
+  }
+  group.add(rocks)
+  const satellite = new THREE.Group()
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc4cad3, metalness: 0.82, roughness: 0.28 })
+  const panelMat = new THREE.MeshStandardMaterial({ color: 0x12315c, metalness: 0.35, roughness: 0.22, emissive: 0x061428, emissiveIntensity: 0.35 })
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.3, 0.42), bodyMat)
+  const dish = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), bodyMat)
+  dish.rotation.x = Math.PI / 2
+  dish.position.z = 0.28
+  const left = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.03, 0.38), panelMat)
+  const right = left.clone()
+  left.position.x = -0.86
+  right.position.x = 0.86
+  const cellFrame = new THREE.MeshStandardMaterial({ color: 0x708894, metalness: 0.7, roughness: 0.38 })
+  for (const side of [-1, 1]) {
+    for (let cell = 0; cell < 7; cell++) {
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.006, 0.004, 0.38), cellFrame)
+      seam.position.set(side * 0.86 - 0.51 + cell * 0.17, 0.018, 0)
+      satellite.add(seam)
+    }
+    const support = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.025, 0.025), cellFrame)
+    support.position.x = side * 0.35
+    satellite.add(support)
+  }
+  const foil = new THREE.MeshStandardMaterial({color:0xa89156,metalness:0.72,roughness:0.48})
+  const radiator = new THREE.Mesh(new THREE.BoxGeometry(0.25,0.23,0.025),foil)
+  radiator.position.set(0,0,-0.22); satellite.add(radiator)
+  for(let i=0;i<6;i++) {
+    const fin=new THREE.Mesh(new THREE.BoxGeometry(0.006,0.19,0.045),bodyMat)
+    fin.position.set(-0.1+i*0.04,0,-0.24);satellite.add(fin)
+  }
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.004,0.006,0.43,8),bodyMat)
+  antenna.position.set(0.13,0.32,0.08);antenna.rotation.z=-0.2;satellite.add(antenna)
+  const sensor = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.08,12),panelMat)
+  sensor.rotation.x=Math.PI/2;sensor.position.set(-0.12,0.08,0.24);satellite.add(sensor)
+  const dishFeed = new THREE.Mesh(new THREE.CylinderGeometry(0.007,0.007,0.14,6),bodyMat)
+  dishFeed.rotation.x=Math.PI/2;dishFeed.position.set(0,0,0.35);satellite.add(dishFeed)
+  for(const side of [-1,1]) for(let row=0;row<3;row++) {
+    const bus=new THREE.Mesh(new THREE.BoxGeometry(1.04,0.003,0.004),cellFrame)
+    bus.position.set(side*0.86,0.019,-0.13+row*0.13);satellite.add(bus)
+  }
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.014,8,8),new THREE.MeshStandardMaterial({color:0xdd8148,emissive:0xff6a2b,emissiveIntensity:1.6}))
+  beacon.position.set(0.16,0.16,0.16);satellite.add(beacon)
+  satellite.add(body, dish, left, right)
+  satellite.scale.setScalar(mobile ? 0.62 : 0.78)
+  group.add(satellite)
+
+  const ufo = new THREE.Group()
+  const hull = new THREE.Mesh(
+    new THREE.SphereGeometry(0.22, 24, 16),
+    new THREE.MeshStandardMaterial({ color: 0x9aa6b4, metalness: 0.88, roughness: 0.18 })
+  )
+  hull.scale.set(1.8, 0.36, 1.8)
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.34, 0.03, 8, 24),
+    new THREE.MeshStandardMaterial({ color: 0x6a747e, metalness: 0.9, roughness: 0.2 })
+  )
+  rim.rotation.x = Math.PI / 2
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+    new THREE.MeshPhysicalMaterial({ color: 0x7fe7e2, roughness: 0.12, metalness: 0.1, transparent: true, opacity: 0.7, emissive: 0x1c4d52, emissiveIntensity: 0.55 })
+  )
+  dome.position.y = 0.06
+  const lights: THREE.Mesh[] = []
+  for (let i = 0; i < 8; i++) {
+    const lamp = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 8, 8),
+      new THREE.MeshStandardMaterial({ color: 0xffc878, emissive: 0xff9a40, emissiveIntensity: 1.4 })
+    )
+    const a = (i / 8) * Math.PI * 2
+    lamp.position.set(Math.cos(a) * 0.34, -0.02, Math.sin(a) * 0.34)
+    ufo.add(lamp)
+    lights.push(lamp)
+  }
+  const insetMaterial=new THREE.MeshStandardMaterial({color:0x34414c,metalness:0.78,roughness:0.33})
+  for(let i=0;i<16;i++) {
+    const a=i/16*Math.PI*2
+    const vent=new THREE.Mesh(new THREE.BoxGeometry(0.043,0.008,0.011),insetMaterial)
+    vent.position.set(Math.cos(a)*0.255,0.061,Math.sin(a)*0.255);vent.rotation.y=-a;ufo.add(vent)
+    const rivet=new THREE.Mesh(new THREE.SphereGeometry(0.005,6,6),bodyMat)
+    rivet.position.set(Math.cos(a)*0.32,0.028,Math.sin(a)*0.32);ufo.add(rivet)
+  }
+  const engine = new THREE.Mesh(new THREE.TorusGeometry(0.19,0.017,10,40),new THREE.MeshStandardMaterial({color:0x82c6cb,emissive:0x519baf,emissiveIntensity:1.3,metalness:0.3,roughness:0.3}))
+  engine.rotation.x=Math.PI/2;engine.position.y=-0.072;ufo.add(engine)
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.065,0.065),insetMaterial)
+  seat.position.set(0,0.083,0);ufo.add(seat)
+  const console = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.012,0.035),panelMat)
+  console.position.set(0,0.095,0.063);console.rotation.x=0.35;ufo.add(console)
+  ufo.add(hull, rim, dome)
+  ufo.scale.setScalar(mobile ? 0.8 : 1.1)
+  group.add(ufo)
+
+  const streakMat = new THREE.ShaderMaterial({
+    uniforms:{uOpacity:{value:0}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+    fragmentShader:`uniform float uOpacity;varying vec2 vUv;void main(){float width=.045+.18*(1.-vUv.x);float core=exp(-pow((vUv.y-.5)/width,2.));float tail=pow(vUv.x,1.5)*smoothstep(0.,.12,vUv.x);vec3 c=mix(vec3(.3,.5,.9),vec3(1.9,1.65,1.15),pow(vUv.x,5.));gl_FragColor=vec4(c,core*tail*uOpacity);}`
+  })
+  const streak = new THREE.Group()
+  const trail = new THREE.Mesh(new THREE.PlaneGeometry(3.8,0.22),streakMat)
+  trail.position.x=-1.9;streak.add(trail)
+  const meteorGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:dustTex,color:0xe4ecff,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}))
+  meteorGlow.scale.set(0.24,0.24,1);streak.add(meteorGlow)
+  const meteorCore=new THREE.Mesh(new THREE.SphereGeometry(0.022,12,8),new THREE.MeshBasicMaterial({color:0xfff1d0,transparent:true,opacity:0}))
+  streak.add(meteorCore)
+  const fragments=Array.from({length:9},(_,i)=>{
+    const spark=new THREE.Sprite(new THREE.SpriteMaterial({map:dustTex,color:i%2 ? 0xf3c68d:0xa3c9fa,transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending}))
+    spark.scale.setScalar(0.04+(i%3)*0.018);streak.add(spark);return spark
+  })
+  streak.visible = false
+  group.add(streak)
+  satellite.position.set(5.2,1.4,-1.8)
+  satellite.rotation.set(0.35,0.4,0.1)
+  ufo.position.set(2.2,2.6,-4.8)
+
+  const key = new THREE.DirectionalLight(0xffe7c4, 2.4)
+  key.position.copy(sun.position)
+  group.add(key)
+  group.add(new THREE.AmbientLight(0x6b7a99, 0.28))
+
+  const setOpacity = (value: number) => {
+    group.visible = value > 0.02
+    starMat.uniforms.uOpacity!.value = value * 0.95
+    coronaMat.opacity = value * 0.09
+    milkyWay.children.forEach((child, i) => {
+      const material = (child as THREE.Sprite).material
+      material.opacity = value * (0.03 + (i % 3) * 0.012)
+    })
+    sun.visible = value > 0.18
+    earth.mesh.visible = value > 0.18
+    earth.atmo.visible = value > 0.18
+    giant.mesh.visible = value > 0.22
+    giant.atmo.visible = value > 0.22
+    ice.mesh.visible = value > 0.22
+    ice.atmo.visible = value > 0.22
+    satellite.visible = value > 0.2
+    ufo.visible = value > 0.18
+    streak.visible = value > 0.2 && streakMat.opacity > 0.02
+  }
+
+  const update = (time: number, progress: number, reduced: boolean) => {
+    moon.rotation.y=time*.025
+    rocks.rotation.y=Math.sin(time*.008)*.08
+    sunMat.uniforms.uTime!.value = time
+    earth.mat.uniforms.uTime!.value = time
+    giant.mat.uniforms.uTime!.value = time * 0.7
+    ice.mat.uniforms.uTime!.value = time * 0.5
+    corona.scale.setScalar(3.3 + Math.sin(time * 0.25) * 0.06)
+    if (reduced) return
+    earth.mesh.rotation.set(0.08, time * 0.026, 0.23)
+    earth.atmo.rotation.copy(earth.mesh.rotation)
+    giant.mesh.quaternion.copy(giantTilt).multiply(giantSpin.setFromAxisAngle(spinAxis,-time*.014))
+    ice.mesh.rotation.set(0.12, time * 0.04, 0.32)
+    satellite.position.set(4.4 + Math.sin(time*0.065)*1.2, 1.45 + Math.sin(time*0.11)*0.3, -2.2 + Math.cos(time*0.065)*0.6)
+    satellite.rotation.set(0.3+Math.sin(time*0.09)*0.12, 0.35+Math.sin(time*0.07)*0.38, 0.12+Math.sin(time*0.1)*0.14)
+    ;(beacon.material as THREE.MeshStandardMaterial).emissiveIntensity=0.5+Math.pow(Math.max(0,Math.sin(time*2.1)),18)*2.5
+    ufo.position.set(Math.sin(time * 0.14) * 5.5, 2.45 + Math.sin(time * 0.28) * 0.27, -4.8+Math.cos(time*0.14)*1.2)
+    ufo.rotation.z = -Math.cos(time*0.14)*0.12
+    ufo.rotation.x = Math.sin(time*0.28)*0.055
+    ufo.rotation.y = time * 0.08
+    lights.forEach((lamp, i) => {
+      const mat = lamp.material as THREE.MeshStandardMaterial
+      mat.emissiveIntensity = 0.55 + Math.pow(Math.max(0, Math.sin(time * 4 + i)), 4) * 1.1
+    })
+    const burst = time % 10.5
+    if (burst > 0.5 && burst < 2.5) {
+      const t = (burst-0.5)/2
+      const fade = Math.min(1,t*8)*Math.min(1,(1-t)*6)
+      streak.visible=true
+      streak.position.set(-12+t*26,4.6-t*5.2-t*t*0.4,-10+t*0.8)
+      streak.rotation.z=Math.atan2(-5.2-t*0.8,26)
+      streakMat.opacity=fade;streakMat.uniforms.uOpacity!.value=fade*0.9
+      meteorGlow.material.opacity=fade;meteorCore.material.opacity=fade
+      fragments.forEach((spark,i)=>{
+        const lag=(i+1)*0.13
+        spark.position.set(-lag*2.2,-Math.sin(i*2.3+t*8)*lag*0.08,0)
+        spark.material.opacity=fade*(1-i/10)*0.65
+      })
+    } else {
+      streak.visible=false;streakMat.opacity=0;streakMat.uniforms.uOpacity!.value=0
+    }
+    stars.rotation.z = Math.sin(time * 0.02) * 0.01
+  }
+
+  return { group, update, setOpacity }
+}

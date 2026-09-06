@@ -1,0 +1,13 @@
+{
+  "title": "Frontend Performance Problems Usually Aren't Where You Think",
+  "description": "Follow the wait from the user’s action to the useful result before deciding which code deserves an optimization.",
+  "date": "2024-10-17",
+  "tags": [
+    "performance",
+    "frontend",
+    "web",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

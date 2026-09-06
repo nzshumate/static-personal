@@ -1,0 +1,13 @@
+{
+  "title": "Frontend Architecture Is Mostly About Boundaries",
+  "description": "A folder diagram tells you where the files are. Follow one product change to find out how the application is organized.",
+  "date": "2021-11-09",
+  "tags": [
+    "architecture",
+    "frontend",
+    "teams",
+    "maintainability"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

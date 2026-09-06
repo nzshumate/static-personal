@@ -1,0 +1,13 @@
+{
+  "title": "Pinia Is What I Wanted Vuex to Be",
+  "description": "I defended explicit mutations. Pinia makes me separate the useful discipline from the machinery I had attached to it.",
+  "date": "2022-03-17",
+  "tags": [
+    "vue",
+    "pinia",
+    "vuex",
+    "state-management"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

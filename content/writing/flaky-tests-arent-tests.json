@@ -1,0 +1,13 @@
+{
+  "title": "Flaky Tests Aren't Tests",
+  "description": "An intermittent failure is evidence to investigate. It cannot quietly become a passing release signal because a rerun worked.",
+  "date": "2026-07-16",
+  "tags": [
+    "testing",
+    "playwright",
+    "ci",
+    "quality"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}
