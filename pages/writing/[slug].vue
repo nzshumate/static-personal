@@ -11,6 +11,6 @@ useSeoMeta({ ogType: 'article', articlePublishedTime: article.date, articleAutho
 </script>
 <template>
   <EditorialPage>
-    <article class="article-page"><NuxtLink class="text-link article-back" to="/writing">← All writing</NuxtLink><header><p class="eyebrow"><time :datetime="article.date">{{ formatArticleDate(article.date) }}</time><span> · {{ article.readingMinutes }} min read</span></p><h1>{{ article.title }}</h1><p class="page-intro">{{ article.description }}</p><p class="article-byline">By Nathan Shumate</p></header><div class="article-prose" v-html="body" /><NuxtLink to="/writing" class="text-link">Back to the notebook →</NuxtLink></article>
+    <article class="article-page"><NuxtLink class="text-link article-back" to="/writing">← All writing</NuxtLink><header><p class="eyebrow"><time :datetime="article.date">{{ formatArticleDate(article.date) }}</time><span> · {{ article.readingMinutes }} min read</span></p><h1>{{ article.title }}</h1><p class="page-intro">{{ article.description }}</p><p class="article-byline">By Nathan Shumate</p><div class="article-tags" aria-label="Article tags"><NuxtLink v-for="tag in article.tags" :key="tag" :to="{ path: '/writing', query: { tag } }" class="article-tag">{{ tag }}</NuxtLink></div></header><div class="article-prose" v-html="body" /><NuxtLink to="/writing" class="text-link">Back to the notebook →</NuxtLink></article>
   </EditorialPage>
 </template>

@@ -9,6 +9,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "check:site": "node scripts/check-site.mjs",
+    "check:world": "jiti scripts/check-world.ts",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {

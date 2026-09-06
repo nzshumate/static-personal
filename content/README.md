@@ -2,7 +2,7 @@
 
 Create a matched pair in `content/writing/`:
 
-- `your-article-slug.md`: Markdown body (start with an H2; the template supplies the H1).
+- `your-article-slug.md`: Markdown body (start with prose or an H2; the template supplies the H1).
 - `your-article-slug.json`: metadata, using the example below.
 
 ```json
@@ -20,4 +20,8 @@ Headings, fenced code blocks, links, images, lists, and blockquotes are supporte
 
 `/writing` lists published files automatically. Nuxt's static crawler follows those links to prerender `/writing/your-article-slug`. No database, CMS, or server is required. Run `pnpm generate` and check the output before deployment.
 
-No sample articles are published with this implementation.
+The site includes 29 revised archive essays. `date` is displayed as the publication date and used for article publication metadata. `tags` is an array of strings displayed on both index and article pages. The internal `writtenOn` field is retained as editorial provenance and is not displayed.
+
+The writing index shows five articles per page, with full-text search and tag filtering. Search, tag and page are reflected in URL query parameters. The static build explicitly includes every published article regardless of pagination.
+
+Historical checks and editorial provenance are retained in `docs/writing-archive/manifest.json`.

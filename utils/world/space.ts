@@ -153,7 +153,12 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   const sunMat = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 } },
     vertexShader: sunVertex,
-    fragmentShader: sunFragment
+    fragmentShader: sunFragment.replace('color * 3.5', 'color * 0.85').replace('vec3(1.0, 0.93, 0.62)', 'vec3(1.0, 0.65, 0.25)').replace('color += (gran - 0.5) * 0.08 * limb;', `
+      float cells=sin(vNormal.x*64.0+sin(vNormal.y*41.0))*sin(vNormal.y*53.0+uTime*.04);
+      float spots=smoothstep(.94,.99,sin(vNormal.x*12.0+1.4)*sin(vNormal.y*17.0-.7));
+      color *= .78+gran*.18+cells*.06;
+      color *= 1.0-spots*.6;
+    `)
   })
   const sun = new THREE.Mesh(sunGeo, sunMat)
   sun.position.set(-6.2, 2.15, -6)
@@ -187,27 +192,80 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   const giant = addPlanet(group, {
     radius: mobile ? 0.58 : 0.72,
     position: new THREE.Vector3(-3.4, -1.9, -18),
-    deep: 0x2a120c,
-    mid: 0x8a3a22,
-    high: 0xffb07a,
+    deep: 0x5b554b,
+    mid: 0xa99b80,
+    high: 0xe4d6b8,
     bands: 9,
     clouds: 0.1,
     seed: 5.8,
-    atmosphere: 0xff7a55
+    atmosphere: 0xc4b798
   })
 
   const ice = addPlanet(group, {
     radius: 0.38,
     position: new THREE.Vector3(6.6, 2.4, -13),
-    deep: 0x1a2438,
-    mid: 0x6b7c93,
-    high: 0xd5e2ef,
+    deep: 0x263e50,
+    mid: 0x628b9b,
+    high: 0xb5d2d7,
     bands: 7,
     clouds: 0.05,
     seed: 3.1,
     atmosphere: 0xa8c4e0
   })
 
+  // Fine dusty rings and a cratered moon enrich the distant planetary system.
+  const rings=new THREE.Group();rings.position.copy(giant.mesh.position);rings.quaternion.setFromEuler(new THREE.Euler(.48,0,-.28));rings.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),Math.PI/2));rings.scale.setScalar(mobile ? .58/.72 : 1)
+  const giantTilt=new THREE.Quaternion().setFromEuler(new THREE.Euler(.48,0,-.28)), giantSpin=new THREE.Quaternion(), spinAxis=new THREE.Vector3(0,1,0)
+  const ringMaterial=new THREE.MeshStandardMaterial({color:0xcab796,roughness:.94,transparent:true,opacity:.86,side:THREE.DoubleSide,depthWrite:false})
+  ringMaterial.onBeforeCompile=shader=>{
+    shader.uniforms.uRingCenter={value:giant.mesh.position.clone()}
+    shader.uniforms.uRingLight={value:SUN_LIGHT.clone()}
+    shader.uniforms.uRingPlanetRadius={value:mobile?.58:.72}
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\n varying vec3 vRingLocal; varying vec3 vRingWorld;').replace('#include <begin_vertex>','#include <begin_vertex>\n vRingLocal=position; vRingWorld=(modelMatrix*vec4(position,1.0)).xyz;')
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>',`#include <common>
+      varying vec3 vRingLocal; varying vec3 vRingWorld;
+      uniform vec3 uRingCenter; uniform vec3 uRingLight; uniform float uRingPlanetRadius;`)
+      .replace('#include <color_fragment>',`#include <color_fragment>
+      float r=length(vRingLocal.xy);
+      float fine=.5+.5*sin(r*820.0+sin(r*217.0)*1.8);
+      float bands=.5+.5*sin(r*75.0+sin(r*31.0));
+      float gap=1.0-smoothstep(1.205,1.216,r)*(1.0-smoothstep(1.252,1.263,r));
+      float edge=smoothstep(.83,.89,r)*(1.0-smoothstep(1.49,1.59,r));
+      diffuseColor.a*=edge*gap*(.26+.38*bands+.36*fine);
+      diffuseColor.rgb*=mix(vec3(.55,.47,.38),vec3(1.05,1.02,.93),.35+bands*.4+fine*.25);
+      vec3 rel=vRingWorld-uRingCenter; float along=dot(rel,uRingLight);
+      float perpendicular=length(rel-uRingLight*along);
+      float shadow=(1.0-smoothstep(uRingPlanetRadius*.95,uRingPlanetRadius*1.05,perpendicular))*(1.0-step(0.0,along));
+      diffuseColor.rgb*=1.0-shadow*.89;`)
+  }
+  ringMaterial.customProgramCacheKey=()=> 'resolved-planet-rings-v2'
+  rings.add(new THREE.Mesh(new THREE.RingGeometry(.83,1.59,256,2),ringMaterial))
+  group.add(rings)
+  const moonGeo=new THREE.SphereGeometry(.27,40,32),moonPos=moonGeo.getAttribute('position')
+  for(let i=0;i<moonPos.count;i++) {
+    const x=moonPos.getX(i),y=moonPos.getY(i),z=moonPos.getZ(i),bump=1+(Math.sin(x*91+y*38)*Math.sin(z*85-x*17))*.023
+    moonPos.setXYZ(i,x*bump,y*bump,z*bump)
+  }
+  moonGeo.computeVertexNormals()
+  const moon=new THREE.Mesh(moonGeo,new THREE.MeshStandardMaterial({color:0x827c73,roughness:1}))
+  const moonMaterial=moon.material
+  moonMaterial.onBeforeCompile=shader=>{
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\n varying vec3 vRock;').replace('#include <begin_vertex>','#include <begin_vertex>\n vRock=position;')
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n varying vec3 vRock;').replace('#include <color_fragment>',`#include <color_fragment>
+      float crater=sin(vRock.x*83.0)*sin(vRock.y*71.0)*sin(vRock.z*93.0);
+      diffuseColor.rgb*=.72+smoothstep(-.5,.6,crater)*.4;
+    `)
+  }
+  moonMaterial.customProgramCacheKey=()=> 'crater-moon'
+  moon.position.set(7.4,-1.8,-8.4);group.add(moon)
+  const rocks=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(.045,1),new THREE.MeshStandardMaterial({color:0x7d7366,roughness:1}),mobile?16:32)
+  const rockTransform=new THREE.Object3D()
+  for(let i=0;i<rocks.count;i++) {
+    const angle=(i/rocks.count+random()*.012)*Math.PI*2, radius=4+random()*3.2
+    rockTransform.position.set(Math.cos(angle)*radius,-2.8+Math.sin(angle)*1.2+(random()-.5)*1.4,-17+Math.sin(angle)*4+(random()-.5)*4)
+    rockTransform.scale.set(.4+random()*1.2,.3+random()*.9,.5+random()*1.1);rockTransform.rotation.set(random()*3,random()*3,0);rockTransform.updateMatrix();rocks.setMatrixAt(i,rockTransform.matrix)
+  }
+  group.add(rocks)
   const satellite = new THREE.Group()
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0xc4cad3, metalness: 0.82, roughness: 0.28 })
   const panelMat = new THREE.MeshStandardMaterial({ color: 0x12315c, metalness: 0.35, roughness: 0.22, emissive: 0x061428, emissiveIntensity: 0.35 })
@@ -328,7 +386,7 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   const setOpacity = (value: number) => {
     group.visible = value > 0.02
     starMat.uniforms.uOpacity!.value = value * 0.95
-    coronaMat.opacity = value * 0.28
+    coronaMat.opacity = value * 0.09
     milkyWay.children.forEach((child, i) => {
       const material = (child as THREE.Sprite).material
       material.opacity = value * (0.03 + (i % 3) * 0.012)
@@ -346,16 +404,18 @@ export const createSpace = (renderer: THREE.WebGLRenderer, mobile: boolean): Spa
   }
 
   const update = (time: number, progress: number, reduced: boolean) => {
+    moon.rotation.y=time*.025
+    rocks.rotation.y=Math.sin(time*.008)*.08
     sunMat.uniforms.uTime!.value = time
     earth.mat.uniforms.uTime!.value = time
     giant.mat.uniforms.uTime!.value = time * 0.7
     ice.mat.uniforms.uTime!.value = time * 0.5
-    corona.scale.setScalar(4.6 + Math.sin(time * 0.7) * 0.18)
+    corona.scale.setScalar(3.3 + Math.sin(time * 0.25) * 0.06)
     if (reduced) return
-    earth.mesh.rotation.y = time * 0.026
+    earth.mesh.rotation.set(0.08, time * 0.026, 0.23)
     earth.atmo.rotation.copy(earth.mesh.rotation)
-    giant.mesh.rotation.y = -time * 0.014
-    ice.mesh.rotation.y = time * 0.04
+    giant.mesh.quaternion.copy(giantTilt).multiply(giantSpin.setFromAxisAngle(spinAxis,-time*.014))
+    ice.mesh.rotation.set(0.12, time * 0.04, 0.32)
     satellite.position.set(4.4 + Math.sin(time*0.065)*1.2, 1.45 + Math.sin(time*0.11)*0.3, -2.2 + Math.cos(time*0.065)*0.6)
     satellite.rotation.set(0.3+Math.sin(time*0.09)*0.12, 0.35+Math.sin(time*0.07)*0.38, 0.12+Math.sin(time*0.1)*0.14)
     ;(beacon.material as THREE.MeshStandardMaterial).emissiveIntensity=0.5+Math.pow(Math.max(0,Math.sin(time*2.1)),18)*2.5

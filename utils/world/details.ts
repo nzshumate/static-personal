@@ -1,6 +1,7 @@
 export { makeSkier, makeBear, makeFox, makeFrog, makeSnake } from './actors'
 import * as THREE from 'three'
 import { textured } from './surfaces'
+import { batchStaticGroup } from './batching'
 
 export const metal = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
   new THREE.MeshStandardMaterial({ color, metalness: 0.78, roughness: 0.28, fog: false, ...extra })
@@ -105,7 +106,7 @@ export const makeCloud = (random: () => number) => {
 export const makeCabin = () => {
   const group = new THREE.Group()
   const wall = textured(0x715037, 'wood')
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.98, 0.56, 0.72), wall)
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.91, 0.56, 0.64), wall)
   body.position.y = 0.28
   const sill = new THREE.Mesh(new THREE.BoxGeometry(1.06, 0.06, 0.8), matte(0x3a2416))
   sill.position.y = 0.03
@@ -142,25 +143,66 @@ export const makeCabin = () => {
   frame.position.set(-0.22, 0.3, 0.355)
   const porch = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.04, 0.22), matte(0x4a301c))
   porch.position.set(0.2, 0.04, 0.48)
-  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.46, 0.16), matte(0x4a4038))
-  chimney.position.set(-0.28, 0.92, -0.1)
+  const chimney = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.28, 0.16), matte(0x4a4038))
+  chimney.position.set(-0.28, 0.84, -0.1)
   const cap = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.05, 0.22), matte(0x2a241c))
-  cap.position.set(-0.28, 1.16, -0.1)
+  cap.position.set(-0.28, 0.99, -0.1)
   const ember = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.04, 8), emit(0xff5520, 2.1))
-  ember.position.set(-0.28, 1.12, -0.1)
+  ember.position.set(-0.28, 0.98, -0.1)
   group.add(body, sill, roof, eaves, door, knob, frame, window, porch, chimney, cap, ember)
-  // Individual siding courses, corner boards, mullions and roof seams hold up close.
+  // Interlocked rounded logs, with front openings cut around the door and window.
   const timber = textured(0x835b38, 'wood')
   const trim = matte(0xb69a70)
-  for (let i = 0; i < 8; i++) {
-    const course = new THREE.Mesh(new THREE.BoxGeometry(0.99, 0.012, 0.008), timber)
-    course.position.set(0, 0.08 + i * 0.061, 0.365)
+  const endGrain = matte(0xa08056)
+  const log = (length: number, x: number, y: number, z: number, across: boolean) => {
+    const course = new THREE.Mesh(new THREE.CylinderGeometry(0.041, 0.045, length, 12), timber)
+    course.rotation.z = Math.PI / 2
+    if (!across) course.rotation.y = Math.PI / 2
+    course.position.set(x,y,z)
     group.add(course)
+    for (const side of [-1,1]) {
+      const end = new THREE.Mesh(new THREE.CircleGeometry(0.037, 12), endGrain)
+      end.position.set(x + (across ? side*length/2 : 0), y, z + (across ? 0 : side*length/2))
+      end.rotation.y = across ? side*Math.PI/2 : (side<0 ? Math.PI : 0)
+      group.add(end)
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.021,0.024,12), timber)
+      ring.position.copy(end.position)
+      if(across)ring.position.x+=side*.001;else ring.position.z+=side*.001
+      ring.rotation.copy(end.rotation);group.add(ring)
+    }
   }
-  for (const x of [-0.47, 0.47]) {
-    const corner = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.54, 0.045), trim)
-    corner.position.set(x, 0.28, 0.375)
-    group.add(corner)
+  for (let i=0;i<8;i++) {
+    const y=.055+i*.071
+    log(1.07+(i%2)*.025,0,y,-.34,true)
+    for(const x of [-.47,.47])log(.83+(i%2)*.025,x,y+.018,0,false)
+    const intervals: [number,number][] = y < .34 ? [[-.53,.105],[.295,.53]] : [[-.53,.53]]
+    for(const [left,right] of intervals) {
+      if(y>.19 && y<.41 && left<-.1) {
+        if(left<-.34)log(-.34-left,(left-.34)/2,y,.34,true)
+        if(right>-.1)log(right+.1,(right-.1)/2,y,.34,true)
+      } else log(right-left,(left+right)/2,y,.34,true)
+    }
+  }
+  // Uneven snow pillows soften the roof edge and expose the dark timber beneath.
+  for(let i=0;i<12;i++)for(const side of [-1,1]) {
+    const snowLip=new THREE.Mesh(new THREE.SphereGeometry(1,10,6),snow)
+    snowLip.position.set(side*.565,.575,-.39+i*.072)
+    snowLip.scale.set(.06,.018+(i%3)*.005,.052)
+    group.add(snowLip)
+    if(i%3===0) {
+      const icicle=new THREE.Mesh(new THREE.ConeGeometry(.009,.055+(i%4)*.018,6),matte(0xcce2e9,{transparent:true,opacity:.75,roughness:.2}))
+      icicle.rotation.z=Math.PI;icicle.position.copy(snowLip.position).y-=.038;group.add(icicle)
+    }
+  }
+  for(let i=0;i<6;i++) {
+    const stone=new THREE.Mesh(new THREE.IcosahedronGeometry(.095,1),textured(0x777773,'stone'))
+    stone.scale.set(1,.42,.7);stone.position.set(-.45+i*.18,.01,.34);group.add(stone)
+    const mortar=new THREE.Mesh(new THREE.BoxGeometry(.165,.008,.165),matte(0x82786a))
+    mortar.position.set(-.28,.75+i*.04,-.1);group.add(mortar)
+  }
+  for(const x of [-.37,-.075]) {
+    const shutter=new THREE.Mesh(new THREE.BoxGeometry(.045,.18,.025),timber)
+    shutter.position.set(x,.3,.389);shutter.rotation.y=x<-.2?-.15:.15;group.add(shutter)
   }
   for (const horizontal of [true, false]) {
     const mullion = new THREE.Mesh(new THREE.BoxGeometry(horizontal ? 0.21 : 0.014, horizontal ? 0.014 : 0.17, 0.015), trim)
@@ -176,7 +218,7 @@ export const makeCabin = () => {
     group.add(tread)
   }
   group.userData = { window, chimney, ember }
-  return group
+  return batchStaticGroup(group)
 }
 
 // Classic envelope: wide shoulder, tapered crown, cinched mouth, burner, and a slatted basket on four lines.
@@ -317,17 +359,18 @@ export const makeFirefly = (): Tickable => {
   tail.rotation.z = Math.PI / 2
   tail.position.x = -0.18
   tail.scale.set(1, 1.6, 1)
+  tail.visible = false
   group.add(core, halo, tail)
   group.userData = { core, halo, tail, phase: Math.random() * Math.PI * 2, speed: 0.35 + Math.random() * 0.45 }
   return {
     group,
     update: (time) => {
-      const flash = Math.pow(Math.max(0, Math.sin(time * 7.5 + group.userData.phase)), 10)
+      const flash = Math.pow(Math.max(0, Math.sin(time * 1.8 + group.userData.phase)), 10)
       const glow = 0.12 + flash * 0.88
       ;(halo.material as THREE.MeshBasicMaterial).opacity = 0.08 + flash * 0.45
       ;(tail.material as THREE.MeshBasicMaterial).opacity = 0.06 + flash * 0.55
       ;(core.material as THREE.MeshStandardMaterial).emissiveIntensity = 0.25 + flash * 1.8
-      group.scale.setScalar(0.85 + glow * 0.25)
+      group.scale.setScalar(0.23 + glow * 0.07)
     }
   }
 }
@@ -565,10 +608,11 @@ export const makePalm = (random: () => number) => {
   const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.13, h, 8), wood)
   shaft.position.y = h / 2
   trunk.add(shaft)
-  for (let i = 0; i < 6; i++) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.075 + i * 0.006, 0.014, 5, 8), matte(0x7a4a28))
+  const growthScar = matte(0x7a4a28)
+  for (let i = 0; i < 17; i++) {
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.126 - i * 0.0034, 0.008, 5, 12), growthScar)
     ring.rotation.x = Math.PI / 2
-    ring.position.y = 0.28 + i * 0.34
+    ring.position.y = 0.13 + i * 0.13
     trunk.add(ring)
   }
   const crown = new THREE.Group()
@@ -604,7 +648,7 @@ export const makePalm = (random: () => number) => {
   trunk.add(crown)
   trunk.rotation.z = lean
   group.add(trunk)
-  return group
+  return batchStaticGroup(group)
 }
 
 export const makeLighthouse = () => {

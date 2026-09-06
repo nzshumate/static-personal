@@ -9,6 +9,15 @@ const atlas = ref<HTMLDialogElement | null>(null)
 const atlasOpen = ref(false)
 const chapterColors = ['#a5b9e7', '#b6d9ee', '#d3e3e8', '#a5cf9d', '#e7b581', '#b5cf8f', '#9fdfd6', '#8ed0e1']
 const chapterNotes = ['A little distance changes everything.', 'Room to see what comes next.', 'Built to weather the unknown.', 'Great things grow together.', 'New terrain. New possibilities.', 'Find a path through the tangled parts.', 'Leave room for curiosity.', 'There is always more to discover.']
+const fieldNotes = [
+  'A little distance is useful. Eventually, you still have to land and build something.',
+  'Before opening the editor: what gets easier for the person using this?',
+  'A good boundary lets one part change without asking the whole system for permission.',
+  'Be clear about the destination. Stay curious about how people get there.',
+  'The useful AI experiment ends with a better workflow, not just an impressive demo.',
+  'When a system gets tangled, follow one real request all the way through it.',
+  'Leave a little room for the idea that has no business case yet.'
+]
 const goToChapter = (index: number) => {
   const chapter = chapters[Math.max(0, Math.min(chapters.length - 1, index))]!
   document.getElementById(chapter.id)?.scrollIntoView({ behavior: 'instant' })
@@ -55,8 +64,8 @@ const chapters = [
     id: 'forest',
     biome: 'Forest',
     kicker: 'Leadership',
-    title: 'Hire smart people.\nGive them context.\nGet out of the way.',
-    copy: 'Leadership should create clarity and remove obstacles, not turn senior engineers into ticket-taking machines.'
+    title: 'Make the direction clear.\nMake the hard calls.\nHelp others do their best work.',
+    copy: 'Leadership means creating clarity, earning trust, and taking responsibility when things get difficult. Give people room to own the work, and support them when it matters.'
   },
   {
     id: 'desert',
@@ -148,14 +157,29 @@ onBeforeUnmount(() => {
           </template>
         </h2>
         <p class="journey-body">{{ chapter.copy }}</p>
+        <details v-if="index < fieldNotes.length" class="journey-field-note">
+          <summary><span aria-hidden="true">↳</span> A thought to take with you</summary>
+          <p>{{ fieldNotes[index] }}</p>
+        </details>
         <NuxtLink v-if="index === 0" to="/work" class="home-work-link">View my work <span aria-hidden="true">→</span></NuxtLink>
-        <a
-          v-if="index === chapters.length - 1"
-          class="journey-cta"
-          href="https://github.com/nzshumate"
-          target="_blank"
-          rel="noreferrer"
-        >GitHub <span>↗</span></a>
+        <div v-if="index === chapters.length - 1" class="journey-contact-actions">
+          <NuxtLink class="journey-cta" to="/contact">Let’s talk <span aria-hidden="true">↗</span></NuxtLink>
+          <a href="https://www.linkedin.com/in/nathan-shumate-996472116" target="_blank" rel="noreferrer">Connect on LinkedIn <span aria-hidden="true">↗</span></a>
+        </div>
+        <div v-if="index === chapters.length - 1" class="journey-family-credit">
+          <p>Designed with help from my children, whose ideas helped bring these worlds to life.</p>
+          <details class="journey-field-note family-field-notes">
+            <summary><span aria-hidden="true">✧</span> Meet the imagination department</summary>
+            <p>Some of the best ideas for this world came from my children.</p>
+            <ul>
+              <li>Charleigh wanted a mermaid. You’ll find her in the deep.</li>
+              <li>Andrew brought the turtle and shark to the ocean.</li>
+              <li>Kieran imagined the forest in autumn.</li>
+              <li>The snowman? A unanimous request.</li>
+            </ul>
+            <p class="field-note-signoff">Built by Dad. Made more interesting by Charleigh, Andrew, and Kieran.</p>
+          </details>
+        </div>
       </div>
       <a v-if="index === 0" class="scroll-cue" href="#sky" :inert="cinema"><span>Eight worlds. One curious mind.</span><i>↓</i></a>
       <SiteFooter v-if="index === chapters.length - 1" cinematic />
@@ -187,7 +211,7 @@ onBeforeUnmount(() => {
 
     <dialog ref="atlas" class="world-atlas" aria-labelledby="atlas-title" @close="atlasOpen = false" @click="($event.target === atlas) && atlas?.close()">
       <div class="atlas-panel">
-        <div class="atlas-heading"><div><p class="scene-kicker">Choose your perspective</p><h2 id="atlas-title">A world of possibilities.</h2></div><button class="atlas-close" aria-label="Close worlds" @click="atlas?.close()">×</button></div>
+        <div class="atlas-heading"><div><p class="scene-kicker">Choose your perspective</p><h2 id="atlas-title">A world of possibilities.</h2></div><button class="atlas-close" aria-label="Close worlds" @click="atlas?.close()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div>
         <div class="atlas-grid">
           <button v-for="(chapter, index) in chapters" :key="chapter.id" :class="['atlas-card', 'atlas-' + chapter.id, { selected: activeChapter === index }]" :style="{ '--card-accent': chapterColors[index] }" :aria-label="`Visit ${chapter.biome}`" @click="goToChapter(index)">
             <div class="atlas-landscape" aria-hidden="true"><i /><i /><i /></div>

@@ -5,6 +5,13 @@ const props = defineProps<{ paused: boolean; exploring: boolean }>()
 const emit = defineEmits<{ ready: []; unavailable: [] }>()
 let world: WorldHandle | null = null
 let disposed = false
+let canvasElement: HTMLCanvasElement | null = null
+const onContextLost = (event: Event) => {
+  event.preventDefault()
+  world?.dispose()
+  world = null
+  emit('unavailable')
+}
 watch(() => props.paused, value => world?.setPaused(value))
 watch(() => props.exploring, value => world?.setExploring(value))
 
@@ -12,6 +19,8 @@ onMounted(async () => {
   await nextTick()
   const canvas = document.getElementById('world-canvas') as HTMLCanvasElement | null
   if (!canvas) return
+  canvasElement = canvas
+  canvas.addEventListener('webglcontextlost', onContextLost)
   try {
     const handle = await createWorld(canvas)
     if (disposed) { handle.dispose(); return }
@@ -27,6 +36,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   disposed = true
+  canvasElement?.removeEventListener('webglcontextlost', onContextLost)
   world?.dispose()
   world = null
 })

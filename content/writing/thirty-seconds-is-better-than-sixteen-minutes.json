@@ -1,0 +1,13 @@
+{
+  "title": "Thirty Seconds Is Better Than Sixteen Minutes",
+  "description": "The difference in pipeline run time matters because it changes when feedback reaches the person who can act on it.",
+  "date": "2026-06-18",
+  "tags": [
+    "playwright",
+    "cypress",
+    "ci",
+    "developer-experience"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

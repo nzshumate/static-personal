@@ -1,0 +1,13 @@
+{
+  "title": "Stop Testing Implementation Details",
+  "description": "A test that breaks when the behavior stays the same is charging rent without doing much security work.",
+  "date": "2024-02-22",
+  "tags": [
+    "testing",
+    "frontend",
+    "quality",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

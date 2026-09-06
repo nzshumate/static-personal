@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { textured } from './surfaces'
+import { batchStaticGroup } from './batching'
 
 const matte = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...extra })
 const sphere = (parent: THREE.Object3D, material: THREE.Material, at: number[], size: number[]) => {
@@ -190,13 +191,15 @@ export const makeFrog = () => {
 
 export const makeMushroom = (random:()=>number) => {
   const group=new THREE.Group()
-  const h=0.16+random()*0.1, r=0.12+random()*0.07
+  const h=0.14+random()*0.12, r=0.09+random()*0.07
   const stem=new THREE.Mesh(new THREE.CylinderGeometry(0.023,0.035,h,12),textured(0xd1bea0,'wood')); stem.position.y=h/2; group.add(stem)
-  const cap=sphere(group,matte(random()>0.4?0xb95035:0xb38a51,{roughness:0.58}),[0,h,0],[r,r*0.43,r])
+  const cap=sphere(group,textured(random()>0.55?0x9c4b32:0x987650,'stone',{roughness:0.7}),[0,h,0],[r,r*0.43,r])
+  cap.rotation.z=(random()-.5)*.1
   const underside=new THREE.Mesh(new THREE.CircleGeometry(r*0.93,32),matte(0xcbbb9c,{side:THREE.DoubleSide})); underside.rotation.x=Math.PI/2; underside.position.y=h-0.015; group.add(underside)
+  const gillMaterial=matte(0x9b856b)
   for(let i=0;i<22;i++) {
     const a=i/22*Math.PI*2
-    const gill=segment(group,matte(0x9b856b),0.0015)
+    const gill=segment(group,gillMaterial,0.0015)
     connect(gill,new THREE.Vector3(Math.cos(a)*0.03,h-0.017,Math.sin(a)*0.03),new THREE.Vector3(Math.cos(a)*r*0.88,h-0.017,Math.sin(a)*r*0.88))
   }
   const fleck=matte(0xe4d5b4)
@@ -205,7 +208,7 @@ export const makeMushroom = (random:()=>number) => {
     sphere(group,fleck,[Math.cos(a)*d,h+Math.sqrt(1-d*d/(r*r))*r*0.43,Math.sin(a)*d],[0.008+random()*0.006,0.003,0.008])
   }
   const collar=new THREE.Mesh(new THREE.TorusGeometry(0.03,0.008,6,18),fleck); collar.rotation.x=Math.PI/2; collar.position.y=h*0.68; group.add(collar)
-  return group
+  return batchStaticGroup(group)
 }
 
 export const makeCampfire = (random:()=>number) => {
@@ -316,7 +319,7 @@ export const makeSnake = () => {
     connect(tine,new THREE.Vector3(0,0,0),new THREE.Vector3(0.063,0,side*0.012))
   }
   const point=(t:number,time:number)=>new THREE.Vector3(-t*1.4,0,Math.sin(time*1.8-t*9)*(0.022+t*0.11))
-  const update=(time:number)=>{
+  const update=(time:number, groundAt: (x:number,z:number)=>number = () => 0)=>{
     for(let i=0;i<=rings;i++) {
       const t=i/rings,center=point(t,time),next=point(t+0.001,time)
       const tangent=next.sub(center).normalize(),lateral=new THREE.Vector3(-tangent.z,0,tangent.x)
@@ -326,11 +329,12 @@ export const makeSnake = () => {
         positions[idx]=center.x+lateral.x*Math.sin(angle)*radius
         positions[idx+1]=0.009+radius*.7+Math.cos(angle)*radius*.7
         positions[idx+2]=center.z+lateral.z*Math.sin(angle)*radius
+        positions[idx+1]=positions[idx+1]!+groundAt(positions[idx]!,positions[idx+2]!)
       }
     }
     geometry.attributes.position!.needsUpdate=true;geometry.computeVertexNormals()
     const at=point(0,time),behind=point(0.01,time)
-    head.position.set(at.x,0.043,at.z);head.rotation.y=-Math.atan2(at.z-behind.z,at.x-behind.x)
+    head.position.set(at.x,groundAt(at.x,at.z)+0.043,at.z);head.rotation.z=Math.atan2(groundAt(at.x,at.z)-groundAt(behind.x,behind.z),at.distanceTo(behind));head.rotation.y=-Math.atan2(at.z-behind.z,at.x-behind.x)
     const flick=Math.max(0,Math.sin(time*0.82))
     tongue.visible=flick>0.96;tongue.scale.x=0.7+Math.sin(time*30)*0.3
   }

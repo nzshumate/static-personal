@@ -1,0 +1,13 @@
+{
+  "title": "Components Are Easy. Component Boundaries Aren't.",
+  "description": "Two panels can look identical and still have very little business sharing a component.",
+  "date": "2018-10-23",
+  "tags": [
+    "vue",
+    "frontend",
+    "components",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

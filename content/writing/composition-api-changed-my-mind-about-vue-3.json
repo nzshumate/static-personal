@@ -1,0 +1,13 @@
+{
+  "title": "Composition API Changed My Mind About Vue 3",
+  "description": "The familiar Vue options still make sense. A component with several overlapping jobs makes the new API easier to appreciate.",
+  "date": "2020-08-20",
+  "tags": [
+    "vue",
+    "vue-3",
+    "composition-api",
+    "architecture"
+  ],
+  "published": true,
+  "writtenOn": "2026-09-05"
+}

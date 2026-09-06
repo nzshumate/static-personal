@@ -15,6 +15,22 @@ const projects = [
 <template>
   <EditorialPage>
     <PageHero label="01 / Work" title="Building software is the easy part." description="Understanding what to build, where to draw the boundaries, and how to keep a team moving. That’s the work I keep coming back to." note="Engineering / In practice" />
+    <section id="building-the-journey" class="editorial-section" aria-labelledby="journey-case-title">
+      <div class="section-heading"><p class="eyebrow">Featured project / This very website</p><h2 id="journey-case-title">A world worth slowing down for.</h2></div>
+      <article class="case-study">
+        <div class="case-meta"><span class="item-number">↳</span><p>Interactive experience</p><span>Nuxt · Vue · Three.js</span></div>
+        <div class="case-content">
+          <h3>Make the imagination work in a browser.</h3>
+          <p class="case-stack">Eight environments. One continuous journey.</p>
+          <div class="case-columns">
+            <div><h4>The challenge</h4><p>A personal site should tell you something about the person behind it. This one needed room for engineering, curiosity, and the ideas my children brought to the worlds.</p></div>
+            <div><h4>The decisions</h4><p>Keep the writing and navigation in ordinary HTML. Let Three.js bring the landscape to life. Animate the active world, combine static geometry, and give visitors control over motion.</p></div>
+          </div>
+          <p class="case-takeaway">The result is a journey you can explore or simply read. The work, writing, and contact pages stand on their own, without loading the 3D world.</p>
+          <NuxtLink to="/#top" :prefetch="false" class="home-work-link">Explore the finished world <span aria-hidden="true">↗</span></NuxtLink>
+        </div>
+      </article>
+    </section>
     <section class="editorial-section practice-section" aria-labelledby="practice-title">
       <div class="section-heading"><p class="eyebrow">How I work</p><h2 id="practice-title">Good software is a series<br>of considered decisions.</h2></div>
       <div class="practice-grid"><article v-for="item in practice" :key="item.number" class="practice-card"><span class="item-number">{{ item.number }}</span><p class="eyebrow">{{ item.label }}</p><h3>{{ item.title }}</h3><p>{{ item.text }}</p><p class="practice-note">{{ item.note }}</p></article></div>
